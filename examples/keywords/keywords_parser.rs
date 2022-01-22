@@ -160,7 +160,7 @@ pub const PRODUCTIONS: &[Production; 13] = &[
         lhs: 6,
         production: &[ParseType::N(6), ParseType::N(8)],
     },
-    // 2 - GrammarList: ;
+    // 2 - GrammarList: Vec<GrammarList>::New;
     Production {
         lhs: 6,
         production: &[],
@@ -190,7 +190,7 @@ pub const PRODUCTIONS: &[Production; 13] = &[
         lhs: 2,
         production: &[ParseType::N(2), ParseType::N(8)],
     },
-    // 8 - BlockList: ;
+    // 8 - BlockList: Vec<BlockList>::New;
     Production {
         lhs: 2,
         production: &[],

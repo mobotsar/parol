@@ -42,11 +42,11 @@ impl Display for ListGrammar {
 }
 
 impl ListGrammarTrait for ListGrammar {
-    /// Semantic action for production 6:
+    /// Semantic action for production 9:
     ///
-    /// Num: "[0-9]+";
+    /// Num: "0|[1-9][0-9]*";
     ///
-    fn num_6(
+    fn num_9(
         &mut self,
         num_0: &ParseTreeStackEntry,
         parse_tree: &Tree<ParseTreeType>,

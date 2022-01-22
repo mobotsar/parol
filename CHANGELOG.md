@@ -13,6 +13,10 @@ Be aware that this project is still v0.y.z which means that anything can change 
 
 But we try to mark incompatible changes with a new minor version.
 
+## v0.6.0-pre - unreleased yet
+
+* Implementing auto generation for expanded grammar
+
 ## v0.5.7 - 2022-01-22
 
 * New examples [Keywords](./examples/keywords) and [Keywords2](./examples/keywords2) to demonstrate

@@ -20,7 +20,7 @@ pub type Rhs = Vec<Symbol>;
 ///
 /// Production type
 ///
-#[derive(Debug, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Pr(pub Symbol, pub Rhs);
 
 impl Display for Pr {
@@ -108,6 +108,17 @@ impl Pr {
     /// Returns the length of [Rhs]
     pub fn len(&self) -> usize {
         self.1.len()
+    }
+
+    /// Returns the length of [Rhs] while counting only parser relevant symbols
+    pub fn efficient_len(&self) -> usize {
+        self.1.iter().fold(0, |count, s| {
+            if s.is_t() || s.is_n() {
+                count + 1
+            } else {
+                count
+            }
+        })
     }
 
     fn is_allowed_symbol(s: &Symbol) -> bool {

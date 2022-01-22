@@ -1,5 +1,6 @@
 use super::parol_grammar_trait::ParolGrammarTrait;
 use super::ParolParserError;
+use crate::grammar::SemanticInfo;
 use id_tree::Tree;
 use log::trace;
 use miette::{miette, IntoDiagnostic, Result};
@@ -34,6 +35,8 @@ pub enum Factor {
     ScannerSwitchPush(usize),
     /// A scanner switch + pop instruction
     ScannerSwitchPop,
+    /// Used to preserve type information
+    Pseudo(SemanticInfo),
 }
 
 impl Display for Factor {
@@ -55,6 +58,7 @@ impl Display for Factor {
             Self::ScannerSwitch(n) => write!(f, "S({})", n),
             Self::ScannerSwitchPush(n) => write!(f, "Push({})", n),
             Self::ScannerSwitchPop => write!(f, "Pop"),
+            Self::Pseudo(p) => write!(f, "{}", p),
         }
     }
 }

@@ -47,7 +47,7 @@ pub trait KeywordsGrammarTrait {
 
     /// Semantic action for production 2:
     ///
-    /// GrammarList: ;
+    /// GrammarList: /* Vec<GrammarList>::New */;
     ///
     fn grammar_list_2(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
@@ -120,7 +120,7 @@ pub trait KeywordsGrammarTrait {
 
     /// Semantic action for production 8:
     ///
-    /// BlockList: ;
+    /// BlockList: /* Vec<BlockList>::New */;
     ///
     fn block_list_8(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())

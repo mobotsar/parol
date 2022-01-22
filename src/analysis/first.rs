@@ -201,6 +201,7 @@ fn combine_production_equation<'a, 'c: 'a>(
                 Symbol::S(_) => (),
                 Symbol::Push(_) => (),
                 Symbol::Pop => (),
+                Symbol::Pseudo(_) => (),
             }
             acc
         });
@@ -241,6 +242,7 @@ fn combine_production_equation<'a, 'c: 'a>(
             Symbol::S(_) => (),
             Symbol::Push(_) => (),
             Symbol::Pop => (),
+            Symbol::Pseudo(_) => (),
         }
     }
     result_function

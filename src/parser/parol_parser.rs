@@ -487,7 +487,7 @@ pub const PRODUCTIONS: &[Production; 50] = &[
         lhs: 8,
         production: &[ParseType::N(8), ParseType::N(13)],
     },
-    // 16 - GrammarDefinitionList: ;
+    // 16 - GrammarDefinitionList: Vec<GrammarDefinitionList>::New;
     Production {
         lhs: 8,
         production: &[],
@@ -512,7 +512,7 @@ pub const PRODUCTIONS: &[Production; 50] = &[
         lhs: 3,
         production: &[ParseType::N(3), ParseType::N(0), ParseType::T(15)],
     },
-    // 20 - AlternationsList: ;
+    // 20 - AlternationsList: Vec<AlternationsList>::New;
     Production {
         lhs: 3,
         production: &[],
@@ -527,7 +527,7 @@ pub const PRODUCTIONS: &[Production; 50] = &[
         lhs: 1,
         production: &[ParseType::N(1), ParseType::N(6)],
     },
-    // 23 - AlternationList: ;
+    // 23 - AlternationList: Vec<AlternationList>::New;
     Production {
         lhs: 1,
         production: &[],
@@ -628,7 +628,7 @@ pub const PRODUCTIONS: &[Production; 50] = &[
         lhs: 19,
         production: &[ParseType::N(19), ParseType::N(16)],
     },
-    // 41 - ScannerStateList: ;
+    // 41 - ScannerStateList: Vec<ScannerStateList>::New;
     Production {
         lhs: 19,
         production: &[],

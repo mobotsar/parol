@@ -7,7 +7,7 @@ use std::fmt::{Display, Error, Formatter};
 /// Especially in contrast to [Rhs] of [Pr] productions they don't contain scanner state
 /// instructions like %sc, %push and %pop.
 ///
-#[derive(Debug, Clone, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Clone, Default, Hash, Eq, PartialEq)]
 pub(crate) struct SymbolString(pub Vec<Symbol>);
 
 impl SymbolString {

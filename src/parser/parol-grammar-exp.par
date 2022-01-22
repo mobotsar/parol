@@ -22,14 +22,14 @@
 /* 13 */ ScannerStates: ;
 /* 14 */ GrammarDefinition: "%%" Production GrammarDefinitionList;
 /* 15 */ GrammarDefinitionList: Production GrammarDefinitionList;
-/* 16 */ GrammarDefinitionList: ;
+/* 16 */ GrammarDefinitionList: /* Vec<GrammarDefinitionList>::New */;
 /* 17 */ Production: Identifier ":" Alternations ";";
 /* 18 */ Alternations: Alternation AlternationsList;
 /* 19 */ AlternationsList: "\|" Alternation AlternationsList;
-/* 20 */ AlternationsList: ;
+/* 20 */ AlternationsList: /* Vec<AlternationsList>::New */;
 /* 21 */ Alternation: AlternationList;
 /* 22 */ AlternationList: Factor AlternationList;
-/* 23 */ AlternationList: ;
+/* 23 */ AlternationList: /* Vec<AlternationList>::New */;
 /* 24 */ Factor: Group;
 /* 25 */ Factor: Repeat;
 /* 26 */ Factor: Optional;
@@ -47,7 +47,7 @@
 /* 38 */ String: "\u{0022}([^\\]|\\.)*?\u{0022}";
 /* 39 */ ScannerState: "%scanner" Identifier "\{" ScannerStateList "\}";
 /* 40 */ ScannerStateList: ScannerDirectives ScannerStateList;
-/* 41 */ ScannerStateList: ;
+/* 41 */ ScannerStateList: /* Vec<ScannerStateList>::New */;
 /* 42 */ StateList: Identifier StateListRest;
 /* 43 */ StateListRest: "," Identifier StateListRest;
 /* 44 */ StateListRest: ;
