@@ -21,7 +21,7 @@ pub fn main(args: &clap::ArgMatches) -> Result<()> {
         .value_of("grammar_file")
         .unwrap();
 
-    let mut grammar_config = obtain_grammar_config(&file_name, true)?;
+    let mut grammar_config = obtain_grammar_config(&file_name, false)?;
     let cfg = left_factor(&grammar_config.cfg);
     // Exchange original grammar with transformed one
     grammar_config.update_cfg(cfg);

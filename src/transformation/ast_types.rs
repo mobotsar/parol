@@ -43,7 +43,7 @@ impl Display for ASTType {
                 t.iter()
                     .map(|t| format!("{}", t))
                     .collect::<Vec<String>>()
-                    .join(" ")
+                    .join(", ")
             ),
             Self::Enum(n, t) => write!(
                 f,
@@ -55,14 +55,27 @@ impl Display for ASTType {
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
-            Self::Repeat(t) => write!(
-                f,
-                "Vec<{}>",
-                t.iter()
-                    .map(|t| format!("{}", t))
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
+            Self::Repeat(t) => {
+                if t.len() <= 1 {
+                    write!(
+                        f,
+                        "Vec<{}>",
+                        t.iter()
+                            .map(|t| format!("{}", t))
+                            .collect::<Vec<String>>()
+                            .join(" ")
+                    )
+                } else {
+                    write!(
+                        f,
+                        "Vec<({})>",
+                        t.iter()
+                            .map(|t| format!("{}", t))
+                            .collect::<Vec<String>>()
+                            .join(" ")
+                    )
+                }
+            }
             Self::Option(t) => write!(
                 f,
                 "Option<{}>",
@@ -408,22 +421,80 @@ impl GrammarTypeSystem {
                     acc = acc.and_then(|_| {
                         self.add_non_terminal_type(
                             n,
-                            Self::deduce_out_type_of_production(&prods[0].1),
+                            Self::deduce_out_type_of_production(prods[0].1),
                         )
                     });
                 } else {
-                    acc = acc.and_then(|_| {
-                        self.add_non_terminal_type(
-                            n,
-                            ASTType::Enum(
-                                n.to_owned(),
-                                prods
-                                    .iter()
-                                    .map(|pr| Self::deduce_out_type_of_production(&pr.1))
-                                    .collect::<Vec<ASTType>>(),
-                            ),
-                        )
-                    });
+                    let option_type = if prods.len() == 2 {
+                        match (
+                            self.in_types.get(&prods[0].0),
+                            self.in_types.get(&prods[1].0),
+                        ) {
+                            (Some(ASTType::Option(n)), _) => Some(ASTType::Option(n.clone())),
+                            (_, Some(ASTType::Option(n))) => Some(ASTType::Option(n.clone())),
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    };
+
+                    if let Some(option_type) = option_type {
+                        acc = acc.and_then(|_| self.add_non_terminal_type(n, option_type));
+                    } else {
+                        let repetition_type = if prods.len() == 2 {
+                            match (
+                                self.semantics.get(&prods[0].0),
+                                self.semantics.get(&prods[1].0),
+                            ) {
+                                (Some(Semantic::StartCollection), _) => {
+                                    let mut pr = prods[1].1.clone();
+                                    let _ = pr.1.pop();
+                                    Some(ASTType::Repeat(
+                                        pr.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
+                                            Vec::new(),
+                                            |mut acc, s| {
+                                                acc.push(Self::deduce_type_of_symbol(s));
+                                                acc
+                                            },
+                                        ),
+                                    ))
+                                }
+                                (_, Some(Semantic::StartCollection)) => {
+                                    let mut pr = prods[0].1.clone();
+                                    let _ = pr.1.pop();
+                                    Some(ASTType::Repeat(
+                                        pr.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
+                                            Vec::new(),
+                                            |mut acc, s| {
+                                                acc.push(Self::deduce_type_of_symbol(s));
+                                                acc
+                                            },
+                                        ),
+                                    ))
+                                }
+                                _ => None,
+                            }
+                        } else {
+                            None
+                        };
+
+                        if let Some(repetition_type) = repetition_type {
+                            acc = acc.and_then(|_| self.add_non_terminal_type(n, repetition_type));
+                        } else {
+                            acc = acc.and_then(|_| {
+                                self.add_non_terminal_type(
+                                    n,
+                                    ASTType::Enum(
+                                        n.to_owned(),
+                                        prods
+                                            .iter()
+                                            .map(|pr| Self::deduce_out_type_of_production(pr.1))
+                                            .collect::<Vec<ASTType>>(),
+                                    ),
+                                )
+                            });
+                        }
+                    }
                 }
                 acc
             })?;
@@ -442,8 +513,8 @@ impl Display for GrammarTypeSystem {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
         let width = (self.in_types.len() as f32).log10() as usize + 1;
         for (prod_num, in_type) in &self.in_types {
-            let out_type = self.out_types.get(&prod_num).unwrap_or(&ASTType::None);
-            let sem = self.semantics.get(&prod_num).unwrap_or(&Semantic::None);
+            let out_type = self.out_types.get(prod_num).unwrap_or(&ASTType::None);
+            let sem = self.semantics.get(prod_num).unwrap_or(&Semantic::None);
             writeln!(
                 f,
                 "/* {:w$} */ ({} -> {})  {{ {} }}",
