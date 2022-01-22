@@ -181,6 +181,7 @@ fn update_production_equations<'a, 'c: 'a>(
                 Symbol::S(_) => (),
                 Symbol::Push(_) => (),
                 Symbol::Pop => (),
+                Symbol::Pseudo(_) => (),
             }
             acc
         },
@@ -232,6 +233,7 @@ fn update_production_equations<'a, 'c: 'a>(
                     Symbol::S(_) => (),
                     Symbol::Push(_) => (),
                     Symbol::Pop => (),
+                    Symbol::Pseudo(_) => (),
                 }
             }
             // trace!("  concat Follow({}, {})", pr.get_n_str(), k);

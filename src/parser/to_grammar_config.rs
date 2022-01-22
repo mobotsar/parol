@@ -59,6 +59,7 @@ pub(crate) fn try_from_factor(factor: Factor) -> Result<Symbol> {
         Factor::ScannerSwitch(s) => Ok(Symbol::s(s)),
         Factor::ScannerSwitchPush(s) => Ok(Symbol::Push(s)),
         Factor::ScannerSwitchPop => Ok(Symbol::Pop),
+        Factor::Pseudo(p) => Ok(Symbol::Pseudo(p)),
         _ => Err(miette!("Unexpected type of factor: {}", factor)),
     }
 }

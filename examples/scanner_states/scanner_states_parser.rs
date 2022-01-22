@@ -176,7 +176,7 @@ pub const PRODUCTIONS: &[Production; 15] = &[
         lhs: 6,
         production: &[ParseType::N(6), ParseType::N(0)],
     },
-    // 2 - StartList: ;
+    // 2 - StartList: Vec<StartList>::New;
     Production {
         lhs: 6,
         production: &[],

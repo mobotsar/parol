@@ -16,7 +16,7 @@ lazy_static! {
 ///
 /// WrapErr free grammar type
 ///
-#[derive(Debug, Default, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Cfg {
     /// Start symbol of the grammar
     pub st: String,

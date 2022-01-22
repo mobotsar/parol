@@ -6,13 +6,13 @@
 
 /*  0 */ Grammar: GrammarList;
 /*  1 */ GrammarList: Items GrammarList;
-/*  2 */ GrammarList: ;
+/*  2 */ GrammarList: /* Vec<GrammarList>::New */;
 /*  3 */ Items: Declaration;
 /*  4 */ Items: Block;
 /*  5 */ Declaration: Var Identifier ";";
 /*  6 */ Block: Begin BlockList End;
 /*  7 */ BlockList: Items BlockList;
-/*  8 */ BlockList: ;
+/*  8 */ BlockList: /* Vec<BlockList>::New */;
 /*  9 */ Begin: "(?i)\bBegin\b";
 /* 10 */ End: "(?i)\bEnd\b";
 /* 11 */ Var: "(?i)\bVar\b";

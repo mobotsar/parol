@@ -48,7 +48,7 @@ fn generate_argument_list(pr: &Pr, terminals: &[&str], terminal_names: &[String]
         .get_r()
         .iter()
         .enumerate()
-        .filter(|(_, s)| !s.is_switch())
+        .filter(|(_, s)| !s.is_switch() && !s.is_pseudo())
         .map(|(i, a)| match a {
             Symbol::N(n) => {
                 format!("_{}_{}: &ParseTreeStackEntry", to_camel_case(n), i)
@@ -72,7 +72,7 @@ fn generate_caller_argument_list(pr: &Pr) -> String {
     let mut arguments = pr
         .get_r()
         .iter()
-        .filter(|s| !s.is_switch())
+        .filter(|s| !s.is_switch() && !s.is_pseudo())
         .enumerate()
         .map(|(i, _)| format!("&children[{}]", i))
         .collect::<Vec<String>>();

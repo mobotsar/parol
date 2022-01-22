@@ -10,9 +10,42 @@ use std::fmt::{Debug, Display, Error, Formatter};
 // *Changes will affect crate's version according to semver*
 // ---------------------------------------------------
 ///
+/// A factor only introduced during grammar transformation
+/// For auto-generation we need some information of types which normally get lost during
+/// grammar transformation. This SemanticInfo is used to convey the information across multiple
+/// transformation steps.
+///
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
+pub enum SemanticInfo {
+    /// An Start-Of-Repetition with a type reference (production name)
+    CollectionStart(String),
+    /// An Push-To-Repetition with a type reference (production name)
+    // CollectionPush(String),
+    /// An Optional::Some case with a type reference (production name)
+    // OptionalSome(String),
+    /// An Optional::None case with a type reference (production name)
+    OptionalNone(String),
+}
+
+impl Display for SemanticInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        match self {
+            Self::CollectionStart(r) => write!(f, "Vec<{}>::New", r),
+            // Self::CollectionPush(r) => write!(f, "Vec<{}>::Push", r),
+            // Self::OptionalSome(o) => write!(f, "Option<{}>::Some", o),
+            Self::OptionalNone(o) => write!(f, "Option<{}>::None", o),
+        }
+    }
+}
+
+// ---------------------------------------------------
+// Part of the Public API
+// *Changes will affect crate's version according to semver*
+// ---------------------------------------------------
+///
 /// A terminal symbol with different specificities
 ///
-#[derive(Debug, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Terminal {
     ///
     /// A physical terminal symbol with the scanner states it belongs to
@@ -131,7 +164,7 @@ impl TerminalMappings<Terminal> for Terminal {
 ///
 /// A grammar symbol with different specificities
 ///
-#[derive(Debug, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Symbol {
     ///
     /// Non-terminal symbol, Meta symbol of the grammar.
@@ -159,6 +192,11 @@ pub enum Symbol {
     /// configuration with that index
     ///
     Pop,
+
+    ///
+    /// Used to preserve type information
+    ///
+    Pseudo(SemanticInfo),
 }
 
 impl Symbol {
@@ -193,6 +231,10 @@ impl Symbol {
     /// Checks if self is a scanner switch instruction
     pub fn is_switch(&self) -> bool {
         matches!(self, Self::S(_)) || matches!(self, Self::Push(_)) || matches!(self, Self::Pop)
+    }
+    /// Checks if self is a pseudo symbol
+    pub fn is_pseudo(&self) -> bool {
+        matches!(self, Self::Pseudo(_))
     }
     /// Returns a terminal if available
     pub fn get_t(&self) -> Option<Terminal> {
@@ -244,6 +286,7 @@ impl Symbol {
             }
             Self::Push(s) => format!("%push({})", scanner_state_resolver(&[*s])),
             Self::Pop => "%pop()".to_string(),
+            Self::Pseudo(p) => format!("/* {} */", p),
         }
     }
 }
@@ -256,6 +299,7 @@ impl Display for Symbol {
             Self::S(s) => write!(f, "S({})", s),
             Self::Push(s) => write!(f, "Push({})", s),
             Self::Pop => write!(f, "Pop"),
+            Self::Pseudo(p) => write!(f, "{}", p),
         }
     }
 }

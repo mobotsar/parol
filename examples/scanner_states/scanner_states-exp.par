@@ -10,7 +10,7 @@
 
 /*  0 */ Start: StartList;
 /*  1 */ StartList: Content StartList;
-/*  2 */ StartList: ;
+/*  2 */ StartList: /* Vec<StartList>::New */;
 /*  3 */ Content: Identifier;
 /*  4 */ Content: StringDelimiter %push(String) StringContent StringDelimiter %pop();
 /*  5 */ StringContent: StringElement StringContent;

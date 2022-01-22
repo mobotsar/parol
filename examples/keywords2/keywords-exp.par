@@ -8,13 +8,13 @@
 
 /*  0 */ Grammar: GrammarList;
 /*  1 */ GrammarList: Items GrammarList;
-/*  2 */ GrammarList: ;
+/*  2 */ GrammarList: /* Vec<GrammarList>::New */;
 /*  3 */ Items: Declaration;
 /*  4 */ Items: Block;
 /*  5 */ Declaration: Var %sc(Identifier) Identifier %sc() ";";
 /*  6 */ Block: Begin BlockList End;
 /*  7 */ BlockList: Items BlockList;
-/*  8 */ BlockList: ;
+/*  8 */ BlockList: /* Vec<BlockList>::New */;
 /*  9 */ Identifier: <Identifier>"[a-zA-Z_][a-zA-Z0-9_]*";
 /* 10 */ Begin: "(?i)\bBegin\b";
 /* 11 */ End: "(?i)\bEnd\b";
