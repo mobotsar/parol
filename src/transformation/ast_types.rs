@@ -503,7 +503,7 @@ impl GrammarTypeSystem {
 
     fn is_collection(&mut self, s: &Symbol) -> bool {
         match s {
-            Symbol::N(_n) => false,
+            Symbol::N(n) => matches!(self.non_terminal_types.get(n), Some(ASTType::Repeat(_))),
             _ => false,
         }
     }
