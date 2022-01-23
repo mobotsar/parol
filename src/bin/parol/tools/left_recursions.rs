@@ -1,24 +1,19 @@
 use miette::Result;
+use std::path::PathBuf;
 
 use parol::{detect_left_recursions, obtain_grammar_config};
 
-pub fn sub_command() -> clap::App<'static, 'static> {
-    clap::SubCommand::with_name("left_recursion")
-        .about("Checks the given grammar for direct and indirect left recursions.")
-        .arg(
-            clap::Arg::with_name("grammar_file")
-                .required(true)
-                .short("f")
-                .long("grammar-file")
-                .takes_value(true)
-                .help("The grammar file to use")
-        )
+/// Checks the given grammar for direct and indirect left recursions.
+#[derive(clap::Parser)]
+#[clap(name = "left_recursion")]
+pub struct Args {
+    /// The grammar file to use
+    #[clap(short = 'f', long = "grammar-file", parse(from_os_str))]
+    grammar_file: PathBuf,
 }
 
-pub fn main(args: &clap::ArgMatches) -> Result<()> {
-    let file_name = args
-        .value_of("grammar_file")
-        .unwrap();
+pub fn main(args: &Args) -> Result<()> {
+    let file_name = &args.grammar_file;
 
     let grammar_config = obtain_grammar_config(&file_name, false)?;
     let recursions = detect_left_recursions(&grammar_config.cfg);

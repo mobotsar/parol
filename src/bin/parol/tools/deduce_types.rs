@@ -1,25 +1,20 @@
 use std::convert::TryInto;
+use std::path::PathBuf;
 use parol::transformation::ast_types::GrammarTypeSystem;
 use miette::Result;
 use parol::{left_factor, obtain_grammar_config};
 
-pub fn sub_command() -> clap::App<'static, 'static> {
-    clap::SubCommand::with_name("deduce_types")
-        .about("Calculates the type structure of the generated expanded grammar.")
-        .arg(
-            clap::Arg::with_name("grammar_file")
-                .required(true)
-                .short("f")
-                .long("grammar-file")
-                .takes_value(true)
-                .help("The grammar file to use")
-        )
+/// Calculates the type structure of the generated expanded grammar.
+#[derive(clap::Parser)]
+#[clap(name = "deduce_types")]
+pub struct Args {
+    /// The grammar file to use
+    #[clap(short = 'f', long = "grammar-file", parse(from_os_str))]
+    grammar_file: PathBuf,
 }
 
-pub fn main(args: &clap::ArgMatches) -> Result<()> {
-    let file_name = args
-        .value_of("grammar_file")
-        .unwrap();
+pub fn main(args: &Args) -> Result<()> {
+    let file_name = &args.grammar_file;
 
     let mut grammar_config = obtain_grammar_config(&file_name, false)?;
     let cfg = left_factor(&grammar_config.cfg);
