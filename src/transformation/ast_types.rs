@@ -1,4 +1,6 @@
 use crate::analysis::lookahead_dfa::ProductionIndex;
+use crate::generators::generate_terminal_name;
+use crate::generators::user_trait_generator::{generate_argument_names, get_argument_name};
 use crate::grammar::SemanticInfo;
 use crate::{Cfg, Pr, Symbol};
 use log::trace;
@@ -20,8 +22,8 @@ pub enum ASTType {
     Token(String),
     /// A type name
     TypeRef(String),
-    /// A tuple, i.e. a sequence of types
-    Tuple(Vec<ASTType>),
+    /// A struct, i.e. a collection of types
+    Struct(String, Vec<(String, ASTType)>),
     /// Will be generated as enum with given name
     Enum(String, Vec<ASTType>),
     /// Will be generated as Vec<T>
@@ -30,18 +32,60 @@ pub enum ASTType {
     Option(Vec<ASTType>),
 }
 
+impl ASTType {
+    pub(crate) fn type_name(&self) -> String {
+        match self {
+            Self::None => "*TypeError*".to_owned(),
+            Self::Unit => "()".to_owned(),
+            Self::Token(t) => format!("OwnedToken /* {} */", t),
+            Self::TypeRef(r) => format!("{}", r),
+            Self::Struct(n, _) => format!("{}", n),
+            Self::Enum(n, _) => format!("{}", n),
+            Self::Repeat(t) => {
+                let members = t
+                    .iter()
+                    .fold(Vec::<String>::new(), |mut acc, t| {
+                        acc.push(t.type_name());
+                        acc
+                    })
+                    .join(", ");
+                if t.len() <= 1 {
+                    format!("Vec<{}>", members,)
+                } else {
+                    format!("Vec<({})>", members)
+                }
+            }
+            Self::Option(t) => {
+                let members = t
+                    .iter()
+                    .fold(Vec::<String>::new(), |mut acc, t| {
+                        acc.push(t.type_name());
+                        acc
+                    })
+                    .join(", ");
+                if t.len() <= 1 {
+                    format!("Option<{}>", members,)
+                } else {
+                    format!("Option<({})>", members)
+                }
+            }
+        }
+    }
+}
+
 impl Display for ASTType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
         match self {
             Self::None => write!(f, "-"),
             Self::Unit => write!(f, "()"),
-            Self::Token(t) => write!(f, "{}", t),
+            Self::Token(t) => write!(f, "OwnedToken /* {} */", t),
             Self::TypeRef(r) => write!(f, "{}", r),
-            Self::Tuple(t) => write!(
+            Self::Struct(n, m) => write!(
                 f,
-                "({})",
-                t.iter()
-                    .map(|t| format!("{}", t))
+                "struct {} {{ {} }}",
+                n,
+                m.iter()
+                    .map(|(n, t)| format!("{}: {}", n, t))
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
@@ -51,7 +95,7 @@ impl Display for ASTType {
                 n,
                 t.iter()
                     .enumerate()
-                    .map(|(i, t)| format!("{}{}: {}", n, i, t))
+                    .map(|(i, t)| format!("{}{}({})", n, i, t))
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
@@ -156,6 +200,10 @@ pub struct GrammarTypeSystem {
 
     /// Information to fill the semantic gap in special cases
     pub semantics: BTreeMap<ProductionIndex, Semantic>,
+
+    terminals: Vec<String>,
+
+    terminal_names: Vec<String>,
 }
 
 impl GrammarTypeSystem {
@@ -330,11 +378,11 @@ impl GrammarTypeSystem {
             .fold(Ok(()), |mut acc, p| {
                 for (i, pr) in p {
                     if !self.in_types.contains_key(&i) {
-                        let in_type = Self::deduce_in_type_of_production(pr);
+                        let in_type = self.deduce_in_type_of_production(pr);
                         acc = acc.and_then(|_| self.add_input_type(i, in_type));
                     }
                     if !self.out_types.contains_key(&i) {
-                        let out_type = Self::deduce_out_type_of_production(pr);
+                        let out_type = self.deduce_out_type_of_production(pr);
                         acc = acc.and_then(|_| self.add_output_type(i, out_type));
                     }
                 }
@@ -359,31 +407,43 @@ impl GrammarTypeSystem {
         Ok(())
     }
 
-    fn deduce_in_type_of_production(prod: &Pr) -> ASTType {
+    fn struct_data_of_production(&self, prod: &Pr) -> ASTType {
+        let mut types =
+            prod.get_r()
+                .iter()
+                .filter(|s| s.is_t() || s.is_n())
+                .fold(Vec::new(), |mut acc, s| {
+                    acc.push(Self::deduce_type_of_symbol(s));
+                    acc
+                });
+        let field_names =
+            generate_argument_names(prod.get_r(), &self.terminals, &self.terminal_names)
+                .iter()
+                .zip(types.drain(..))
+                .map(|(n, t)| (n.to_string(), t))
+                .collect::<Vec<(String, ASTType)>>();
+        ASTType::Struct(prod.get_n(), field_names)
+    }
+
+    fn deduce_in_type_of_production(&self, prod: &Pr) -> ASTType {
         match prod.efficient_len() {
             0 => ASTType::Unit,
             1 => Self::deduce_type_of_symbol(&prod.get_r()[0]),
-            _ => ASTType::Tuple(prod.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
-                Vec::new(),
-                |mut acc, s| {
-                    acc.push(Self::deduce_type_of_symbol(s));
-                    acc
-                },
-            )),
+            _ => self.struct_data_of_production(prod),
         }
     }
 
-    fn deduce_out_type_of_production(prod: &Pr) -> ASTType {
+    fn deduce_out_type_of_production(&self, prod: &Pr) -> ASTType {
         match prod.efficient_len() {
             0 => ASTType::Unit,
-            1 => ASTType::Tuple(vec![Self::deduce_type_of_symbol(&prod.get_r()[0])]),
-            _ => ASTType::Tuple(prod.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
-                Vec::new(),
-                |mut acc, s| {
-                    acc.push(Self::deduce_type_of_symbol(s));
-                    acc
-                },
-            )),
+            1 => ASTType::Struct(
+                prod.get_n(),
+                vec![(
+                    get_argument_name(&prod.get_r()[0], 0, &self.terminals, &self.terminal_names),
+                    Self::deduce_type_of_symbol(&prod.get_r()[0]),
+                )],
+            ),
+            _ => self.struct_data_of_production(prod),
         }
     }
 
@@ -421,7 +481,7 @@ impl GrammarTypeSystem {
                     acc = acc.and_then(|_| {
                         self.add_non_terminal_type(
                             n,
-                            Self::deduce_out_type_of_production(prods[0].1),
+                            self.deduce_out_type_of_production(prods[0].1),
                         )
                     });
                 } else {
@@ -488,7 +548,7 @@ impl GrammarTypeSystem {
                                         n.to_owned(),
                                         prods
                                             .iter()
-                                            .map(|pr| Self::deduce_out_type_of_production(pr.1))
+                                            .map(|pr| self.deduce_out_type_of_production(pr.1))
                                             .collect::<Vec<ASTType>>(),
                                     ),
                                 )
@@ -537,6 +597,17 @@ impl TryFrom<&Cfg> for GrammarTypeSystem {
     type Error = miette::Error;
     fn try_from(cfg: &Cfg) -> Result<Self> {
         let mut me = Self::new();
+        me.terminals = cfg
+            .get_ordered_terminals()
+            .iter()
+            .map(|(t, _)| t.to_string())
+            .collect::<Vec<String>>();
+        me.terminal_names = me.terminals.iter().fold(Vec::new(), |mut acc, e| {
+            let n = generate_terminal_name(e, usize::MAX, cfg);
+            acc.push(n);
+            acc
+        });
+
         me.add_pairwise_types(cfg)?;
         me.add_other_types(cfg)?;
         me.deduce_type_of_non_terminals(cfg)?;

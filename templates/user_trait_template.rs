@@ -5,15 +5,22 @@
 // ---------------------------------------------------------
 
 use id_tree::Tree;
+use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
 use miette::{miette, Result};
 use crate::{{user_trait_module_name}}::{{user_type_name}};
+
+//
+// Types of non-terminals deduced from the structure of the transformed grammar
+//
+
+{{{non_terminal_types}}}
 
 ///
 /// The `{{{user_type_name}}}Trait` trait is automatically generated for the
 /// given grammar.
 /// All functions have default implementations.
-/// 
+///
 pub trait {{{user_type_name}}}Trait {
     ///
     /// Implement this method if you need the provided information
