@@ -11,6 +11,12 @@ use miette::{miette, Result};
 use crate::{{user_trait_module_name}}::{{user_type_name}};
 
 //
+// Output Types of productions deduced from the structure of the transformed grammar
+//
+
+{{{production_output_types}}}
+
+//
 // Types of non-terminals deduced from the structure of the transformed grammar
 //
 

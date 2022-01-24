@@ -25,6 +25,7 @@ struct UserTraitFunctionData {
 #[template = "templates/user_trait_template.rs"]
 struct UserTraitData<'a> {
     user_type_name: &'a str,
+    production_output_types: StrVec,
     non_terminal_types: StrVec,
     trait_functions: StrVec,
     trait_caller: StrVec,
@@ -34,6 +35,7 @@ struct UserTraitData<'a> {
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/non_terminal_type_struct_template.rs"]
 struct NonTerminalTypeStruct {
+    comment: String,
     non_terminal: String,
     members: StrVec,
 }
@@ -41,6 +43,7 @@ struct NonTerminalTypeStruct {
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/non_terminal_type_enum_template.rs"]
 struct NonTerminalTypeEnum {
+    comment: String,
     non_terminal: String,
     members: StrVec,
 }
@@ -48,6 +51,7 @@ struct NonTerminalTypeEnum {
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/non_terminal_type_vec_template.rs"]
 struct NonTerminalTypeVec {
+    comment: String,
     non_terminal: String,
     members: String,
 }
@@ -55,6 +59,7 @@ struct NonTerminalTypeVec {
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/non_terminal_type_opt_template.rs"]
 struct NonTerminalTypeOpt {
+    comment: String,
     non_terminal: String,
     members: String,
 }
@@ -88,7 +93,7 @@ pub(crate) fn get_argument_name(
             let terminal_name = &terminal_names[get_terminal_index(t)];
             format!("{}_{}", to_camel_case(terminal_name), arg_index)
         }
-        _ => panic!("Invalid symbol type in production!"),
+        _ => panic!("Invalid symbol type {}", s),
     }
 }
 
@@ -189,6 +194,78 @@ pub fn generate_user_trait_source(
 
     let type_system: GrammarTypeSystem = (&grammar_config.cfg).try_into()?;
 
+    let production_output_types =
+        type_system
+            .out_types
+            .iter()
+            .fold(StrVec::new(0), |mut acc, (s, t)| {
+                match t {
+                    ASTType::Struct(_n, m) => {
+                        let struct_data = NonTerminalTypeStruct {
+                            comment: format!("production {}", s),
+                            non_terminal: format!("{}{}", grammar_config.cfg.pr[*s].get_n_str(), s),
+                            members: m.iter().fold(StrVec::new(4), |mut acc, (n, t)| {
+                                acc.push(format!("{}: {},", n, t));
+                                acc
+                            }),
+                        };
+                        acc.push(format!("{}", struct_data));
+                    }
+                    ASTType::Enum(n, m) => {
+                        let struct_data = NonTerminalTypeEnum {
+                            comment: format!("production {}", s),
+                            non_terminal: format!("{}{}", grammar_config.cfg.pr[*s].get_n_str(), s),
+                            members: m.iter().enumerate().fold(
+                                StrVec::new(4),
+                                |mut acc, (i, t)| {
+                                    acc.push(format!("{}{}({}),", n, i, t.type_name()));
+                                    acc
+                                },
+                            ),
+                        };
+                        acc.push(format!("{}", struct_data));
+                    }
+                    ASTType::Repeat(m) => {
+                        let members = m.iter().fold(String::new(), |mut acc, t| {
+                            acc.push_str(&format!("{},", t.type_name()));
+                            acc
+                        });
+
+                        let members = if m.len() == 1 {
+                            format!("{}", members)
+                        } else {
+                            format!("({})", members)
+                        };
+                        let struct_data = NonTerminalTypeVec {
+                            comment: format!("production {}", s),
+                            non_terminal: format!("{}{}", grammar_config.cfg.pr[*s].get_n_str(), s),
+                            members,
+                        };
+                        acc.push(format!("{}", struct_data));
+                    }
+                    ASTType::Option(m) => {
+                        let members = m.iter().fold(String::new(), |mut acc, t| {
+                            acc.push_str(&format!("{},", t.type_name()));
+                            acc
+                        });
+
+                        let members = if m.len() == 1 {
+                            format!("{}", members)
+                        } else {
+                            format!("({})", members)
+                        };
+                        let struct_data = NonTerminalTypeOpt {
+                            comment: format!("production {}", s),
+                            non_terminal: format!("{}{}", grammar_config.cfg.pr[*s].get_n_str(), s),
+                            members,
+                        };
+                        acc.push(format!("{}", struct_data));
+                    }
+                    _ => (),
+                }
+                acc
+            });
+
     let non_terminal_types =
         type_system
             .non_terminal_types
@@ -197,6 +274,7 @@ pub fn generate_user_trait_source(
                 match t {
                     ASTType::Struct(_n, m) => {
                         let struct_data = NonTerminalTypeStruct {
+                            comment: format!("non-terminal {}", s),
                             non_terminal: s.clone(),
                             members: m.iter().fold(StrVec::new(4), |mut acc, (n, t)| {
                                 acc.push(format!("{}: {},", n, t));
@@ -207,6 +285,7 @@ pub fn generate_user_trait_source(
                     }
                     ASTType::Enum(n, m) => {
                         let struct_data = NonTerminalTypeEnum {
+                            comment: format!("non-terminal {}", s),
                             non_terminal: s.clone(),
                             members: m.iter().enumerate().fold(
                                 StrVec::new(4),
@@ -230,6 +309,7 @@ pub fn generate_user_trait_source(
                             format!("({})", members)
                         };
                         let struct_data = NonTerminalTypeVec {
+                            comment: format!("non-terminal {}", s),
                             non_terminal: s.clone(),
                             members,
                         };
@@ -247,6 +327,7 @@ pub fn generate_user_trait_source(
                             format!("({})", members)
                         };
                         let struct_data = NonTerminalTypeOpt {
+                            comment: format!("non-terminal {}", s),
                             non_terminal: s.clone(),
                             members,
                         };
@@ -294,6 +375,7 @@ pub fn generate_user_trait_source(
 
     let user_trait_data = UserTraitData {
         user_type_name,
+        production_output_types,
         non_terminal_types,
         trait_functions,
         trait_caller,

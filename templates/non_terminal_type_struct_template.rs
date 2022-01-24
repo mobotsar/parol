@@ -1,6 +1,4 @@
-/// 
-/// Type derived for non-terminal {{non_terminal}}
-///
+/// Type derived for {{comment}}
 #[derive(Debug, Clone)]
 struct {{non_terminal}} {
 {{{members}}}}

@@ -436,13 +436,25 @@ impl GrammarTypeSystem {
     fn deduce_out_type_of_production(&self, prod: &Pr) -> ASTType {
         match prod.efficient_len() {
             0 => ASTType::Unit,
-            1 => ASTType::Struct(
-                prod.get_n(),
-                vec![(
-                    get_argument_name(&prod.get_r()[0], 0, &self.terminals, &self.terminal_names),
-                    Self::deduce_type_of_symbol(&prod.get_r()[0]),
-                )],
-            ),
+            1 => {
+                let idx = prod
+                    .get_r()
+                    .iter()
+                    .position(|s| s.is_n() || s.is_t())
+                    .unwrap();
+                ASTType::Struct(
+                    prod.get_n(),
+                    vec![(
+                        get_argument_name(
+                            &prod.get_r()[idx],
+                            0,
+                            &self.terminals,
+                            &self.terminal_names,
+                        ),
+                        Self::deduce_type_of_symbol(&prod.get_r()[0]),
+                    )],
+                )
+            }
             _ => self.struct_data_of_production(prod),
         }
     }
@@ -548,7 +560,13 @@ impl GrammarTypeSystem {
                                         n.to_owned(),
                                         prods
                                             .iter()
-                                            .map(|pr| self.deduce_out_type_of_production(pr.1))
+                                            .map(|pr| {
+                                                ASTType::TypeRef(format!(
+                                                    "{}{}",
+                                                    pr.1.get_n_str(),
+                                                    pr.0
+                                                ))
+                                            })
                                             .collect::<Vec<ASTType>>(),
                                     ),
                                 )
