@@ -36,11 +36,11 @@ pub trait BooleanGrammarTrait {
 
     /// Semantic action for production 1:
     ///
-    /// ExpressionsSuffix: Semicolon;
+    /// ExpressionsSuffix: ExpressionsOpt;
     ///
     fn expressions_suffix_1(
         &mut self,
-        _semicolon_0: &ParseTreeStackEntry,
+        _expressions_opt_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -56,9 +56,21 @@ pub trait BooleanGrammarTrait {
 
     /// Semantic action for production 3:
     ///
+    /// ExpressionsOpt: Semicolon;
+    ///
+    fn expressions_opt_3(
+        &mut self,
+        _semicolon_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 4:
+    ///
     /// ExpressionsList: Semicolon Expression ExpressionsList;
     ///
-    fn expressions_list_3(
+    fn expressions_list_4(
         &mut self,
         _semicolon_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -68,19 +80,19 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 4:
+    /// Semantic action for production 5:
     ///
     /// ExpressionsList: ;
     ///
-    fn expressions_list_4(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn expressions_list_5(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 5:
+    /// Semantic action for production 6:
     ///
     /// Expression: Term TailExpression;
     ///
-    fn expression_5(
+    fn expression_6(
         &mut self,
         _term_0: &ParseTreeStackEntry,
         _tail_expression_1: &ParseTreeStackEntry,
@@ -89,11 +101,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 6:
+    /// Semantic action for production 7:
     ///
     /// TailExpression: TailExpressionList;
     ///
-    fn tail_expression_6(
+    fn tail_expression_7(
         &mut self,
         _tail_expression_list_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -101,11 +113,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 7:
+    /// Semantic action for production 8:
     ///
     /// TailExpressionList: BinaryOperator Term TailExpressionList;
     ///
-    fn tail_expression_list_7(
+    fn tail_expression_list_8(
         &mut self,
         _binary_operator_0: &ParseTreeStackEntry,
         _term_1: &ParseTreeStackEntry,
@@ -115,34 +127,22 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 8:
+    /// Semantic action for production 9:
     ///
     /// TailExpressionList: ;
     ///
-    fn tail_expression_list_8(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 9:
-    ///
-    /// Term: UnaryOperator Factor;
-    ///
-    fn term_9(
-        &mut self,
-        _unary_operator_0: &ParseTreeStackEntry,
-        _factor_1: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
+    fn tail_expression_list_9(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
     /// Semantic action for production 10:
     ///
-    /// Term: Factor;
+    /// Term: TermOpt Factor;
     ///
     fn term_10(
         &mut self,
-        _factor_0: &ParseTreeStackEntry,
+        _term_opt_0: &ParseTreeStackEntry,
+        _factor_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -150,11 +150,11 @@ pub trait BooleanGrammarTrait {
 
     /// Semantic action for production 11:
     ///
-    /// Boolean: True;
+    /// Term: Factor;
     ///
-    fn boolean_11(
+    fn term_11(
         &mut self,
-        _true_0: &ParseTreeStackEntry,
+        _factor_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -162,11 +162,11 @@ pub trait BooleanGrammarTrait {
 
     /// Semantic action for production 12:
     ///
-    /// Boolean: False;
+    /// TermOpt: UnaryOperator;
     ///
-    fn boolean_12(
+    fn term_opt_12(
         &mut self,
-        _false_0: &ParseTreeStackEntry,
+        _unary_operator_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -174,165 +174,9 @@ pub trait BooleanGrammarTrait {
 
     /// Semantic action for production 13:
     ///
-    /// UnaryOperator: Not;
+    /// Boolean: True;
     ///
-    fn unary_operator_13(
-        &mut self,
-        _not_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 14:
-    ///
-    /// BinaryOperator: AndOp;
-    ///
-    fn binary_operator_14(
-        &mut self,
-        _and_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 15:
-    ///
-    /// BinaryOperator: OrOp;
-    ///
-    fn binary_operator_15(
-        &mut self,
-        _or_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 16:
-    ///
-    /// BinaryOperator: XorOp;
-    ///
-    fn binary_operator_16(
-        &mut self,
-        _xor_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 17:
-    ///
-    /// BinaryOperator: NorOp;
-    ///
-    fn binary_operator_17(
-        &mut self,
-        _nor_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 18:
-    ///
-    /// BinaryOperator: NandOp;
-    ///
-    fn binary_operator_18(
-        &mut self,
-        _nand_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 19:
-    ///
-    /// BinaryOperator: XnorOp;
-    ///
-    fn binary_operator_19(
-        &mut self,
-        _xnor_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 20:
-    ///
-    /// AndOp: "(?i)AND";
-    ///
-    fn and_op_20(
-        &mut self,
-        _and_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 21:
-    ///
-    /// OrOp: "(?i)OR";
-    ///
-    fn or_op_21(
-        &mut self,
-        _or_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 22:
-    ///
-    /// XorOp: "(?i)XOR";
-    ///
-    fn xor_op_22(
-        &mut self,
-        _xor_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 23:
-    ///
-    /// NorOp: "(?i)NOR";
-    ///
-    fn nor_op_23(
-        &mut self,
-        _nor_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 24:
-    ///
-    /// NandOp: "(?i)NAND";
-    ///
-    fn nand_op_24(
-        &mut self,
-        _nand_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 25:
-    ///
-    /// XnorOp: "(?i)XNOR";
-    ///
-    fn xnor_op_25(
-        &mut self,
-        _xnor_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 26:
-    ///
-    /// True: "(?i)TRUE";
-    ///
-    fn true_26(
+    fn boolean_13(
         &mut self,
         _true_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -340,11 +184,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 27:
+    /// Semantic action for production 14:
     ///
-    /// False: "(?i)FALSE";
+    /// Boolean: False;
     ///
-    fn false_27(
+    fn boolean_14(
         &mut self,
         _false_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -352,11 +196,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 28:
+    /// Semantic action for production 15:
     ///
-    /// Not: "(?i)NOT";
+    /// UnaryOperator: Not;
     ///
-    fn not_28(
+    fn unary_operator_15(
         &mut self,
         _not_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -364,11 +208,191 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
+    /// Semantic action for production 16:
+    ///
+    /// BinaryOperator: AndOp;
+    ///
+    fn binary_operator_16(
+        &mut self,
+        _and_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 17:
+    ///
+    /// BinaryOperator: OrOp;
+    ///
+    fn binary_operator_17(
+        &mut self,
+        _or_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 18:
+    ///
+    /// BinaryOperator: XorOp;
+    ///
+    fn binary_operator_18(
+        &mut self,
+        _xor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 19:
+    ///
+    /// BinaryOperator: NorOp;
+    ///
+    fn binary_operator_19(
+        &mut self,
+        _nor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 20:
+    ///
+    /// BinaryOperator: NandOp;
+    ///
+    fn binary_operator_20(
+        &mut self,
+        _nand_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 21:
+    ///
+    /// BinaryOperator: XnorOp;
+    ///
+    fn binary_operator_21(
+        &mut self,
+        _xnor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 22:
+    ///
+    /// AndOp: "(?i)AND";
+    ///
+    fn and_op_22(
+        &mut self,
+        _and_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 23:
+    ///
+    /// OrOp: "(?i)OR";
+    ///
+    fn or_op_23(
+        &mut self,
+        _or_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 24:
+    ///
+    /// XorOp: "(?i)XOR";
+    ///
+    fn xor_op_24(
+        &mut self,
+        _xor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 25:
+    ///
+    /// NorOp: "(?i)NOR";
+    ///
+    fn nor_op_25(
+        &mut self,
+        _nor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 26:
+    ///
+    /// NandOp: "(?i)NAND";
+    ///
+    fn nand_op_26(
+        &mut self,
+        _nand_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 27:
+    ///
+    /// XnorOp: "(?i)XNOR";
+    ///
+    fn xnor_op_27(
+        &mut self,
+        _xnor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 28:
+    ///
+    /// True: "(?i)TRUE";
+    ///
+    fn true_28(
+        &mut self,
+        _true_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     /// Semantic action for production 29:
+    ///
+    /// False: "(?i)FALSE";
+    ///
+    fn false_29(
+        &mut self,
+        _false_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 30:
+    ///
+    /// Not: "(?i)NOT";
+    ///
+    fn not_30(
+        &mut self,
+        _not_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 31:
     ///
     /// Parenthesized: LeftParenthesis Expression RightParenthesis;
     ///
-    fn parenthesized_29(
+    fn parenthesized_31(
         &mut self,
         _left_parenthesis_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -378,11 +402,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 30:
+    /// Semantic action for production 32:
     ///
     /// Semicolon: ";";
     ///
-    fn semicolon_30(
+    fn semicolon_32(
         &mut self,
         _semicolon_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -390,11 +414,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 31:
+    /// Semantic action for production 33:
     ///
     /// LeftParenthesis: "\(";
     ///
-    fn left_parenthesis_31(
+    fn left_parenthesis_33(
         &mut self,
         _left_parenthesis_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -402,11 +426,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 32:
+    /// Semantic action for production 34:
     ///
     /// RightParenthesis: "\)";
     ///
-    fn right_parenthesis_32(
+    fn right_parenthesis_34(
         &mut self,
         _right_parenthesis_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -414,11 +438,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 33:
+    /// Semantic action for production 35:
     ///
     /// Factor: Boolean;
     ///
-    fn factor_33(
+    fn factor_35(
         &mut self,
         _boolean_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -426,11 +450,11 @@ pub trait BooleanGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 34:
+    /// Semantic action for production 36:
     ///
     /// Factor: Parenthesized;
     ///
-    fn factor_34(
+    fn factor_36(
         &mut self,
         _parenthesized_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -465,31 +489,31 @@ impl UserActionsTrait for BooleanGrammar {
 
             2 => self.expressions_suffix_2(parse_tree),
 
-            3 => self.expressions_list_3(&children[0], &children[1], &children[2], parse_tree),
+            3 => self.expressions_opt_3(&children[0], parse_tree),
 
-            4 => self.expressions_list_4(parse_tree),
+            4 => self.expressions_list_4(&children[0], &children[1], &children[2], parse_tree),
 
-            5 => self.expression_5(&children[0], &children[1], parse_tree),
+            5 => self.expressions_list_5(parse_tree),
 
-            6 => self.tail_expression_6(&children[0], parse_tree),
+            6 => self.expression_6(&children[0], &children[1], parse_tree),
 
-            7 => self.tail_expression_list_7(&children[0], &children[1], &children[2], parse_tree),
+            7 => self.tail_expression_7(&children[0], parse_tree),
 
-            8 => self.tail_expression_list_8(parse_tree),
+            8 => self.tail_expression_list_8(&children[0], &children[1], &children[2], parse_tree),
 
-            9 => self.term_9(&children[0], &children[1], parse_tree),
+            9 => self.tail_expression_list_9(parse_tree),
 
-            10 => self.term_10(&children[0], parse_tree),
+            10 => self.term_10(&children[0], &children[1], parse_tree),
 
-            11 => self.boolean_11(&children[0], parse_tree),
+            11 => self.term_11(&children[0], parse_tree),
 
-            12 => self.boolean_12(&children[0], parse_tree),
+            12 => self.term_opt_12(&children[0], parse_tree),
 
-            13 => self.unary_operator_13(&children[0], parse_tree),
+            13 => self.boolean_13(&children[0], parse_tree),
 
-            14 => self.binary_operator_14(&children[0], parse_tree),
+            14 => self.boolean_14(&children[0], parse_tree),
 
-            15 => self.binary_operator_15(&children[0], parse_tree),
+            15 => self.unary_operator_15(&children[0], parse_tree),
 
             16 => self.binary_operator_16(&children[0], parse_tree),
 
@@ -499,35 +523,39 @@ impl UserActionsTrait for BooleanGrammar {
 
             19 => self.binary_operator_19(&children[0], parse_tree),
 
-            20 => self.and_op_20(&children[0], parse_tree),
+            20 => self.binary_operator_20(&children[0], parse_tree),
 
-            21 => self.or_op_21(&children[0], parse_tree),
+            21 => self.binary_operator_21(&children[0], parse_tree),
 
-            22 => self.xor_op_22(&children[0], parse_tree),
+            22 => self.and_op_22(&children[0], parse_tree),
 
-            23 => self.nor_op_23(&children[0], parse_tree),
+            23 => self.or_op_23(&children[0], parse_tree),
 
-            24 => self.nand_op_24(&children[0], parse_tree),
+            24 => self.xor_op_24(&children[0], parse_tree),
 
-            25 => self.xnor_op_25(&children[0], parse_tree),
+            25 => self.nor_op_25(&children[0], parse_tree),
 
-            26 => self.true_26(&children[0], parse_tree),
+            26 => self.nand_op_26(&children[0], parse_tree),
 
-            27 => self.false_27(&children[0], parse_tree),
+            27 => self.xnor_op_27(&children[0], parse_tree),
 
-            28 => self.not_28(&children[0], parse_tree),
+            28 => self.true_28(&children[0], parse_tree),
 
-            29 => self.parenthesized_29(&children[0], &children[1], &children[2], parse_tree),
+            29 => self.false_29(&children[0], parse_tree),
 
-            30 => self.semicolon_30(&children[0], parse_tree),
+            30 => self.not_30(&children[0], parse_tree),
 
-            31 => self.left_parenthesis_31(&children[0], parse_tree),
+            31 => self.parenthesized_31(&children[0], &children[1], &children[2], parse_tree),
 
-            32 => self.right_parenthesis_32(&children[0], parse_tree),
+            32 => self.semicolon_32(&children[0], parse_tree),
 
-            33 => self.factor_33(&children[0], parse_tree),
+            33 => self.left_parenthesis_33(&children[0], parse_tree),
 
-            34 => self.factor_34(&children[0], parse_tree),
+            34 => self.right_parenthesis_34(&children[0], parse_tree),
+
+            35 => self.factor_35(&children[0], parse_tree),
+
+            36 => self.factor_36(&children[0], parse_tree),
 
             _ => Err(miette!("Unhandled production number: {}", prod_num)),
         }

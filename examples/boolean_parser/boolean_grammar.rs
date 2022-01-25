@@ -277,71 +277,43 @@ impl Display for BooleanGrammar {
 }
 
 impl BooleanGrammarTrait for BooleanGrammar {
-    /// Semantic action for production 5:
+    /// Semantic action for production 6:
     ///
     /// Expression: Term TailExpression;
     ///
-    fn expression_5(
+    fn expression_6(
         &mut self,
         _term_0: &ParseTreeStackEntry,
         _tail_expression_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "expression_5";
+        let context = "expression_6";
         trace!("{}", self.trace_item_stack(context));
         self.process_left_associations(context)
     }
 
-    /// Semantic action for production 9:
+    /// Semantic action for production 10:
     ///
-    /// Term: UnaryOperator Factor;
+    /// Term: TermOpt Factor;
     ///
-    fn term_9(
+    fn term_10(
         &mut self,
-        _unary_operator_0: &ParseTreeStackEntry,
+        _term_opt_0: &ParseTreeStackEntry,
         _factor_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "term_9";
+        let context = "term_10";
         trace!("{}", self.trace_item_stack(context));
         self.process_unary_operator(context)
     }
 
-    /// Semantic action for production 14:
+    /// Semantic action for production 16:
     ///
     /// BinaryOperator: AndOp;
     ///
-    fn binary_operator_14(
-        &mut self,
-        _and_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        let context = "binary_operator_14";
-        trace!("{}", self.trace_item_stack(context));
-        self.process_left_assoc(context)
-    }
-
-    /// Semantic action for production 15:
-    ///
-    /// BinaryOperator: OrOp;
-    ///
-    fn binary_operator_15(
-        &mut self,
-        _or_op_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        let context = "binary_operator_15";
-        trace!("{}", self.trace_item_stack(context));
-        self.process_left_assoc(context)
-    }
-
-    /// Semantic action for production 16:
-    ///
-    /// BinaryOperator: XorOp;
-    ///
     fn binary_operator_16(
         &mut self,
-        _xor_op_0: &ParseTreeStackEntry,
+        _and_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "binary_operator_16";
@@ -351,11 +323,11 @@ impl BooleanGrammarTrait for BooleanGrammar {
 
     /// Semantic action for production 17:
     ///
-    /// BinaryOperator: NorOp;
+    /// BinaryOperator: OrOp;
     ///
     fn binary_operator_17(
         &mut self,
-        _nor_op_0: &ParseTreeStackEntry,
+        _or_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "binary_operator_17";
@@ -365,11 +337,11 @@ impl BooleanGrammarTrait for BooleanGrammar {
 
     /// Semantic action for production 18:
     ///
-    /// BinaryOperator: NandOp;
+    /// BinaryOperator: XorOp;
     ///
     fn binary_operator_18(
         &mut self,
-        _nand_op_0: &ParseTreeStackEntry,
+        _xor_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "binary_operator_18";
@@ -379,11 +351,11 @@ impl BooleanGrammarTrait for BooleanGrammar {
 
     /// Semantic action for production 19:
     ///
-    /// BinaryOperator: XnorOp;
+    /// BinaryOperator: NorOp;
     ///
     fn binary_operator_19(
         &mut self,
-        _xnor_op_0: &ParseTreeStackEntry,
+        _nor_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "binary_operator_19";
@@ -393,14 +365,42 @@ impl BooleanGrammarTrait for BooleanGrammar {
 
     /// Semantic action for production 20:
     ///
+    /// BinaryOperator: NandOp;
+    ///
+    fn binary_operator_20(
+        &mut self,
+        _nand_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        let context = "binary_operator_20";
+        trace!("{}", self.trace_item_stack(context));
+        self.process_left_assoc(context)
+    }
+
+    /// Semantic action for production 21:
+    ///
+    /// BinaryOperator: XnorOp;
+    ///
+    fn binary_operator_21(
+        &mut self,
+        _xnor_op_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        let context = "binary_operator_21";
+        trace!("{}", self.trace_item_stack(context));
+        self.process_left_assoc(context)
+    }
+
+    /// Semantic action for production 22:
+    ///
     /// AndOp: "(?i)AND";
     ///
-    fn and_op_20(
+    fn and_op_22(
         &mut self,
         _and_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "and_op_20";
+        let context = "and_op_22";
         trace!("{}", self.trace_item_stack(context));
         let op = BinaryOp::And;
         self.record_expression(&op);
@@ -408,16 +408,16 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 21:
+    /// Semantic action for production 23:
     ///
     /// OrOp: "(?i)OR";
     ///
-    fn or_op_21(
+    fn or_op_23(
         &mut self,
         _or_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "or_op_21";
+        let context = "or_op_23";
         trace!("{}", self.trace_item_stack(context));
         let op = BinaryOp::Or;
         self.record_expression(&op);
@@ -425,16 +425,16 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 21:
+    /// Semantic action for production 24:
     ///
     /// XorOp: "(?i)XOR";
     ///
-    fn xor_op_22(
+    fn xor_op_24(
         &mut self,
         _xor_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "xor_op_22";
+        let context = "xor_op_24";
         trace!("{}", self.trace_item_stack(context));
         let op = BinaryOp::Xor;
         self.record_expression(&op);
@@ -442,16 +442,16 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 23:
+    /// Semantic action for production 25:
     ///
     /// NorOp: "(?i)NOR";
     ///
-    fn nor_op_23(
+    fn nor_op_25(
         &mut self,
         _nor_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "nor_op_23";
+        let context = "nor_op_25";
         trace!("{}", self.trace_item_stack(context));
         let op = BinaryOp::Nor;
         self.record_expression(&op);
@@ -459,16 +459,16 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 24:
+    /// Semantic action for production 26:
     ///
     /// NandOp: "(?i)NAND";
     ///
-    fn nand_op_24(
+    fn nand_op_26(
         &mut self,
         _nand_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "nand_op_24";
+        let context = "nand_op_26";
         trace!("{}", self.trace_item_stack(context));
         let op = BinaryOp::Nand;
         self.record_expression(&op);
@@ -476,16 +476,16 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 25:
+    /// Semantic action for production 27:
     ///
     /// XnorOp: "(?i)XNOR";
     ///
-    fn xnor_op_25(
+    fn xnor_op_27(
         &mut self,
         _xnor_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "xnor_op_25";
+        let context = "xnor_op_27";
         trace!("{}", self.trace_item_stack(context));
         let op = BinaryOp::Xnor;
         self.record_expression(&op);
@@ -493,59 +493,59 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 26:
+    /// Semantic action for production 28:
     ///
     /// True: "(?i)TRUE";
     ///
-    fn true_26(
+    fn true_28(
         &mut self,
         _true_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "true_26";
+        let context = "true_28";
         let val = BooleanGrammarItem::Val(true);
         self.record_expression(&val);
         self.push(val, context);
         Ok(())
     }
 
-    /// Semantic action for production 27:
+    /// Semantic action for production 29:
     ///
     /// False: "(?i)FALSE";
     ///
-    fn false_27(
+    fn false_29(
         &mut self,
         _false_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "false_27";
+        let context = "false_29";
         let val = BooleanGrammarItem::Val(false);
         self.record_expression(&val);
         self.push(val, context);
         Ok(())
     }
 
-    /// Semantic action for production 28:
+    /// Semantic action for production 30:
     ///
     /// Not: "(?i)NOT";
     ///
-    fn not_28(
+    fn not_30(
         &mut self,
         _not_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "not_28";
+        let context = "not_30";
         let op = UnaryOp::Not;
         self.record_expression(&op);
         self.push(BooleanGrammarItem::UnaryOp(op), context);
         Ok(())
     }
 
-    /// Semantic action for production 30:
+    /// Semantic action for production 32:
     ///
     /// Semicolon: ";";
     ///
-    fn semicolon_30(
+    fn semicolon_32(
         &mut self,
         _semicolon_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -554,11 +554,11 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 31:
+    /// Semantic action for production 33:
     ///
     /// LeftParenthesis: "\(";
     ///
-    fn left_parenthesis_31(
+    fn left_parenthesis_33(
         &mut self,
         _left_parenthesis_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -567,11 +567,11 @@ impl BooleanGrammarTrait for BooleanGrammar {
         Ok(())
     }
 
-    /// Semantic action for production 32:
+    /// Semantic action for production 34:
     ///
     /// RightParenthesis: "\)";
     ///
-    fn right_parenthesis_32(
+    fn right_parenthesis_34(
         &mut self,
         _right_parenthesis_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,

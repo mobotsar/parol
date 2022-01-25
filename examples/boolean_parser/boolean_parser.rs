@@ -86,37 +86,39 @@ const SCANNER_0: (&[&str; 5], &[usize; 12]) = (
 
 const MAX_K: usize = 2;
 
-pub const NON_TERMINALS: &[&str; 24] = &[
+pub const NON_TERMINALS: &[&str; 26] = &[
     /*  0 */ "AndOp",
     /*  1 */ "BinaryOperator",
     /*  2 */ "Boolean",
     /*  3 */ "Expression",
     /*  4 */ "Expressions",
     /*  5 */ "ExpressionsList",
-    /*  6 */ "ExpressionsSuffix",
-    /*  7 */ "Factor",
-    /*  8 */ "False",
-    /*  9 */ "LeftParenthesis",
-    /* 10 */ "NandOp",
-    /* 11 */ "NorOp",
-    /* 12 */ "Not",
-    /* 13 */ "OrOp",
-    /* 14 */ "Parenthesized",
-    /* 15 */ "RightParenthesis",
-    /* 16 */ "Semicolon",
-    /* 17 */ "TailExpression",
-    /* 18 */ "TailExpressionList",
-    /* 19 */ "Term",
-    /* 20 */ "True",
-    /* 21 */ "UnaryOperator",
-    /* 22 */ "XnorOp",
-    /* 23 */ "XorOp",
+    /*  6 */ "ExpressionsOpt",
+    /*  7 */ "ExpressionsSuffix",
+    /*  8 */ "Factor",
+    /*  9 */ "False",
+    /* 10 */ "LeftParenthesis",
+    /* 11 */ "NandOp",
+    /* 12 */ "NorOp",
+    /* 13 */ "Not",
+    /* 14 */ "OrOp",
+    /* 15 */ "Parenthesized",
+    /* 16 */ "RightParenthesis",
+    /* 17 */ "Semicolon",
+    /* 18 */ "TailExpression",
+    /* 19 */ "TailExpressionList",
+    /* 20 */ "Term",
+    /* 21 */ "TermOpt",
+    /* 22 */ "True",
+    /* 23 */ "UnaryOperator",
+    /* 24 */ "XnorOp",
+    /* 25 */ "XorOp",
 ];
 
-pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
+pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 26] = &[
     /* 0 - "AndOp" */
     LookaheadDFA {
-        states: &[Some(20)],
+        states: &[Some(22)],
         transitions: &[],
         k: 0,
     },
@@ -124,12 +126,12 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
     LookaheadDFA {
         states: &[
             None,
-            Some(14),
-            Some(15),
             Some(16),
             Some(17),
             Some(18),
             Some(19),
+            Some(20),
+            Some(21),
         ],
         transitions: &[
             DFATransition(0, 5, 1),
@@ -143,13 +145,13 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
     },
     /* 2 - "Boolean" */
     LookaheadDFA {
-        states: &[None, Some(11), Some(12)],
+        states: &[None, Some(13), Some(14)],
         transitions: &[DFATransition(0, 11, 1), DFATransition(0, 12, 2)],
         k: 1,
     },
     /* 3 - "Expression" */
     LookaheadDFA {
-        states: &[Some(5)],
+        states: &[Some(6)],
         transitions: &[],
         k: 0,
     },
@@ -161,7 +163,7 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
     },
     /* 5 - "ExpressionsList" */
     LookaheadDFA {
-        states: &[None, None, Some(3), Some(4)],
+        states: &[None, None, Some(4), Some(5)],
         transitions: &[
             DFATransition(0, 0, 3),
             DFATransition(0, 14, 1),
@@ -173,15 +175,21 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
         ],
         k: 2,
     },
-    /* 6 - "ExpressionsSuffix" */
+    /* 6 - "ExpressionsOpt" */
+    LookaheadDFA {
+        states: &[Some(3)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 7 - "ExpressionsSuffix" */
     LookaheadDFA {
         states: &[None, Some(1), Some(2)],
         transitions: &[DFATransition(0, 0, 2), DFATransition(0, 14, 1)],
         k: 1,
     },
-    /* 7 - "Factor" */
+    /* 8 - "Factor" */
     LookaheadDFA {
-        states: &[None, Some(33), Some(34)],
+        states: &[None, Some(35), Some(36)],
         transitions: &[
             DFATransition(0, 11, 1),
             DFATransition(0, 12, 1),
@@ -189,69 +197,69 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
         ],
         k: 1,
     },
-    /* 8 - "False" */
-    LookaheadDFA {
-        states: &[Some(27)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 9 - "LeftParenthesis" */
-    LookaheadDFA {
-        states: &[Some(31)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 10 - "NandOp" */
-    LookaheadDFA {
-        states: &[Some(24)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 11 - "NorOp" */
-    LookaheadDFA {
-        states: &[Some(23)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 12 - "Not" */
-    LookaheadDFA {
-        states: &[Some(28)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 13 - "OrOp" */
-    LookaheadDFA {
-        states: &[Some(21)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 14 - "Parenthesized" */
+    /* 9 - "False" */
     LookaheadDFA {
         states: &[Some(29)],
         transitions: &[],
         k: 0,
     },
-    /* 15 - "RightParenthesis" */
+    /* 10 - "LeftParenthesis" */
     LookaheadDFA {
-        states: &[Some(32)],
+        states: &[Some(33)],
         transitions: &[],
         k: 0,
     },
-    /* 16 - "Semicolon" */
+    /* 11 - "NandOp" */
+    LookaheadDFA {
+        states: &[Some(26)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 12 - "NorOp" */
+    LookaheadDFA {
+        states: &[Some(25)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 13 - "Not" */
     LookaheadDFA {
         states: &[Some(30)],
         transitions: &[],
         k: 0,
     },
-    /* 17 - "TailExpression" */
+    /* 14 - "OrOp" */
     LookaheadDFA {
-        states: &[Some(6)],
+        states: &[Some(23)],
         transitions: &[],
         k: 0,
     },
-    /* 18 - "TailExpressionList" */
+    /* 15 - "Parenthesized" */
     LookaheadDFA {
-        states: &[None, Some(7), Some(8)],
+        states: &[Some(31)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 16 - "RightParenthesis" */
+    LookaheadDFA {
+        states: &[Some(34)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 17 - "Semicolon" */
+    LookaheadDFA {
+        states: &[Some(32)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 18 - "TailExpression" */
+    LookaheadDFA {
+        states: &[Some(7)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 19 - "TailExpressionList" */
+    LookaheadDFA {
+        states: &[None, Some(8), Some(9)],
         transitions: &[
             DFATransition(0, 0, 2),
             DFATransition(0, 5, 1),
@@ -265,9 +273,9 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
         ],
         k: 1,
     },
-    /* 19 - "Term" */
+    /* 20 - "Term" */
     LookaheadDFA {
-        states: &[None, Some(9), Some(10)],
+        states: &[None, Some(10), Some(11)],
         transitions: &[
             DFATransition(0, 11, 2),
             DFATransition(0, 12, 2),
@@ -276,207 +284,223 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 24] = &[
         ],
         k: 1,
     },
-    /* 20 - "True" */
+    /* 21 - "TermOpt" */
     LookaheadDFA {
-        states: &[Some(26)],
+        states: &[Some(12)],
         transitions: &[],
         k: 0,
     },
-    /* 21 - "UnaryOperator" */
+    /* 22 - "True" */
     LookaheadDFA {
-        states: &[Some(13)],
+        states: &[Some(28)],
         transitions: &[],
         k: 0,
     },
-    /* 22 - "XnorOp" */
+    /* 23 - "UnaryOperator" */
     LookaheadDFA {
-        states: &[Some(25)],
+        states: &[Some(15)],
         transitions: &[],
         k: 0,
     },
-    /* 23 - "XorOp" */
+    /* 24 - "XnorOp" */
     LookaheadDFA {
-        states: &[Some(22)],
+        states: &[Some(27)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 25 - "XorOp" */
+    LookaheadDFA {
+        states: &[Some(24)],
         transitions: &[],
         k: 0,
     },
 ];
 
-pub const PRODUCTIONS: &[Production; 35] = &[
+pub const PRODUCTIONS: &[Production; 37] = &[
     // 0 - Expressions: Expression ExpressionsList ExpressionsSuffix;
     Production {
         lhs: 4,
-        production: &[ParseType::N(6), ParseType::N(5), ParseType::N(3)],
+        production: &[ParseType::N(7), ParseType::N(5), ParseType::N(3)],
     },
-    // 1 - ExpressionsSuffix: Semicolon;
+    // 1 - ExpressionsSuffix: ExpressionsOpt;
     Production {
-        lhs: 6,
-        production: &[ParseType::N(16)],
+        lhs: 7,
+        production: &[ParseType::N(6)],
     },
     // 2 - ExpressionsSuffix: ;
     Production {
+        lhs: 7,
+        production: &[],
+    },
+    // 3 - ExpressionsOpt: Semicolon;
+    Production {
         lhs: 6,
-        production: &[],
+        production: &[ParseType::N(17)],
     },
-    // 3 - ExpressionsList: Semicolon Expression ExpressionsList;
+    // 4 - ExpressionsList: Semicolon Expression ExpressionsList;
     Production {
         lhs: 5,
-        production: &[ParseType::N(5), ParseType::N(3), ParseType::N(16)],
+        production: &[ParseType::N(5), ParseType::N(3), ParseType::N(17)],
     },
-    // 4 - ExpressionsList: ;
+    // 5 - ExpressionsList: ;
     Production {
         lhs: 5,
         production: &[],
     },
-    // 5 - Expression: Term TailExpression;
+    // 6 - Expression: Term TailExpression;
     Production {
         lhs: 3,
-        production: &[ParseType::N(17), ParseType::N(19)],
+        production: &[ParseType::N(18), ParseType::N(20)],
     },
-    // 6 - TailExpression: TailExpressionList;
-    Production {
-        lhs: 17,
-        production: &[ParseType::N(18)],
-    },
-    // 7 - TailExpressionList: BinaryOperator Term TailExpressionList;
+    // 7 - TailExpression: TailExpressionList;
     Production {
         lhs: 18,
-        production: &[ParseType::N(18), ParseType::N(19), ParseType::N(1)],
+        production: &[ParseType::N(19)],
     },
-    // 8 - TailExpressionList: ;
+    // 8 - TailExpressionList: BinaryOperator Term TailExpressionList;
     Production {
-        lhs: 18,
+        lhs: 19,
+        production: &[ParseType::N(19), ParseType::N(20), ParseType::N(1)],
+    },
+    // 9 - TailExpressionList: ;
+    Production {
+        lhs: 19,
         production: &[],
     },
-    // 9 - Term: UnaryOperator Factor;
+    // 10 - Term: TermOpt Factor;
     Production {
-        lhs: 19,
-        production: &[ParseType::N(7), ParseType::N(21)],
+        lhs: 20,
+        production: &[ParseType::N(8), ParseType::N(21)],
     },
-    // 10 - Term: Factor;
+    // 11 - Term: Factor;
     Production {
-        lhs: 19,
-        production: &[ParseType::N(7)],
-    },
-    // 11 - Boolean: True;
-    Production {
-        lhs: 2,
-        production: &[ParseType::N(20)],
-    },
-    // 12 - Boolean: False;
-    Production {
-        lhs: 2,
+        lhs: 20,
         production: &[ParseType::N(8)],
     },
-    // 13 - UnaryOperator: Not;
+    // 12 - TermOpt: UnaryOperator;
     Production {
         lhs: 21,
-        production: &[ParseType::N(12)],
+        production: &[ParseType::N(23)],
     },
-    // 14 - BinaryOperator: AndOp;
+    // 13 - Boolean: True;
+    Production {
+        lhs: 2,
+        production: &[ParseType::N(22)],
+    },
+    // 14 - Boolean: False;
+    Production {
+        lhs: 2,
+        production: &[ParseType::N(9)],
+    },
+    // 15 - UnaryOperator: Not;
+    Production {
+        lhs: 23,
+        production: &[ParseType::N(13)],
+    },
+    // 16 - BinaryOperator: AndOp;
     Production {
         lhs: 1,
         production: &[ParseType::N(0)],
     },
-    // 15 - BinaryOperator: OrOp;
+    // 17 - BinaryOperator: OrOp;
     Production {
         lhs: 1,
-        production: &[ParseType::N(13)],
+        production: &[ParseType::N(14)],
     },
-    // 16 - BinaryOperator: XorOp;
+    // 18 - BinaryOperator: XorOp;
     Production {
         lhs: 1,
-        production: &[ParseType::N(23)],
+        production: &[ParseType::N(25)],
     },
-    // 17 - BinaryOperator: NorOp;
+    // 19 - BinaryOperator: NorOp;
+    Production {
+        lhs: 1,
+        production: &[ParseType::N(12)],
+    },
+    // 20 - BinaryOperator: NandOp;
     Production {
         lhs: 1,
         production: &[ParseType::N(11)],
     },
-    // 18 - BinaryOperator: NandOp;
+    // 21 - BinaryOperator: XnorOp;
     Production {
         lhs: 1,
-        production: &[ParseType::N(10)],
+        production: &[ParseType::N(24)],
     },
-    // 19 - BinaryOperator: XnorOp;
-    Production {
-        lhs: 1,
-        production: &[ParseType::N(22)],
-    },
-    // 20 - AndOp: "(?i)AND";
+    // 22 - AndOp: "(?i)AND";
     Production {
         lhs: 0,
         production: &[ParseType::T(5)],
     },
-    // 21 - OrOp: "(?i)OR";
-    Production {
-        lhs: 13,
-        production: &[ParseType::T(6)],
-    },
-    // 22 - XorOp: "(?i)XOR";
-    Production {
-        lhs: 23,
-        production: &[ParseType::T(7)],
-    },
-    // 23 - NorOp: "(?i)NOR";
-    Production {
-        lhs: 11,
-        production: &[ParseType::T(8)],
-    },
-    // 24 - NandOp: "(?i)NAND";
-    Production {
-        lhs: 10,
-        production: &[ParseType::T(9)],
-    },
-    // 25 - XnorOp: "(?i)XNOR";
-    Production {
-        lhs: 22,
-        production: &[ParseType::T(10)],
-    },
-    // 26 - True: "(?i)TRUE";
-    Production {
-        lhs: 20,
-        production: &[ParseType::T(11)],
-    },
-    // 27 - False: "(?i)FALSE";
-    Production {
-        lhs: 8,
-        production: &[ParseType::T(12)],
-    },
-    // 28 - Not: "(?i)NOT";
-    Production {
-        lhs: 12,
-        production: &[ParseType::T(13)],
-    },
-    // 29 - Parenthesized: LeftParenthesis Expression RightParenthesis;
+    // 23 - OrOp: "(?i)OR";
     Production {
         lhs: 14,
-        production: &[ParseType::N(15), ParseType::N(3), ParseType::N(9)],
+        production: &[ParseType::T(6)],
     },
-    // 30 - Semicolon: ";";
+    // 24 - XorOp: "(?i)XOR";
     Production {
-        lhs: 16,
-        production: &[ParseType::T(14)],
+        lhs: 25,
+        production: &[ParseType::T(7)],
     },
-    // 31 - LeftParenthesis: "\(";
+    // 25 - NorOp: "(?i)NOR";
+    Production {
+        lhs: 12,
+        production: &[ParseType::T(8)],
+    },
+    // 26 - NandOp: "(?i)NAND";
+    Production {
+        lhs: 11,
+        production: &[ParseType::T(9)],
+    },
+    // 27 - XnorOp: "(?i)XNOR";
+    Production {
+        lhs: 24,
+        production: &[ParseType::T(10)],
+    },
+    // 28 - True: "(?i)TRUE";
+    Production {
+        lhs: 22,
+        production: &[ParseType::T(11)],
+    },
+    // 29 - False: "(?i)FALSE";
     Production {
         lhs: 9,
-        production: &[ParseType::T(15)],
+        production: &[ParseType::T(12)],
     },
-    // 32 - RightParenthesis: "\)";
+    // 30 - Not: "(?i)NOT";
+    Production {
+        lhs: 13,
+        production: &[ParseType::T(13)],
+    },
+    // 31 - Parenthesized: LeftParenthesis Expression RightParenthesis;
     Production {
         lhs: 15,
+        production: &[ParseType::N(16), ParseType::N(3), ParseType::N(10)],
+    },
+    // 32 - Semicolon: ";";
+    Production {
+        lhs: 17,
+        production: &[ParseType::T(14)],
+    },
+    // 33 - LeftParenthesis: "\(";
+    Production {
+        lhs: 10,
+        production: &[ParseType::T(15)],
+    },
+    // 34 - RightParenthesis: "\)";
+    Production {
+        lhs: 16,
         production: &[ParseType::T(16)],
     },
-    // 33 - Factor: Boolean;
+    // 35 - Factor: Boolean;
     Production {
-        lhs: 7,
+        lhs: 8,
         production: &[ParseType::N(2)],
     },
-    // 34 - Factor: Parenthesized;
+    // 36 - Factor: Parenthesized;
     Production {
-        lhs: 7,
-        production: &[ParseType::N(14)],
+        lhs: 8,
+        production: &[ParseType::N(15)],
     },
 ];
 

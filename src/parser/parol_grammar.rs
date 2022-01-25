@@ -388,17 +388,29 @@ impl ParolGrammarTrait for ParolGrammar {
         self.file_name = file_name.into();
     }
 
-    /// Semantic action for production 2:
+    /// Semantic action for production 5:
+    ///
+    /// PrologList: ;
+    ///
+    fn prolog_list_5(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        let context = "prolog_list_5";
+        trace!("{}", self.trace_item_stack(context));
+        self.scanner_configurations[0] = self.current_scanner.clone();
+        self.current_scanner = ScannerConfig::default();
+        Ok(())
+    }
+
+    /// Semantic action for production 6:
     ///
     /// StartDeclaration: "%start" Identifier;
     ///
-    fn start_declaration_2(
+    fn start_declaration_6(
         &mut self,
-        _end_of_input_0: &ParseTreeStackEntry,
+        _percent_start_0: &ParseTreeStackEntry,
         _identifier_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "start_declaration_2";
+        let context = "start_declaration_6";
         if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))) = self.pop(context) {
             self.start_symbol = s;
             Ok(())
@@ -410,29 +422,17 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 4:
-    ///
-    /// Declarations: ;
-    ///
-    fn declarations_4(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        let context = "declarations_4";
-        trace!("{}", self.trace_item_stack(context));
-        self.scanner_configurations[0] = self.current_scanner.clone();
-        self.current_scanner = ScannerConfig::default();
-        Ok(())
-    }
-
-    /// Semantic action for production 5:
+    /// Semantic action for production 7:
     ///
     /// Declaration: "%title" String;
     ///
-    fn declaration_5(
+    fn declaration_7(
         &mut self,
         _percent_title_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "declaration_5";
+        let context = "declaration_7";
         if let Some(ParolGrammarItem::Fac(Factor::Terminal(s, _))) = self.pop(context) {
             self.title = Some(s);
             Ok(())
@@ -444,17 +444,17 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 6:
+    /// Semantic action for production 8:
     ///
     /// Declaration: "%comment" String;
     ///
-    fn declaration_6(
+    fn declaration_8(
         &mut self,
         _percent_comment_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "declaration_6";
+        let context = "declaration_8";
         if let Some(ParolGrammarItem::Fac(Factor::Terminal(s, _))) = self.pop(context) {
             self.comment = Some(s);
             Ok(())
@@ -466,17 +466,17 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 8:
+    /// Semantic action for production 10:
     ///
-    /// Declaration: "%line_comment" String;
+    /// ScannerDirectives: "%line_comment" String;
     ///
-    fn scanner_directives_8(
+    fn scanner_directives_10(
         &mut self,
         _percent_line_underscore_comment_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "scanner_directives_8";
+        let context = "scanner_directives_10";
         if let Some(ParolGrammarItem::Fac(Factor::Terminal(s, _))) = self.pop(context) {
             self.current_scanner.line_comments.push(s);
             Ok(())
@@ -488,18 +488,18 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 9:
+    /// Semantic action for production 11:
     ///
     /// ScannerDirectives: "%block_comment" String String;
     ///
-    fn scanner_directives_9(
+    fn scanner_directives_11(
         &mut self,
         _percent_block_underscore_comment_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
         _string_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "scanner_directives_9";
+        let context = "scanner_directives_11";
         if let Some(ParolGrammarItem::Fac(Factor::Terminal(s1, _))) = self.pop(context) {
             if let Some(ParolGrammarItem::Fac(Factor::Terminal(s2, _))) = self.pop(context) {
                 self.current_scanner.block_comments.push((s2, s1));
@@ -518,30 +518,30 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 10:
+    /// Semantic action for production 12:
     ///
     /// ScannerDirectives: "%auto_newline_off";
     ///
-    fn scanner_directives_10(
+    fn scanner_directives_12(
         &mut self,
         _percent_auto_underscore_newline_underscore_off_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let _context = "scanner_directives_10";
+        let _context = "scanner_directives_12";
         self.current_scanner.auto_newline_off = true;
         Ok(())
     }
 
-    /// Semantic action for production 11:
+    /// Semantic action for production 13:
     ///
     /// ScannerDirectives: "%auto_ws_off";
     ///
-    fn scanner_directives_11(
+    fn scanner_directives_13(
         &mut self,
         _percent_auto_underscore_ws_underscore_off_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let _context = "scanner_directives_11";
+        let _context = "scanner_directives_13";
         self.current_scanner.auto_ws_off = true;
         Ok(())
     }
@@ -883,25 +883,25 @@ impl ParolGrammarTrait for ParolGrammar {
 
     /// Semantic action for production 43:
     ///
-    /// StateListRest: "," Identifier StateListRest;
+    /// StateListList: "," Identifier StateListList;
     ///
-    fn state_list_rest_43(
+    fn state_list_list_43(
         &mut self,
         _comma_0: &ParseTreeStackEntry,
         identifier_1: &ParseTreeStackEntry,
-        _state_list_rest_2: &ParseTreeStackEntry,
+        _state_list_list_2: &ParseTreeStackEntry,
         parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "state_list_rest_43";
+        let context = "state_list_list_43";
         trace!("{}", self.trace_item_stack(context));
         self.handle_scanner_state(context, identifier_1, parse_tree)
     }
 
     /// Semantic action for production 44:
     ///
-    /// StateListRest: ;
+    /// StateListList: ;
     ///
-    fn state_list_rest_44(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn state_list_list_44(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         let context = "state_list_rest_44";
         // Start with an empty state list
         self.push(ParolGrammarItem::StateList(vec![]), context);
@@ -910,17 +910,17 @@ impl ParolGrammarTrait for ParolGrammar {
 
     /// Semantic action for production 45:
     ///
-    /// ScannerSwitch: "%sc" "\(" ScannerNameOpt "\)";
+    /// ScannerSwitch: "%sc" "\(" ScannerSwitchSuffix;
     ///
     fn scanner_switch_45(
         &mut self,
         _percent_sc_0: &ParseTreeStackEntry,
         _l_paren_1: &ParseTreeStackEntry,
-        _scanner_name_opt_2: &ParseTreeStackEntry,
-        _r_paren_3: &ParseTreeStackEntry,
+        _scanner_switch_suffix_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "scanner_switch_45";
+        trace!("{}", self.trace_item_stack(context));
         if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))) = self.pop(context) {
             if let Some(scanner_state) = self
                 .scanner_configurations
@@ -944,11 +944,28 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 46:
+    /// Semantic action for production 47:
+    ///
+    /// ScannerSwitchSuffix: "\)";
+    ///
+    fn scanner_switch_suffix_47(
+        &mut self,
+        _r_paren_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        let context = "scanner_switch_suffix_47";
+        self.push(
+            ParolGrammarItem::Fac(Factor::NonTerminal("INITIAL".to_string())),
+            context,
+        );
+        Ok(())
+    }
+
+    /// Semantic action for production 48:
     ///
     /// ScannerSwitch: "%push" "\(" Identifier "\)";
     ///
-    fn scanner_switch_46(
+    fn scanner_switch_48(
         &mut self,
         _percent_push_0: &ParseTreeStackEntry,
         _l_paren_1: &ParseTreeStackEntry,
@@ -956,7 +973,7 @@ impl ParolGrammarTrait for ParolGrammar {
         _r_paren_3: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "scanner_switch_46";
+        let context = "scanner_switch_48";
         if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))) = self.pop(context) {
             if let Some(scanner_state) = self
                 .scanner_configurations
@@ -980,33 +997,20 @@ impl ParolGrammarTrait for ParolGrammar {
         }
     }
 
-    /// Semantic action for production 47:
+    /// Semantic action for production 49:
     ///
     /// ScannerSwitch: "%pop" "\(" "\)";
     ///
-    fn scanner_switch_47(
+    fn scanner_switch_49(
         &mut self,
         _percent_pop_0: &ParseTreeStackEntry,
         _l_paren_1: &ParseTreeStackEntry,
         _r_paren_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        let context = "scanner_switch_47";
+        let context = "scanner_switch_49";
         self.push(ParolGrammarItem::Fac(Factor::ScannerSwitchPop), context);
         trace!("{}", self.trace_item_stack(context));
-        Ok(())
-    }
-
-    /// Semantic action for production 49:
-    ///
-    /// ScannerNameOpt: ;
-    ///
-    fn scanner_name_opt_49(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        let context = "scanner_name_opt_49";
-        self.push(
-            ParolGrammarItem::Fac(Factor::NonTerminal("INITIAL".to_string())),
-            context,
-        );
         Ok(())
     }
 }

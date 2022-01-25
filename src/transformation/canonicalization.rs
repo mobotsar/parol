@@ -283,10 +283,6 @@ fn eliminate_repetitions(opd: TransformationOperand) -> TransformationOperand {
 // -------------------------------------------------------------------------
 // R  -> x [ a ] y.
 // =>
-// Case 1: Iff a is only of size 1
-// R  -> x a y         (1)
-// R  -> x y           (1a)
-// Case 2: Otherwise
 // R  -> x R' y.       (1)
 // R  -> x y.          (1a)
 // R' -> a.            (2)
@@ -303,40 +299,24 @@ fn eliminate_single_opt(
     {
         if let Factor::Optional(optional) = production.rhs.0[alt_index].0[opt_index_in_alt].clone()
         {
-            if optional.0.len() == 1 {
-                // Case 1
-                let mut production1 = production.clone();
-                production1.rhs.0[alt_index].0.remove(opt_index_in_alt);
-                optional.0[0].0.iter().rev().for_each(|fac| {
-                    production1.rhs.0[alt_index]
-                        .0
-                        .insert(opt_index_in_alt, fac.clone())
-                });
-                let mut production1a = production.clone();
-                production1a.rhs.0[alt_index].0.remove(opt_index_in_alt);
+            let r_tick_name = generate_name(exclusions, production_name + "Opt");
+            let mut production1 = production.clone();
+            production1.rhs.0[alt_index].0[opt_index_in_alt] =
+                Factor::NonTerminal(r_tick_name.clone());
 
-                vec![production1, production1a]
-            } else {
-                // Case 2
-                let r_tick_name = generate_name(exclusions, production_name + "Opt");
-                let mut production1 = production.clone();
-                production1.rhs.0[alt_index].0[opt_index_in_alt] =
-                    Factor::NonTerminal(r_tick_name.clone());
+            let mut production1a = production1.clone();
+            production1a.rhs.0[0].0.remove(opt_index_in_alt);
 
-                let mut production1a = production1.clone();
-                production1a.rhs.0[0].0.remove(opt_index_in_alt);
+            let production2 = Production {
+                lhs: r_tick_name,
+                rhs: if optional.0.len() == 1 {
+                    Alternations(vec![Alternation(optional.0[0].0.clone())])
+                } else {
+                    optional
+                },
+            };
 
-                let production2 = Production {
-                    lhs: r_tick_name,
-                    rhs: if optional.0.len() == 1 {
-                        Alternations(vec![Alternation(optional.0[0].0.clone())])
-                    } else {
-                        optional
-                    },
-                };
-
-                vec![production1, production1a, production2]
-            }
+            vec![production1, production1a, production2]
         } else {
             panic!("Expected Factor::Optional!");
         }
@@ -690,60 +670,13 @@ mod test {
         );
     }
 
-    // R  -> x [ o1 o2 ] y.
-    // =>
-    // R  -> x o1 o2 y     (1)
-    // R  -> x y           (1a)
-    #[test]
-    fn eliminate_single_opt_case_1() {
-        // Start: x [ o1 o2 ] y;
-        let production = Production {
-            lhs: "Start".to_string(),
-            rhs: Alternations(vec![Alternation(vec![
-                Factor::Terminal("x".to_string(), vec![0]),
-                Factor::Optional(Alternations(vec![Alternation(vec![
-                    Factor::Terminal("o1".to_string(), vec![0]),
-                    Factor::Terminal("o2".to_string(), vec![0]),
-                ])])),
-                Factor::Terminal("y".to_string(), vec![0]),
-            ])]),
-        };
-
-        let productions = eliminate_single_opt(&[production.lhs.clone()], 0, production);
-        assert_eq!(2, productions.len());
-        // Start: x o1 o2 y;
-        assert_eq!(
-            Production {
-                lhs: "Start".to_string(),
-                rhs: Alternations(vec![Alternation(vec![
-                    Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::Terminal("o1".to_string(), vec![0]),
-                    Factor::Terminal("o2".to_string(), vec![0]),
-                    Factor::Terminal("y".to_string(), vec![0]),
-                ])])
-            },
-            productions[0]
-        );
-        // Start: x y;
-        assert_eq!(
-            Production {
-                lhs: "Start".to_string(),
-                rhs: Alternations(vec![Alternation(vec![
-                    Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::Terminal("y".to_string(), vec![0]),
-                ])])
-            },
-            productions[1]
-        );
-    }
-
     // R  -> x [ o1 | o2 ] y.
     // =>
     // R  -> x R' y.       (1)
     // R  -> x y.          (1a)
     // R' -> o1 | o2.      (2)
     #[test]
-    fn eliminate_single_opt_case_2() {
+    fn eliminate_single_opt_test() {
         // Start: x [ o1 | o2 ] y;
         let production = Production {
             lhs: "Start".to_string(),
