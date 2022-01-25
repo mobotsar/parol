@@ -35,13 +35,13 @@ pub trait ParolGrammarTrait {
 
     /// Semantic action for production 1:
     ///
-    /// Prolog: StartDeclaration Declarations ScannerStates;
+    /// Prolog: StartDeclaration PrologList PrologList1;
     ///
     fn prolog_1(
         &mut self,
         _start_declaration_0: &ParseTreeStackEntry,
-        _declarations_1: &ParseTreeStackEntry,
-        _scanner_states_2: &ParseTreeStackEntry,
+        _prolog_list_1: &ParseTreeStackEntry,
+        _prolog_list1_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -49,9 +49,51 @@ pub trait ParolGrammarTrait {
 
     /// Semantic action for production 2:
     ///
+    /// PrologList1: ScannerState PrologList1;
+    ///
+    fn prolog_list1_2(
+        &mut self,
+        _scanner_state_0: &ParseTreeStackEntry,
+        _prolog_list1_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 3:
+    ///
+    /// PrologList1: /* Vec<PrologList1>::New */;
+    ///
+    fn prolog_list1_3(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 4:
+    ///
+    /// PrologList: Declaration PrologList;
+    ///
+    fn prolog_list_4(
+        &mut self,
+        _declaration_0: &ParseTreeStackEntry,
+        _prolog_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 5:
+    ///
+    /// PrologList: /* Vec<PrologList>::New */;
+    ///
+    fn prolog_list_5(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 6:
+    ///
     /// StartDeclaration: "%start" Identifier;
     ///
-    fn start_declaration_2(
+    fn start_declaration_6(
         &mut self,
         _percent_start_0: &ParseTreeStackEntry,
         _identifier_1: &ParseTreeStackEntry,
@@ -60,32 +102,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 3:
-    ///
-    /// Declarations: Declaration Declarations;
-    ///
-    fn declarations_3(
-        &mut self,
-        _declaration_0: &ParseTreeStackEntry,
-        _declarations_1: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 4:
-    ///
-    /// Declarations: ;
-    ///
-    fn declarations_4(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 5:
+    /// Semantic action for production 7:
     ///
     /// Declaration: "%title" String;
     ///
-    fn declaration_5(
+    fn declaration_7(
         &mut self,
         _percent_title_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
@@ -94,11 +115,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 6:
+    /// Semantic action for production 8:
     ///
     /// Declaration: "%comment" String;
     ///
-    fn declaration_6(
+    fn declaration_8(
         &mut self,
         _percent_comment_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
@@ -107,11 +128,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 7:
+    /// Semantic action for production 9:
     ///
     /// Declaration: ScannerDirectives;
     ///
-    fn declaration_7(
+    fn declaration_9(
         &mut self,
         _scanner_directives_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -119,11 +140,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 8:
+    /// Semantic action for production 10:
     ///
     /// ScannerDirectives: "%line_comment" String;
     ///
-    fn scanner_directives_8(
+    fn scanner_directives_10(
         &mut self,
         _percent_line_underscore_comment_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
@@ -132,11 +153,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 9:
+    /// Semantic action for production 11:
     ///
     /// ScannerDirectives: "%block_comment" String String;
     ///
-    fn scanner_directives_9(
+    fn scanner_directives_11(
         &mut self,
         _percent_block_underscore_comment_0: &ParseTreeStackEntry,
         _string_1: &ParseTreeStackEntry,
@@ -146,11 +167,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 10:
+    /// Semantic action for production 12:
     ///
     /// ScannerDirectives: "%auto_newline_off";
     ///
-    fn scanner_directives_10(
+    fn scanner_directives_12(
         &mut self,
         _percent_auto_underscore_newline_underscore_off_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -158,36 +179,15 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 11:
+    /// Semantic action for production 13:
     ///
     /// ScannerDirectives: "%auto_ws_off";
     ///
-    fn scanner_directives_11(
+    fn scanner_directives_13(
         &mut self,
         _percent_auto_underscore_ws_underscore_off_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 12:
-    ///
-    /// ScannerStates: ScannerState ScannerStates;
-    ///
-    fn scanner_states_12(
-        &mut self,
-        _scanner_state_0: &ParseTreeStackEntry,
-        _scanner_states_1: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 13:
-    ///
-    /// ScannerStates: ;
-    ///
-    fn scanner_states_13(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
@@ -537,12 +537,12 @@ pub trait ParolGrammarTrait {
 
     /// Semantic action for production 42:
     ///
-    /// StateList: Identifier StateListRest;
+    /// StateList: Identifier StateListList;
     ///
     fn state_list_42(
         &mut self,
         _identifier_0: &ParseTreeStackEntry,
-        _state_list_rest_1: &ParseTreeStackEntry,
+        _state_list_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -550,13 +550,13 @@ pub trait ParolGrammarTrait {
 
     /// Semantic action for production 43:
     ///
-    /// StateListRest: "," Identifier StateListRest;
+    /// StateListList: "," Identifier StateListList;
     ///
-    fn state_list_rest_43(
+    fn state_list_list_43(
         &mut self,
         _comma_0: &ParseTreeStackEntry,
         _identifier_1: &ParseTreeStackEntry,
-        _state_list_rest_2: &ParseTreeStackEntry,
+        _state_list_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -564,22 +564,21 @@ pub trait ParolGrammarTrait {
 
     /// Semantic action for production 44:
     ///
-    /// StateListRest: ;
+    /// StateListList: /* Vec<StateListList>::New */;
     ///
-    fn state_list_rest_44(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn state_list_list_44(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
     /// Semantic action for production 45:
     ///
-    /// ScannerSwitch: "%sc" "\(" ScannerNameOpt "\)";
+    /// ScannerSwitch: "%sc" "\(" ScannerSwitchSuffix;
     ///
     fn scanner_switch_45(
         &mut self,
         _percent_sc_0: &ParseTreeStackEntry,
         _l_paren_1: &ParseTreeStackEntry,
-        _scanner_name_opt_2: &ParseTreeStackEntry,
-        _r_paren_3: &ParseTreeStackEntry,
+        _scanner_switch_suffix_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -587,9 +586,34 @@ pub trait ParolGrammarTrait {
 
     /// Semantic action for production 46:
     ///
+    /// ScannerSwitchSuffix: ScannerSwitchOpt "\)";
+    ///
+    fn scanner_switch_suffix_46(
+        &mut self,
+        _scanner_switch_opt_0: &ParseTreeStackEntry,
+        _r_paren_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 47:
+    ///
+    /// ScannerSwitchSuffix: /* Option<ScannerSwitchOpt>::None */ "\)";
+    ///
+    fn scanner_switch_suffix_47(
+        &mut self,
+        _r_paren_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 48:
+    ///
     /// ScannerSwitch: "%push" "\(" Identifier "\)";
     ///
-    fn scanner_switch_46(
+    fn scanner_switch_48(
         &mut self,
         _percent_push_0: &ParseTreeStackEntry,
         _l_paren_1: &ParseTreeStackEntry,
@@ -600,11 +624,11 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 47:
+    /// Semantic action for production 49:
     ///
     /// ScannerSwitch: "%pop" "\(" "\)";
     ///
-    fn scanner_switch_47(
+    fn scanner_switch_49(
         &mut self,
         _percent_pop_0: &ParseTreeStackEntry,
         _l_paren_1: &ParseTreeStackEntry,
@@ -614,23 +638,15 @@ pub trait ParolGrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 48:
+    /// Semantic action for production 50:
     ///
-    /// ScannerNameOpt: Identifier;
+    /// ScannerSwitchOpt: Identifier;
     ///
-    fn scanner_name_opt_48(
+    fn scanner_switch_opt_50(
         &mut self,
         _identifier_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 49:
-    ///
-    /// ScannerNameOpt: ;
-    ///
-    fn scanner_name_opt_49(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 }
@@ -659,29 +675,29 @@ impl UserActionsTrait for ParolGrammar {
 
             1 => self.prolog_1(&children[0], &children[1], &children[2], parse_tree),
 
-            2 => self.start_declaration_2(&children[0], &children[1], parse_tree),
+            2 => self.prolog_list1_2(&children[0], &children[1], parse_tree),
 
-            3 => self.declarations_3(&children[0], &children[1], parse_tree),
+            3 => self.prolog_list1_3(parse_tree),
 
-            4 => self.declarations_4(parse_tree),
+            4 => self.prolog_list_4(&children[0], &children[1], parse_tree),
 
-            5 => self.declaration_5(&children[0], &children[1], parse_tree),
+            5 => self.prolog_list_5(parse_tree),
 
-            6 => self.declaration_6(&children[0], &children[1], parse_tree),
+            6 => self.start_declaration_6(&children[0], &children[1], parse_tree),
 
-            7 => self.declaration_7(&children[0], parse_tree),
+            7 => self.declaration_7(&children[0], &children[1], parse_tree),
 
-            8 => self.scanner_directives_8(&children[0], &children[1], parse_tree),
+            8 => self.declaration_8(&children[0], &children[1], parse_tree),
 
-            9 => self.scanner_directives_9(&children[0], &children[1], &children[2], parse_tree),
+            9 => self.declaration_9(&children[0], parse_tree),
 
-            10 => self.scanner_directives_10(&children[0], parse_tree),
+            10 => self.scanner_directives_10(&children[0], &children[1], parse_tree),
 
-            11 => self.scanner_directives_11(&children[0], parse_tree),
+            11 => self.scanner_directives_11(&children[0], &children[1], &children[2], parse_tree),
 
-            12 => self.scanner_states_12(&children[0], &children[1], parse_tree),
+            12 => self.scanner_directives_12(&children[0], parse_tree),
 
-            13 => self.scanner_states_13(parse_tree),
+            13 => self.scanner_directives_13(&children[0], parse_tree),
 
             14 => self.grammar_definition_14(&children[0], &children[1], &children[2], parse_tree),
 
@@ -760,11 +776,17 @@ impl UserActionsTrait for ParolGrammar {
 
             42 => self.state_list_42(&children[0], &children[1], parse_tree),
 
-            43 => self.state_list_rest_43(&children[0], &children[1], &children[2], parse_tree),
+            43 => self.state_list_list_43(&children[0], &children[1], &children[2], parse_tree),
 
-            44 => self.state_list_rest_44(parse_tree),
+            44 => self.state_list_list_44(parse_tree),
 
-            45 => self.scanner_switch_45(
+            45 => self.scanner_switch_45(&children[0], &children[1], &children[2], parse_tree),
+
+            46 => self.scanner_switch_suffix_46(&children[0], &children[1], parse_tree),
+
+            47 => self.scanner_switch_suffix_47(&children[0], parse_tree),
+
+            48 => self.scanner_switch_48(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -772,19 +794,9 @@ impl UserActionsTrait for ParolGrammar {
                 parse_tree,
             ),
 
-            46 => self.scanner_switch_46(
-                &children[0],
-                &children[1],
-                &children[2],
-                &children[3],
-                parse_tree,
-            ),
+            49 => self.scanner_switch_49(&children[0], &children[1], &children[2], parse_tree),
 
-            47 => self.scanner_switch_47(&children[0], &children[1], &children[2], parse_tree),
-
-            48 => self.scanner_name_opt_48(&children[0], parse_tree),
-
-            49 => self.scanner_name_opt_49(parse_tree),
+            50 => self.scanner_switch_opt_50(&children[0], parse_tree),
 
             _ => Err(miette!("Unhandled production number: {}", prod_num)),
         }

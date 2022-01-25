@@ -38,9 +38,9 @@ impl ASTType {
             Self::None => "*TypeError*".to_owned(),
             Self::Unit => "()".to_owned(),
             Self::Token(t) => format!("OwnedToken /* {} */", t),
-            Self::TypeRef(r) => format!("{}", r),
-            Self::Struct(n, _) => format!("{}", n),
-            Self::Enum(n, _) => format!("{}", n),
+            Self::TypeRef(r) => r.to_string(),
+            Self::Struct(n, _) => n.to_string(),
+            Self::Enum(n, _) => n.to_string(),
             Self::Repeat(t) => {
                 let members = t
                     .iter()

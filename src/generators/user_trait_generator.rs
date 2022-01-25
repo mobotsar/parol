@@ -232,7 +232,7 @@ pub fn generate_user_trait_source(
                         });
 
                         let members = if m.len() == 1 {
-                            format!("{}", members)
+                            members
                         } else {
                             format!("({})", members)
                         };
@@ -250,7 +250,7 @@ pub fn generate_user_trait_source(
                         });
 
                         let members = if m.len() == 1 {
-                            format!("{}", members)
+                            members
                         } else {
                             format!("({})", members)
                         };
@@ -304,7 +304,7 @@ pub fn generate_user_trait_source(
                         });
 
                         let members = if m.len() == 1 {
-                            format!("{}", members)
+                            members
                         } else {
                             format!("({})", members)
                         };
@@ -322,7 +322,7 @@ pub fn generate_user_trait_source(
                         });
 
                         let members = if m.len() == 1 {
-                            format!("{}", members)
+                            members
                         } else {
                             format!("({})", members)
                         };
