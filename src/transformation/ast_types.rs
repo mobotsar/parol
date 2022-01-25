@@ -1,4 +1,5 @@
 use crate::analysis::lookahead_dfa::ProductionIndex;
+use crate::generators::case_helpers::to_upper_camel_case;
 use crate::generators::generate_terminal_name;
 use crate::generators::user_trait_generator::{generate_argument_names, get_argument_name};
 use crate::grammar::SemanticInfo;
@@ -38,9 +39,9 @@ impl ASTType {
             Self::None => "*TypeError*".to_owned(),
             Self::Unit => "()".to_owned(),
             Self::Token(t) => format!("OwnedToken /* {} */", t),
-            Self::TypeRef(r) => r.to_string(),
-            Self::Struct(n, _) => n.to_string(),
-            Self::Enum(n, _) => n.to_string(),
+            Self::TypeRef(r) => to_upper_camel_case(r),
+            Self::Struct(n, _) => to_upper_camel_case(n),
+            Self::Enum(n, _) => to_upper_camel_case(n),
             Self::Repeat(t) => {
                 let members = t
                     .iter()

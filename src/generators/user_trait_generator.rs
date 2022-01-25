@@ -1,3 +1,4 @@
+use crate::generators::case_helpers::to_lower_snake_case;
 use crate::generators::{generate_terminal_name, GrammarConfig};
 use crate::transformation::ast_types::{ASTType, GrammarTypeSystem};
 use crate::{Pr, StrVec, Symbol, Terminal};
@@ -64,20 +65,6 @@ struct NonTerminalTypeOpt {
     members: String,
 }
 
-fn to_camel_case(name: &str) -> String {
-    name.chars().fold(String::new(), |mut acc, c| {
-        if acc.is_empty() {
-            acc.push(c.to_lowercase().next().unwrap())
-        } else if c.is_uppercase() {
-            acc.push('_');
-            acc.push(c.to_lowercase().next().unwrap())
-        } else {
-            acc.push(c);
-        }
-        acc
-    })
-}
-
 pub(crate) fn get_argument_name(
     s: &Symbol,
     arg_index: usize,
@@ -87,11 +74,11 @@ pub(crate) fn get_argument_name(
     let get_terminal_index = |tr: &str| terminals.iter().position(|t| *t == tr).unwrap();
     match s {
         Symbol::N(n) => {
-            format!("{}_{}", to_camel_case(n), arg_index)
+            format!("{}_{}", to_lower_snake_case(n), arg_index)
         }
         Symbol::T(Terminal::Trm(t, _)) => {
             let terminal_name = &terminal_names[get_terminal_index(t)];
-            format!("{}_{}", to_camel_case(terminal_name), arg_index)
+            format!("{}_{}", to_lower_snake_case(terminal_name), arg_index)
         }
         _ => panic!("Invalid symbol type {}", s),
     }
@@ -108,11 +95,11 @@ pub(crate) fn generate_argument_names(
         .filter(|(_, s)| !s.is_switch() && !s.is_pseudo())
         .map(|(i, a)| match a {
             Symbol::N(n) => {
-                format!("{}_{}", to_camel_case(n), i)
+                format!("{}_{}", to_lower_snake_case(n), i)
             }
             Symbol::T(Terminal::Trm(t, _)) => {
                 let terminal_name = &terminal_names[get_terminal_index(t)];
-                format!("{}_{}", to_camel_case(terminal_name), i)
+                format!("{}_{}", to_lower_snake_case(terminal_name), i)
             }
             _ => panic!("Invalid symbol type in production!"),
         })
@@ -128,13 +115,13 @@ fn generate_argument_list(pr: &Pr, terminals: &[&str], terminal_names: &[String]
         .filter(|(_, s)| !s.is_switch() && !s.is_pseudo())
         .map(|(i, a)| match a {
             Symbol::N(n) => {
-                format!("_{}_{}: &ParseTreeStackEntry", to_camel_case(n), i)
+                format!("_{}_{}: &ParseTreeStackEntry", to_lower_snake_case(n), i)
             }
             Symbol::T(Terminal::Trm(t, _)) => {
                 let terminal_name = &terminal_names[get_terminal_index(t)];
                 format!(
                     "_{}_{}: &ParseTreeStackEntry",
-                    to_camel_case(terminal_name),
+                    to_lower_snake_case(terminal_name),
                     i
                 )
             }
@@ -341,7 +328,7 @@ pub fn generate_user_trait_source(
     let trait_functions = grammar_config.cfg.pr.iter().enumerate().fold(
         StrVec::new(0).first_line_no_indent(),
         |mut acc, (i, p)| {
-            let fn_name = to_camel_case(p.get_n_str());
+            let fn_name = to_lower_snake_case(p.get_n_str());
             let prod_string = p.format(&scanner_state_resolver);
             let fn_arguments = generate_argument_list(p, &terminals, &terminal_names);
             let user_trait_function_data = UserTraitFunctionData {
@@ -362,7 +349,7 @@ pub fn generate_user_trait_source(
             .iter()
             .enumerate()
             .fold(StrVec::new(12), |mut acc, (i, p)| {
-                let fn_name = to_camel_case(p.get_n_str());
+                let fn_name = to_lower_snake_case(p.get_n_str());
                 let fn_arguments = generate_caller_argument_list(p);
                 let user_trait_function_data = UserTraitCallerFunctionData {
                     fn_name,

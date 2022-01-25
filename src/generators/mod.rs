@@ -1,3 +1,6 @@
+/// Module with functions to convert between different identifier formats
+pub mod case_helpers;
+
 /// Module with type GrammarConfig
 pub mod grammar_config;
 pub use grammar_config::GrammarConfig;
