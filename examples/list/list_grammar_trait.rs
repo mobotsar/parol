@@ -7,7 +7,143 @@
 use crate::list_grammar::ListGrammar;
 use id_tree::Tree;
 use miette::{miette, Result};
+use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+
+//
+// Output Types of productions deduced from the structure of the transformed grammar
+//
+
+/// Type derived for production 0
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct List0 {
+    opt: Option<Box<ListOpt>>,
+}
+
+/// Type derived for production 1
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct List1 {
+    opt: Option<Box<ListOpt>>,
+}
+
+/// Type derived for production 2
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOpt2 {
+    num_0: Box<Num>,
+    list_rest_1: Box<ListRest>,
+    list_opt_suffix_2: Box<ListOptSuffix>,
+}
+
+/// Type derived for production 3
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOptSuffix3 {
+    opt: Option<Box<ListOptOpt>>,
+}
+
+/// Type derived for production 4
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOptSuffix4 {
+    opt: Option<Box<ListOptOpt>>,
+}
+
+/// Type derived for production 5
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOptOpt5 {
+    list_opt_opt_0: OwnedToken, /* , */
+}
+
+/// Type derived for production 6
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListRest6 {
+    opt: Option<Box<ListRestOpt>>,
+}
+
+/// Type derived for production 7
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListRest7 {
+    opt: Option<Box<ListRestOpt>>,
+}
+
+/// Type derived for production 8
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListRestOpt8 {
+    list_opt_opt_0: OwnedToken, /* , */
+    num_1: Box<Num>,
+    list_rest_2: Box<ListRest>,
+}
+
+/// Type derived for production 9
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Num9 {
+    num_0: OwnedToken, /* 0|[1-9][0-9]* */
+}
+
+//
+// Types of non-terminals deduced from the structure of the transformed grammar
+//
+
+/// Type derived for non-terminal List
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct List {
+    opt: Option<Box<ListOpt>>,
+}
+
+/// Type derived for non-terminal ListOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOpt {
+    num_0: Box<Num>,
+    list_rest_1: Box<ListRest>,
+    list_opt_suffix_2: Box<ListOptSuffix>,
+}
+
+/// Type derived for non-terminal ListOptOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOptOpt {
+    list_opt_opt_0: OwnedToken, /* , */
+}
+
+/// Type derived for non-terminal ListOptSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListOptSuffix {
+    opt: Option<Box<ListOptOpt>>,
+}
+
+/// Type derived for non-terminal ListRest
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListRest {
+    opt: Option<Box<ListRestOpt>>,
+}
+
+/// Type derived for non-terminal ListRestOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ListRestOpt {
+    list_opt_opt_0: OwnedToken, /* , */
+    num_1: Box<Num>,
+    list_rest_2: Box<ListRest>,
+}
+
+/// Type derived for non-terminal Num
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Num {
+    num_0: OwnedToken, /* 0|[1-9][0-9]* */
+}
 
 ///
 /// The `ListGrammarTrait` trait is automatically generated for the

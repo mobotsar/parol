@@ -33,8 +33,8 @@ pub const TERMINALS: &[&str; 42] = &[
     /* 12 */ r###">=|<=|\#|<|>"###,
     /* 13 */ r###"="###,
     /* 14 */ r###","###,
-    /* 15 */ r###"ELSE"###,
-    /* 16 */ r###"END"###,
+    /* 15 */ r###"END"###,
+    /* 16 */ r###"ELSE"###,
     /* 17 */ r###"IF"###,
     /* 18 */ r###"THEN"###,
     /* 19 */ r###"ELSIF"###,
@@ -51,7 +51,7 @@ pub const TERMINALS: &[&str; 42] = &[
     /* 30 */ r###"PROCEDURE"###,
     /* 31 */ r###"BEGIN"###,
     /* 32 */ r###"RETURN"###,
-    /* 33 */ r###"TYPE"###,
+    /* 33 */ r###"Type"###,
     /* 34 */ r###"CONST"###,
     /* 35 */ r###"MODULE"###,
     /* 36 */ r###"\*|/|DIV|MOD|&"###,
@@ -78,8 +78,8 @@ pub const TERMINAL_NAMES: &[&str; 42] = &[
     /* 12 */ "RelationalOps",
     /* 13 */ "Equ",
     /* 14 */ "Comma",
-    /* 15 */ "ELSE",
-    /* 16 */ "END",
+    /* 15 */ "END",
+    /* 16 */ "ELSE",
     /* 17 */ "IF",
     /* 18 */ "THEN",
     /* 19 */ "ELSIF",
@@ -92,11 +92,11 @@ pub const TERMINAL_NAMES: &[&str; 42] = &[
     /* 26 */ "OF",
     /* 27 */ "Colon",
     /* 28 */ "RECORD",
-    /* 29 */ "VAR",
+    /* 29 */ "FPSectionOpt",
     /* 30 */ "PROCEDURE",
     /* 31 */ "BEGIN",
     /* 32 */ "RETURN",
-    /* 33 */ "TYPE",
+    /* 33 */ "Type",
     /* 34 */ "CONST",
     /* 35 */ "MODULE",
     /* 36 */ "MulOperator",
@@ -127,8 +127,8 @@ const SCANNER_0: (&[&str; 5], &[usize; 36]) = (
         12, /* RelationalOps */
         13, /* Equ */
         14, /* Comma */
-        15, /* ELSE */
-        16, /* END */
+        15, /* END */
+        16, /* ELSE */
         17, /* IF */
         18, /* THEN */
         19, /* ELSIF */
@@ -141,11 +141,11 @@ const SCANNER_0: (&[&str; 5], &[usize; 36]) = (
         26, /* OF */
         27, /* Colon */
         28, /* RECORD */
-        29, /* VAR */
+        29, /* FPSectionOpt */
         30, /* PROCEDURE */
         31, /* BEGIN */
         32, /* RETURN */
-        33, /* TYPE */
+        33, /* Type */
         34, /* CONST */
         35, /* MODULE */
         36, /* MulOperator */
@@ -158,91 +158,130 @@ const SCANNER_0: (&[&str; 5], &[usize; 36]) = (
 
 const MAX_K: usize = 2;
 
-pub const NON_TERMINALS: &[&str; 59] = &[
+pub const NON_TERMINALS: &[&str; 80] = &[
     /*  0 */ "ActualParameters",
-    /*  1 */ "ActualParametersSuffix",
-    /*  2 */ "AddExpression",
-    /*  3 */ "AddOperator",
-    /*  4 */ "ArrayType",
-    /*  5 */ "AssignOp",
-    /*  6 */ "ConstDecls",
-    /*  7 */ "FPSection",
-    /*  8 */ "FPSectionRest",
-    /*  9 */ "FieldList",
-    /* 10 */ "FieldListRest",
-    /* 11 */ "FormalParameters",
-    /* 12 */ "FormalParametersSuffix",
-    /* 13 */ "IdentList",
-    /* 14 */ "IdentListRest",
-    /* 15 */ "IfPrefix",
-    /* 16 */ "IfStatement",
-    /* 17 */ "IfStatementSuffix",
-    /* 18 */ "MulExpression",
-    /* 19 */ "MulOperator",
-    /* 20 */ "ProcedureBody",
-    /* 21 */ "ProcedureBodySuffix",
-    /* 22 */ "ProcedureBodySuffix1",
-    /* 23 */ "ProcedureCall",
-    /* 24 */ "ProcedureCallSuffix",
-    /* 25 */ "ProcedureDeclaration",
-    /* 26 */ "ProcedureDeclarationList",
-    /* 27 */ "ProcedureHeading",
-    /* 28 */ "ProcedureHeadingSuffix",
-    /* 29 */ "RecordType",
-    /* 30 */ "RelationOp",
-    /* 31 */ "RelationalOps",
-    /* 32 */ "RepeatStatement",
-    /* 33 */ "SimpleExpression",
-    /* 34 */ "StatementSequence",
-    /* 35 */ "StatementSequenceRest",
-    /* 36 */ "TypeDecls",
-    /* 37 */ "UnaryOp",
-    /* 38 */ "VarDecls",
-    /* 39 */ "WhileStatement",
-    /* 40 */ "assignment",
-    /* 41 */ "declarations",
-    /* 42 */ "declarationsSuffix",
-    /* 43 */ "declarationsSuffix1",
-    /* 44 */ "declarationsSuffix2",
-    /* 45 */ "elseiflist",
-    /* 46 */ "expression",
-    /* 47 */ "expressionSuffix",
-    /* 48 */ "expressionlistrest",
-    /* 49 */ "factor",
-    /* 50 */ "ident",
-    /* 51 */ "integer",
-    /* 52 */ "module",
-    /* 53 */ "moduleSuffix",
-    /* 54 */ "selector",
-    /* 55 */ "selectorlist",
-    /* 56 */ "statement",
-    /* 57 */ "term",
-    /* 58 */ "type",
+    /*  1 */ "ActualParametersOpt",
+    /*  2 */ "ActualParametersOptList",
+    /*  3 */ "ActualParametersSuffix",
+    /*  4 */ "AddExpression",
+    /*  5 */ "AddExpressionList",
+    /*  6 */ "AddOperator",
+    /*  7 */ "ArrayType",
+    /*  8 */ "AssignOp",
+    /*  9 */ "Assignment",
+    /* 10 */ "ConstDecls",
+    /* 11 */ "ConstDeclsList",
+    /* 12 */ "Expression",
+    /* 13 */ "ExpressionOpt",
+    /* 14 */ "ExpressionSuffix",
+    /* 15 */ "FPSection",
+    /* 16 */ "FPSectionOpt",
+    /* 17 */ "Factor",
+    /* 18 */ "FieldList",
+    /* 19 */ "FormalParameters",
+    /* 20 */ "FormalParametersOpt",
+    /* 21 */ "FormalParametersOptList",
+    /* 22 */ "FormalParametersSuffix",
+    /* 23 */ "Ident",
+    /* 24 */ "IdentList",
+    /* 25 */ "IdentListList",
+    /* 26 */ "IfPrefix",
+    /* 27 */ "IfPrefixList",
+    /* 28 */ "IfStatement",
+    /* 29 */ "IfStatementOpt",
+    /* 30 */ "IfStatementSuffix",
+    /* 31 */ "Integer",
+    /* 32 */ "MulExpression",
+    /* 33 */ "MulExpressionList",
+    /* 34 */ "MulOperator",
+    /* 35 */ "ProcedureBody",
+    /* 36 */ "ProcedureBodySuffix",
+    /* 37 */ "ProcedureBodySuffix1",
+    /* 38 */ "ProcedureCall",
+    /* 39 */ "ProcedureCallOpt",
+    /* 40 */ "ProcedureCallSuffix",
+    /* 41 */ "ProcedureDeclaration",
+    /* 42 */ "ProcedureDeclarationList",
+    /* 43 */ "ProcedureDeclarationListList",
+    /* 44 */ "ProcedureHeading",
+    /* 45 */ "ProcedureHeadingOpt",
+    /* 46 */ "ProcedureHeadingSuffix",
+    /* 47 */ "RecordType",
+    /* 48 */ "RecordTypeList",
+    /* 49 */ "RecordTypeListSuffix",
+    /* 50 */ "RecordTypeOpt",
+    /* 51 */ "RecordTypeSuffix",
+    /* 52 */ "RelationOp",
+    /* 53 */ "RelationalOps",
+    /* 54 */ "RepeatStatement",
+    /* 55 */ "Selector",
+    /* 56 */ "SelectorList",
+    /* 57 */ "SelectorListGroup",
+    /* 58 */ "SimpleExpression",
+    /* 59 */ "Statement",
+    /* 60 */ "StatementSequence",
+    /* 61 */ "StatementSequenceList",
+    /* 62 */ "StatementSequenceListSuffix",
+    /* 63 */ "StatementSequenceOpt",
+    /* 64 */ "Term",
+    /* 65 */ "Type",
+    /* 66 */ "TypeDecls",
+    /* 67 */ "TypeDeclsList",
+    /* 68 */ "UnaryOp",
+    /* 69 */ "VarDecls",
+    /* 70 */ "VarDeclsList",
+    /* 71 */ "WhileStatement",
+    /* 72 */ "declarations",
+    /* 73 */ "declarationsOpt",
+    /* 74 */ "declarationsSuffix",
+    /* 75 */ "declarationsSuffix1",
+    /* 76 */ "declarationsSuffix2",
+    /* 77 */ "module",
+    /* 78 */ "moduleOpt",
+    /* 79 */ "moduleSuffix",
 ];
 
-pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
+pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 80] = &[
     /* 0 - "ActualParameters" */
     LookaheadDFA {
-        states: &[Some(24)],
+        states: &[Some(28)],
         transitions: &[],
         k: 0,
     },
-    /* 1 - "ActualParametersSuffix" */
+    /* 1 - "ActualParametersOpt" */
     LookaheadDFA {
-        states: &[None, Some(25), Some(26)],
+        states: &[Some(31)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 2 - "ActualParametersOptList" */
+    LookaheadDFA {
+        states: &[None, Some(32), Some(33)],
+        transitions: &[DFATransition(0, 9, 2), DFATransition(0, 14, 1)],
+        k: 1,
+    },
+    /* 3 - "ActualParametersSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(29), Some(30)],
         transitions: &[
-            DFATransition(0, 8, 2),
-            DFATransition(0, 9, 1),
-            DFATransition(0, 10, 2),
-            DFATransition(0, 38, 2),
-            DFATransition(0, 39, 2),
-            DFATransition(0, 40, 2),
+            DFATransition(0, 8, 1),
+            DFATransition(0, 9, 2),
+            DFATransition(0, 10, 1),
+            DFATransition(0, 38, 1),
+            DFATransition(0, 39, 1),
+            DFATransition(0, 40, 1),
         ],
         k: 1,
     },
-    /* 2 - "AddExpression" */
+    /* 4 - "AddExpression" */
     LookaheadDFA {
-        states: &[None, Some(13), Some(14)],
+        states: &[Some(15)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 5 - "AddExpressionList" */
+    LookaheadDFA {
+        states: &[None, Some(16), Some(17)],
         transitions: &[
             DFATransition(0, 7, 2),
             DFATransition(0, 9, 2),
@@ -263,29 +302,41 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
         ],
         k: 1,
     },
-    /* 3 - "AddOperator" */
+    /* 6 - "AddOperator" */
     LookaheadDFA {
-        states: &[Some(101)],
+        states: &[Some(124)],
         transitions: &[],
         k: 0,
     },
-    /* 4 - "ArrayType" */
+    /* 7 - "ArrayType" */
     LookaheadDFA {
-        states: &[Some(52)],
+        states: &[Some(62)],
         transitions: &[],
         k: 0,
     },
-    /* 5 - "AssignOp" */
+    /* 8 - "AssignOp" */
     LookaheadDFA {
-        states: &[None, Some(15), Some(19)],
+        states: &[None, Some(18), Some(22)],
         transitions: &[DFATransition(0, 11, 1), DFATransition(0, 13, 2)],
         k: 1,
     },
-    /* 6 - "ConstDecls" */
+    /* 9 - "Assignment" */
     LookaheadDFA {
-        states: &[None, Some(91), Some(92)],
+        states: &[Some(27)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 10 - "ConstDecls" */
+    LookaheadDFA {
+        states: &[Some(110)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 11 - "ConstDeclsList" */
+    LookaheadDFA {
+        states: &[None, Some(111), Some(112)],
         transitions: &[
-            DFATransition(0, 16, 2),
+            DFATransition(0, 15, 2),
             DFATransition(0, 29, 2),
             DFATransition(0, 30, 2),
             DFATransition(0, 31, 2),
@@ -295,83 +346,165 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
         ],
         k: 1,
     },
-    /* 7 - "FPSection" */
+    /* 12 - "Expression" */
     LookaheadDFA {
-        states: &[None, Some(61), Some(62)],
-        transitions: &[DFATransition(0, 29, 1), DFATransition(0, 39, 2)],
-        k: 1,
+        states: &[Some(23)],
+        transitions: &[],
+        k: 0,
     },
-    /* 8 - "FPSectionRest" */
+    /* 13 - "ExpressionOpt" */
     LookaheadDFA {
-        states: &[None, Some(66), Some(67)],
-        transitions: &[DFATransition(0, 9, 2), DFATransition(0, 24, 1)],
-        k: 1,
+        states: &[Some(26)],
+        transitions: &[],
+        k: 0,
     },
-    /* 9 - "FieldList" */
+    /* 14 - "ExpressionSuffix" */
     LookaheadDFA {
-        states: &[None, Some(53), Some(54)],
+        states: &[None, Some(24), Some(25)],
         transitions: &[
+            DFATransition(0, 7, 2),
+            DFATransition(0, 9, 2),
+            DFATransition(0, 11, 1),
+            DFATransition(0, 12, 1),
+            DFATransition(0, 13, 1),
+            DFATransition(0, 14, 2),
+            DFATransition(0, 15, 2),
             DFATransition(0, 16, 2),
+            DFATransition(0, 18, 2),
+            DFATransition(0, 19, 2),
+            DFATransition(0, 21, 2),
+            DFATransition(0, 23, 2),
             DFATransition(0, 24, 2),
-            DFATransition(0, 39, 1),
+            DFATransition(0, 26, 2),
+            DFATransition(0, 32, 2),
         ],
         k: 1,
     },
-    /* 10 - "FieldListRest" */
+    /* 15 - "FPSection" */
     LookaheadDFA {
-        states: &[None, Some(56), Some(57)],
-        transitions: &[DFATransition(0, 16, 2), DFATransition(0, 24, 1)],
+        states: &[None, Some(75), Some(76)],
+        transitions: &[DFATransition(0, 29, 1), DFATransition(0, 39, 2)],
         k: 1,
     },
-    /* 11 - "FormalParameters" */
+    /* 16 - "FPSectionOpt" */
+    LookaheadDFA {
+        states: &[Some(77)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 17 - "Factor" */
+    LookaheadDFA {
+        states: &[None, Some(5), Some(6), Some(7), Some(8), Some(9)],
+        transitions: &[
+            DFATransition(0, 8, 3),
+            DFATransition(0, 10, 4),
+            DFATransition(0, 38, 5),
+            DFATransition(0, 39, 1),
+            DFATransition(0, 40, 2),
+        ],
+        k: 1,
+    },
+    /* 18 - "FieldList" */
     LookaheadDFA {
         states: &[Some(63)],
         transitions: &[],
         k: 0,
     },
-    /* 12 - "FormalParametersSuffix" */
+    /* 19 - "FormalParameters" */
     LookaheadDFA {
-        states: &[None, Some(64), Some(65)],
+        states: &[Some(78)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 20 - "FormalParametersOpt" */
+    LookaheadDFA {
+        states: &[Some(81)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 21 - "FormalParametersOptList" */
+    LookaheadDFA {
+        states: &[None, Some(82), Some(83)],
+        transitions: &[DFATransition(0, 9, 2), DFATransition(0, 24, 1)],
+        k: 1,
+    },
+    /* 22 - "FormalParametersSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(79), Some(80)],
         transitions: &[
-            DFATransition(0, 9, 1),
-            DFATransition(0, 29, 2),
-            DFATransition(0, 39, 2),
+            DFATransition(0, 9, 2),
+            DFATransition(0, 29, 1),
+            DFATransition(0, 39, 1),
         ],
         k: 1,
     },
-    /* 13 - "IdentList" */
+    /* 23 - "Ident" */
     LookaheadDFA {
-        states: &[Some(49)],
+        states: &[Some(126)],
         transitions: &[],
         k: 0,
     },
-    /* 14 - "IdentListRest" */
+    /* 24 - "IdentList" */
     LookaheadDFA {
-        states: &[None, Some(50), Some(51)],
+        states: &[Some(59)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 25 - "IdentListList" */
+    LookaheadDFA {
+        states: &[None, Some(60), Some(61)],
         transitions: &[DFATransition(0, 14, 1), DFATransition(0, 27, 2)],
         k: 1,
     },
-    /* 15 - "IfPrefix" */
+    /* 26 - "IfPrefix" */
     LookaheadDFA {
-        states: &[Some(35)],
+        states: &[Some(42)],
         transitions: &[],
         k: 0,
     },
-    /* 16 - "IfStatement" */
+    /* 27 - "IfPrefixList" */
     LookaheadDFA {
-        states: &[Some(32)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 17 - "IfStatementSuffix" */
-    LookaheadDFA {
-        states: &[None, Some(33), Some(34)],
-        transitions: &[DFATransition(0, 15, 1), DFATransition(0, 16, 2)],
+        states: &[None, Some(43), Some(44)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 16, 2),
+            DFATransition(0, 19, 1),
+        ],
         k: 1,
     },
-    /* 18 - "MulExpression" */
+    /* 28 - "IfStatement" */
     LookaheadDFA {
-        states: &[None, Some(10), Some(11)],
+        states: &[Some(38)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 29 - "IfStatementOpt" */
+    LookaheadDFA {
+        states: &[Some(41)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 30 - "IfStatementSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(39), Some(40)],
+        transitions: &[DFATransition(0, 15, 2), DFATransition(0, 16, 1)],
+        k: 1,
+    },
+    /* 31 - "Integer" */
+    LookaheadDFA {
+        states: &[Some(127)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 32 - "MulExpression" */
+    LookaheadDFA {
+        states: &[Some(11)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 33 - "MulExpressionList" */
+    LookaheadDFA {
+        states: &[None, Some(12), Some(13)],
         transitions: &[
             DFATransition(0, 7, 2),
             DFATransition(0, 9, 2),
@@ -393,43 +526,49 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
         ],
         k: 1,
     },
-    /* 19 - "MulOperator" */
+    /* 34 - "MulOperator" */
     LookaheadDFA {
-        states: &[Some(100)],
+        states: &[Some(123)],
         transitions: &[],
         k: 0,
     },
-    /* 20 - "ProcedureBody" */
+    /* 35 - "ProcedureBody" */
     LookaheadDFA {
-        states: &[Some(71)],
+        states: &[Some(88)],
         transitions: &[],
         k: 0,
     },
-    /* 21 - "ProcedureBodySuffix" */
+    /* 36 - "ProcedureBodySuffix" */
     LookaheadDFA {
-        states: &[None, Some(75), Some(76)],
-        transitions: &[DFATransition(0, 16, 2), DFATransition(0, 32, 1)],
+        states: &[None, Some(92), Some(93)],
+        transitions: &[DFATransition(0, 15, 2), DFATransition(0, 32, 1)],
         k: 1,
     },
-    /* 22 - "ProcedureBodySuffix1" */
+    /* 37 - "ProcedureBodySuffix1" */
     LookaheadDFA {
-        states: &[None, Some(72), Some(73), Some(74)],
+        states: &[None, Some(89), Some(90), Some(91)],
         transitions: &[
-            DFATransition(0, 16, 3),
+            DFATransition(0, 15, 3),
             DFATransition(0, 31, 1),
             DFATransition(0, 32, 2),
         ],
         k: 1,
     },
-    /* 23 - "ProcedureCall" */
+    /* 38 - "ProcedureCall" */
     LookaheadDFA {
-        states: &[Some(29)],
+        states: &[Some(34)],
         transitions: &[],
         k: 0,
     },
-    /* 24 - "ProcedureCallSuffix" */
+    /* 39 - "ProcedureCallOpt" */
     LookaheadDFA {
-        states: &[None, Some(30), Some(31)],
+        states: &[Some(37)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 40 - "ProcedureCallSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(35), Some(36)],
         transitions: &[
             DFATransition(0, 8, 1),
             DFATransition(0, 15, 2),
@@ -441,44 +580,88 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
         ],
         k: 1,
     },
-    /* 25 - "ProcedureDeclaration" */
+    /* 41 - "ProcedureDeclaration" */
     LookaheadDFA {
-        states: &[Some(77)],
+        states: &[Some(94)],
         transitions: &[],
         k: 0,
     },
-    /* 26 - "ProcedureDeclarationList" */
+    /* 42 - "ProcedureDeclarationList" */
     LookaheadDFA {
-        states: &[None, Some(89), Some(90)],
+        states: &[Some(107)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 43 - "ProcedureDeclarationListList" */
+    LookaheadDFA {
+        states: &[None, Some(108), Some(109)],
         transitions: &[
-            DFATransition(0, 16, 2),
+            DFATransition(0, 15, 2),
             DFATransition(0, 30, 1),
             DFATransition(0, 31, 2),
             DFATransition(0, 32, 2),
         ],
         k: 1,
     },
-    /* 27 - "ProcedureHeading" */
+    /* 44 - "ProcedureHeading" */
     LookaheadDFA {
-        states: &[Some(68)],
+        states: &[Some(84)],
         transitions: &[],
         k: 0,
     },
-    /* 28 - "ProcedureHeadingSuffix" */
+    /* 45 - "ProcedureHeadingOpt" */
     LookaheadDFA {
-        states: &[None, Some(69), Some(70)],
+        states: &[Some(87)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 46 - "ProcedureHeadingSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(85), Some(86)],
         transitions: &[DFATransition(0, 8, 1), DFATransition(0, 24, 2)],
         k: 1,
     },
-    /* 29 - "RecordType" */
+    /* 47 - "RecordType" */
     LookaheadDFA {
-        states: &[Some(55)],
+        states: &[Some(64)],
         transitions: &[],
         k: 0,
     },
-    /* 30 - "RelationOp" */
+    /* 48 - "RecordTypeList" */
     LookaheadDFA {
-        states: &[None, Some(16), Some(17)],
+        states: &[None, Some(68), Some(71)],
+        transitions: &[DFATransition(0, 15, 2), DFATransition(0, 24, 1)],
+        k: 1,
+    },
+    /* 49 - "RecordTypeListSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(69), Some(70)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 24, 2),
+            DFATransition(0, 39, 1),
+        ],
+        k: 1,
+    },
+    /* 50 - "RecordTypeOpt" */
+    LookaheadDFA {
+        states: &[Some(67)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 51 - "RecordTypeSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(65), Some(66)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 24, 2),
+            DFATransition(0, 39, 1),
+        ],
+        k: 1,
+    },
+    /* 52 - "RelationOp" */
+    LookaheadDFA {
+        states: &[None, Some(19), Some(20)],
         transitions: &[
             DFATransition(0, 11, 1),
             DFATransition(0, 12, 2),
@@ -486,162 +669,35 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
         ],
         k: 1,
     },
-    /* 31 - "RelationalOps" */
+    /* 53 - "RelationalOps" */
     LookaheadDFA {
-        states: &[Some(18)],
+        states: &[Some(21)],
         transitions: &[],
         k: 0,
     },
-    /* 32 - "RepeatStatement" */
-    LookaheadDFA {
-        states: &[Some(39)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 33 - "SimpleExpression" */
-    LookaheadDFA {
-        states: &[Some(12)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 34 - "StatementSequence" */
+    /* 54 - "RepeatStatement" */
     LookaheadDFA {
         states: &[Some(46)],
         transitions: &[],
         k: 0,
     },
-    /* 35 - "StatementSequenceRest" */
+    /* 55 - "Selector" */
     LookaheadDFA {
-        states: &[None, Some(47), Some(48)],
-        transitions: &[
-            DFATransition(0, 15, 2),
-            DFATransition(0, 16, 2),
-            DFATransition(0, 19, 2),
-            DFATransition(0, 23, 2),
-            DFATransition(0, 24, 1),
-            DFATransition(0, 32, 2),
-        ],
-        k: 1,
-    },
-    /* 36 - "TypeDecls" */
-    LookaheadDFA {
-        states: &[None, Some(93), Some(94)],
-        transitions: &[
-            DFATransition(0, 16, 2),
-            DFATransition(0, 29, 2),
-            DFATransition(0, 30, 2),
-            DFATransition(0, 31, 2),
-            DFATransition(0, 32, 2),
-            DFATransition(0, 39, 1),
-        ],
-        k: 1,
-    },
-    /* 37 - "UnaryOp" */
-    LookaheadDFA {
-        states: &[Some(102)],
+        states: &[Some(0)],
         transitions: &[],
         k: 0,
     },
-    /* 38 - "VarDecls" */
+    /* 56 - "SelectorList" */
     LookaheadDFA {
-        states: &[None, Some(95), Some(96)],
+        states: &[None, Some(1), Some(4)],
         transitions: &[
-            DFATransition(0, 16, 2),
-            DFATransition(0, 30, 2),
-            DFATransition(0, 31, 2),
-            DFATransition(0, 32, 2),
-            DFATransition(0, 39, 1),
-        ],
-        k: 1,
-    },
-    /* 39 - "WhileStatement" */
-    LookaheadDFA {
-        states: &[Some(38)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 40 - "assignment" */
-    LookaheadDFA {
-        states: &[Some(23)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 41 - "declarations" */
-    LookaheadDFA {
-        states: &[None, Some(78), Some(79), Some(82), Some(83)],
-        transitions: &[
-            DFATransition(0, 16, 4),
-            DFATransition(0, 29, 3),
-            DFATransition(0, 30, 4),
-            DFATransition(0, 31, 4),
-            DFATransition(0, 32, 4),
-            DFATransition(0, 33, 1),
-            DFATransition(0, 34, 2),
-        ],
-        k: 1,
-    },
-    /* 42 - "declarationsSuffix" */
-    LookaheadDFA {
-        states: &[None, Some(87), Some(88)],
-        transitions: &[
-            DFATransition(0, 16, 2),
-            DFATransition(0, 29, 1),
-            DFATransition(0, 30, 2),
-            DFATransition(0, 31, 2),
-            DFATransition(0, 32, 2),
-        ],
-        k: 1,
-    },
-    /* 43 - "declarationsSuffix1" */
-    LookaheadDFA {
-        states: &[None, Some(84), Some(85), Some(86)],
-        transitions: &[
-            DFATransition(0, 16, 3),
-            DFATransition(0, 29, 2),
-            DFATransition(0, 30, 3),
-            DFATransition(0, 31, 3),
-            DFATransition(0, 32, 3),
-            DFATransition(0, 33, 1),
-        ],
-        k: 1,
-    },
-    /* 44 - "declarationsSuffix2" */
-    LookaheadDFA {
-        states: &[None, Some(80), Some(81)],
-        transitions: &[
-            DFATransition(0, 16, 2),
-            DFATransition(0, 29, 1),
-            DFATransition(0, 30, 2),
-            DFATransition(0, 31, 2),
-            DFATransition(0, 32, 2),
-        ],
-        k: 1,
-    },
-    /* 45 - "elseiflist" */
-    LookaheadDFA {
-        states: &[None, Some(36), Some(37)],
-        transitions: &[
-            DFATransition(0, 15, 2),
-            DFATransition(0, 16, 2),
-            DFATransition(0, 19, 1),
-        ],
-        k: 1,
-    },
-    /* 46 - "expression" */
-    LookaheadDFA {
-        states: &[Some(20)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 47 - "expressionSuffix" */
-    LookaheadDFA {
-        states: &[None, Some(21), Some(22)],
-        transitions: &[
+            DFATransition(0, 5, 1),
+            DFATransition(0, 6, 1),
             DFATransition(0, 7, 2),
             DFATransition(0, 9, 2),
-            DFATransition(0, 11, 1),
-            DFATransition(0, 12, 1),
-            DFATransition(0, 13, 1),
+            DFATransition(0, 11, 2),
+            DFATransition(0, 12, 2),
+            DFATransition(0, 13, 2),
             DFATransition(0, 14, 2),
             DFATransition(0, 15, 2),
             DFATransition(0, 16, 2),
@@ -652,114 +708,41 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
             DFATransition(0, 24, 2),
             DFATransition(0, 26, 2),
             DFATransition(0, 32, 2),
+            DFATransition(0, 36, 2),
+            DFATransition(0, 37, 2),
         ],
         k: 1,
     },
-    /* 48 - "expressionlistrest" */
+    /* 57 - "SelectorListGroup" */
     LookaheadDFA {
-        states: &[None, Some(27), Some(28)],
-        transitions: &[DFATransition(0, 9, 2), DFATransition(0, 14, 1)],
+        states: &[None, Some(2), Some(3)],
+        transitions: &[DFATransition(0, 5, 1), DFATransition(0, 6, 2)],
         k: 1,
     },
-    /* 49 - "factor" */
+    /* 58 - "SimpleExpression" */
     LookaheadDFA {
-        states: &[None, Some(4), Some(5), Some(6), Some(7), Some(8)],
-        transitions: &[
-            DFATransition(0, 8, 3),
-            DFATransition(0, 10, 4),
-            DFATransition(0, 38, 5),
-            DFATransition(0, 39, 1),
-            DFATransition(0, 40, 2),
-        ],
-        k: 1,
-    },
-    /* 50 - "ident" */
-    LookaheadDFA {
-        states: &[Some(103)],
+        states: &[Some(14)],
         transitions: &[],
         k: 0,
     },
-    /* 51 - "integer" */
-    LookaheadDFA {
-        states: &[Some(104)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 52 - "module" */
-    LookaheadDFA {
-        states: &[Some(97)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 53 - "moduleSuffix" */
-    LookaheadDFA {
-        states: &[None, Some(98), Some(99)],
-        transitions: &[DFATransition(0, 16, 2), DFATransition(0, 31, 1)],
-        k: 1,
-    },
-    /* 54 - "selector" */
-    LookaheadDFA {
-        states: &[Some(0)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 55 - "selectorlist" */
-    LookaheadDFA {
-        states: &[None, Some(1), Some(2), Some(3)],
-        transitions: &[
-            DFATransition(0, 5, 1),
-            DFATransition(0, 6, 2),
-            DFATransition(0, 7, 3),
-            DFATransition(0, 9, 3),
-            DFATransition(0, 11, 3),
-            DFATransition(0, 12, 3),
-            DFATransition(0, 13, 3),
-            DFATransition(0, 14, 3),
-            DFATransition(0, 15, 3),
-            DFATransition(0, 16, 3),
-            DFATransition(0, 18, 3),
-            DFATransition(0, 19, 3),
-            DFATransition(0, 21, 3),
-            DFATransition(0, 23, 3),
-            DFATransition(0, 24, 3),
-            DFATransition(0, 26, 3),
-            DFATransition(0, 32, 3),
-            DFATransition(0, 36, 3),
-            DFATransition(0, 37, 3),
-        ],
-        k: 1,
-    },
-    /* 56 - "statement" */
+    /* 59 - "Statement" */
     LookaheadDFA {
         states: &[
             None,
             None,
-            Some(40),
-            Some(41),
+            Some(47),
+            Some(48),
             None,
-            Some(42),
+            Some(49),
             None,
-            Some(43),
+            Some(50),
             None,
-            Some(44),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            Some(45),
+            Some(51),
         ],
         transitions: &[
-            DFATransition(0, 15, 10),
-            DFATransition(0, 16, 11),
             DFATransition(0, 17, 4),
-            DFATransition(0, 19, 12),
             DFATransition(0, 20, 6),
             DFATransition(0, 22, 8),
-            DFATransition(0, 23, 13),
-            DFATransition(0, 24, 14),
-            DFATransition(0, 32, 15),
             DFATransition(0, 39, 1),
             DFATransition(1, 5, 2),
             DFATransition(1, 6, 2),
@@ -788,56 +771,71 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
             DFATransition(8, 23, 9),
             DFATransition(8, 24, 9),
             DFATransition(8, 39, 9),
-            DFATransition(10, 16, 16),
-            DFATransition(10, 17, 16),
-            DFATransition(10, 20, 16),
-            DFATransition(10, 22, 16),
-            DFATransition(10, 24, 16),
-            DFATransition(10, 39, 16),
-            DFATransition(11, 15, 16),
-            DFATransition(11, 16, 16),
-            DFATransition(11, 19, 16),
-            DFATransition(11, 23, 16),
-            DFATransition(11, 24, 16),
-            DFATransition(11, 32, 16),
-            DFATransition(11, 39, 16),
-            DFATransition(12, 8, 16),
-            DFATransition(12, 10, 16),
-            DFATransition(12, 38, 16),
-            DFATransition(12, 39, 16),
-            DFATransition(12, 40, 16),
-            DFATransition(13, 8, 16),
-            DFATransition(13, 10, 16),
-            DFATransition(13, 38, 16),
-            DFATransition(13, 39, 16),
-            DFATransition(13, 40, 16),
-            DFATransition(14, 15, 16),
-            DFATransition(14, 16, 16),
-            DFATransition(14, 17, 16),
-            DFATransition(14, 19, 16),
-            DFATransition(14, 20, 16),
-            DFATransition(14, 22, 16),
-            DFATransition(14, 23, 16),
-            DFATransition(14, 24, 16),
-            DFATransition(14, 32, 16),
-            DFATransition(14, 39, 16),
-            DFATransition(15, 8, 16),
-            DFATransition(15, 10, 16),
-            DFATransition(15, 38, 16),
-            DFATransition(15, 39, 16),
-            DFATransition(15, 40, 16),
         ],
         k: 2,
     },
-    /* 57 - "term" */
+    /* 60 - "StatementSequence" */
     LookaheadDFA {
-        states: &[Some(9)],
+        states: &[None, Some(52), Some(53)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 16, 2),
+            DFATransition(0, 17, 1),
+            DFATransition(0, 19, 2),
+            DFATransition(0, 20, 1),
+            DFATransition(0, 22, 1),
+            DFATransition(0, 23, 2),
+            DFATransition(0, 24, 2),
+            DFATransition(0, 32, 2),
+            DFATransition(0, 39, 1),
+        ],
+        k: 1,
+    },
+    /* 61 - "StatementSequenceList" */
+    LookaheadDFA {
+        states: &[None, Some(55), Some(58)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 16, 2),
+            DFATransition(0, 19, 2),
+            DFATransition(0, 23, 2),
+            DFATransition(0, 24, 1),
+            DFATransition(0, 32, 2),
+        ],
+        k: 1,
+    },
+    /* 62 - "StatementSequenceListSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(56), Some(57)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 16, 2),
+            DFATransition(0, 17, 1),
+            DFATransition(0, 19, 2),
+            DFATransition(0, 20, 1),
+            DFATransition(0, 22, 1),
+            DFATransition(0, 23, 2),
+            DFATransition(0, 24, 2),
+            DFATransition(0, 32, 2),
+            DFATransition(0, 39, 1),
+        ],
+        k: 1,
+    },
+    /* 63 - "StatementSequenceOpt" */
+    LookaheadDFA {
+        states: &[Some(54)],
         transitions: &[],
         k: 0,
     },
-    /* 58 - "type" */
+    /* 64 - "Term" */
     LookaheadDFA {
-        states: &[None, Some(58), Some(59), Some(60)],
+        states: &[Some(10)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 65 - "Type" */
+    LookaheadDFA {
+        states: &[None, Some(72), Some(73), Some(74)],
         transitions: &[
             DFATransition(0, 25, 2),
             DFATransition(0, 28, 3),
@@ -845,620 +843,848 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 59] = &[
         ],
         k: 1,
     },
+    /* 66 - "TypeDecls" */
+    LookaheadDFA {
+        states: &[Some(113)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 67 - "TypeDeclsList" */
+    LookaheadDFA {
+        states: &[None, Some(114), Some(115)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 29, 2),
+            DFATransition(0, 30, 2),
+            DFATransition(0, 31, 2),
+            DFATransition(0, 32, 2),
+            DFATransition(0, 39, 1),
+        ],
+        k: 1,
+    },
+    /* 68 - "UnaryOp" */
+    LookaheadDFA {
+        states: &[Some(125)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 69 - "VarDecls" */
+    LookaheadDFA {
+        states: &[Some(116)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 70 - "VarDeclsList" */
+    LookaheadDFA {
+        states: &[None, Some(117), Some(118)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 30, 2),
+            DFATransition(0, 31, 2),
+            DFATransition(0, 32, 2),
+            DFATransition(0, 39, 1),
+        ],
+        k: 1,
+    },
+    /* 71 - "WhileStatement" */
+    LookaheadDFA {
+        states: &[Some(45)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 72 - "declarations" */
+    LookaheadDFA {
+        states: &[None, Some(95), Some(96), Some(99), Some(100)],
+        transitions: &[
+            DFATransition(0, 15, 4),
+            DFATransition(0, 29, 3),
+            DFATransition(0, 30, 4),
+            DFATransition(0, 31, 4),
+            DFATransition(0, 32, 4),
+            DFATransition(0, 33, 1),
+            DFATransition(0, 34, 2),
+        ],
+        k: 1,
+    },
+    /* 73 - "declarationsOpt" */
+    LookaheadDFA {
+        states: &[Some(106)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 74 - "declarationsSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(104), Some(105)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 29, 1),
+            DFATransition(0, 30, 2),
+            DFATransition(0, 31, 2),
+            DFATransition(0, 32, 2),
+        ],
+        k: 1,
+    },
+    /* 75 - "declarationsSuffix1" */
+    LookaheadDFA {
+        states: &[None, Some(101), Some(102), Some(103)],
+        transitions: &[
+            DFATransition(0, 15, 3),
+            DFATransition(0, 29, 2),
+            DFATransition(0, 30, 3),
+            DFATransition(0, 31, 3),
+            DFATransition(0, 32, 3),
+            DFATransition(0, 33, 1),
+        ],
+        k: 1,
+    },
+    /* 76 - "declarationsSuffix2" */
+    LookaheadDFA {
+        states: &[None, Some(97), Some(98)],
+        transitions: &[
+            DFATransition(0, 15, 2),
+            DFATransition(0, 29, 1),
+            DFATransition(0, 30, 2),
+            DFATransition(0, 31, 2),
+            DFATransition(0, 32, 2),
+        ],
+        k: 1,
+    },
+    /* 77 - "module" */
+    LookaheadDFA {
+        states: &[Some(119)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 78 - "moduleOpt" */
+    LookaheadDFA {
+        states: &[Some(122)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 79 - "moduleSuffix" */
+    LookaheadDFA {
+        states: &[None, Some(120), Some(121)],
+        transitions: &[DFATransition(0, 15, 2), DFATransition(0, 31, 1)],
+        k: 1,
+    },
 ];
 
-pub const PRODUCTIONS: &[Production; 105] = &[
-    // 0 - selector: selectorlist;
-    Production {
-        lhs: 54,
-        production: &[ParseType::N(55)],
-    },
-    // 1 - selectorlist: "\." ident selectorlist;
+pub const PRODUCTIONS: &[Production; 128] = &[
+    // 0 - Selector: SelectorList;
     Production {
         lhs: 55,
-        production: &[ParseType::N(55), ParseType::N(50), ParseType::T(5)],
+        production: &[ParseType::N(56)],
     },
-    // 2 - selectorlist: "\[" expression "]" selectorlist;
+    // 1 - SelectorList: SelectorListGroup SelectorList;
     Production {
-        lhs: 55,
-        production: &[
-            ParseType::N(55),
-            ParseType::T(7),
-            ParseType::N(46),
-            ParseType::T(6),
-        ],
+        lhs: 56,
+        production: &[ParseType::N(56), ParseType::N(57)],
     },
-    // 3 - selectorlist: ;
-    Production {
-        lhs: 55,
-        production: &[],
-    },
-    // 4 - factor: ident selector;
-    Production {
-        lhs: 49,
-        production: &[ParseType::N(54), ParseType::N(50)],
-    },
-    // 5 - factor: integer;
-    Production {
-        lhs: 49,
-        production: &[ParseType::N(51)],
-    },
-    // 6 - factor: "\(" expression "\)";
-    Production {
-        lhs: 49,
-        production: &[ParseType::T(9), ParseType::N(46), ParseType::T(8)],
-    },
-    // 7 - factor: "~" factor;
-    Production {
-        lhs: 49,
-        production: &[ParseType::N(49), ParseType::T(10)],
-    },
-    // 8 - factor: UnaryOp factor;
-    Production {
-        lhs: 49,
-        production: &[ParseType::N(49), ParseType::N(37)],
-    },
-    // 9 - term: factor MulExpression;
+    // 2 - SelectorListGroup: "\." Ident;
     Production {
         lhs: 57,
-        production: &[ParseType::N(18), ParseType::N(49)],
+        production: &[ParseType::N(23), ParseType::T(5)],
     },
-    // 10 - MulExpression: MulOperator factor MulExpression;
+    // 3 - SelectorListGroup: "\[" Expression "]";
     Production {
-        lhs: 18,
-        production: &[ParseType::N(18), ParseType::N(49), ParseType::N(19)],
+        lhs: 57,
+        production: &[ParseType::T(7), ParseType::N(12), ParseType::T(6)],
     },
-    // 11 - MulExpression: ;
+    // 4 - SelectorList: Vec<SelectorList>::New;
     Production {
-        lhs: 18,
+        lhs: 56,
         production: &[],
     },
-    // 12 - SimpleExpression: term AddExpression;
+    // 5 - Factor: Ident Selector;
     Production {
-        lhs: 33,
-        production: &[ParseType::N(2), ParseType::N(57)],
+        lhs: 17,
+        production: &[ParseType::N(55), ParseType::N(23)],
     },
-    // 13 - AddExpression: AddOperator term AddExpression;
+    // 6 - Factor: Integer;
     Production {
-        lhs: 2,
-        production: &[ParseType::N(2), ParseType::N(57), ParseType::N(3)],
-    },
-    // 14 - AddExpression: ;
-    Production {
-        lhs: 2,
-        production: &[],
-    },
-    // 15 - AssignOp: ":=";
-    Production {
-        lhs: 5,
-        production: &[ParseType::T(11)],
-    },
-    // 16 - RelationOp: AssignOp;
-    Production {
-        lhs: 30,
-        production: &[ParseType::N(5)],
-    },
-    // 17 - RelationOp: RelationalOps;
-    Production {
-        lhs: 30,
+        lhs: 17,
         production: &[ParseType::N(31)],
     },
-    // 18 - RelationalOps: ">=|<=|\#|<|>";
+    // 7 - Factor: "\(" Expression "\)";
     Production {
-        lhs: 31,
-        production: &[ParseType::T(12)],
+        lhs: 17,
+        production: &[ParseType::T(9), ParseType::N(12), ParseType::T(8)],
     },
-    // 19 - AssignOp: "=";
+    // 8 - Factor: "~" Factor;
+    Production {
+        lhs: 17,
+        production: &[ParseType::N(17), ParseType::T(10)],
+    },
+    // 9 - Factor: UnaryOp Factor;
+    Production {
+        lhs: 17,
+        production: &[ParseType::N(17), ParseType::N(68)],
+    },
+    // 10 - Term: Factor MulExpression;
+    Production {
+        lhs: 64,
+        production: &[ParseType::N(32), ParseType::N(17)],
+    },
+    // 11 - MulExpression: MulExpressionList;
+    Production {
+        lhs: 32,
+        production: &[ParseType::N(33)],
+    },
+    // 12 - MulExpressionList: MulOperator Factor MulExpressionList;
+    Production {
+        lhs: 33,
+        production: &[ParseType::N(33), ParseType::N(17), ParseType::N(34)],
+    },
+    // 13 - MulExpressionList: Vec<MulExpressionList>::New;
+    Production {
+        lhs: 33,
+        production: &[],
+    },
+    // 14 - SimpleExpression: Term AddExpression;
+    Production {
+        lhs: 58,
+        production: &[ParseType::N(4), ParseType::N(64)],
+    },
+    // 15 - AddExpression: AddExpressionList;
+    Production {
+        lhs: 4,
+        production: &[ParseType::N(5)],
+    },
+    // 16 - AddExpressionList: AddOperator Term AddExpressionList;
     Production {
         lhs: 5,
+        production: &[ParseType::N(5), ParseType::N(64), ParseType::N(6)],
+    },
+    // 17 - AddExpressionList: Vec<AddExpressionList>::New;
+    Production {
+        lhs: 5,
+        production: &[],
+    },
+    // 18 - AssignOp: ":=";
+    Production {
+        lhs: 8,
+        production: &[ParseType::T(11)],
+    },
+    // 19 - RelationOp: AssignOp;
+    Production {
+        lhs: 52,
+        production: &[ParseType::N(8)],
+    },
+    // 20 - RelationOp: RelationalOps;
+    Production {
+        lhs: 52,
+        production: &[ParseType::N(53)],
+    },
+    // 21 - RelationalOps: ">=|<=|\#|<|>";
+    Production {
+        lhs: 53,
+        production: &[ParseType::T(12)],
+    },
+    // 22 - AssignOp: "=";
+    Production {
+        lhs: 8,
         production: &[ParseType::T(13)],
     },
-    // 20 - expression: SimpleExpression expressionSuffix;
+    // 23 - Expression: SimpleExpression ExpressionSuffix;
     Production {
-        lhs: 46,
-        production: &[ParseType::N(47), ParseType::N(33)],
+        lhs: 12,
+        production: &[ParseType::N(14), ParseType::N(58)],
     },
-    // 21 - expressionSuffix: RelationOp SimpleExpression;
+    // 24 - ExpressionSuffix: ExpressionOpt;
     Production {
-        lhs: 47,
-        production: &[ParseType::N(33), ParseType::N(30)],
+        lhs: 14,
+        production: &[ParseType::N(13)],
     },
-    // 22 - expressionSuffix: ;
+    // 25 - ExpressionSuffix: Option<ExpressionOpt>::None;
     Production {
-        lhs: 47,
+        lhs: 14,
         production: &[],
     },
-    // 23 - assignment: ident selector AssignOp expression;
+    // 26 - ExpressionOpt: RelationOp SimpleExpression;
     Production {
-        lhs: 40,
+        lhs: 13,
+        production: &[ParseType::N(58), ParseType::N(52)],
+    },
+    // 27 - Assignment: Ident Selector AssignOp Expression;
+    Production {
+        lhs: 9,
         production: &[
-            ParseType::N(46),
-            ParseType::N(5),
-            ParseType::N(54),
-            ParseType::N(50),
+            ParseType::N(12),
+            ParseType::N(8),
+            ParseType::N(55),
+            ParseType::N(23),
         ],
     },
-    // 24 - ActualParameters: "\(" ActualParametersSuffix;
+    // 28 - ActualParameters: "\(" ActualParametersSuffix;
     Production {
         lhs: 0,
-        production: &[ParseType::N(1), ParseType::T(8)],
+        production: &[ParseType::N(3), ParseType::T(8)],
     },
-    // 25 - ActualParametersSuffix: "\)";
+    // 29 - ActualParametersSuffix: ActualParametersOpt "\)";
     Production {
-        lhs: 1,
+        lhs: 3,
+        production: &[ParseType::T(9), ParseType::N(1)],
+    },
+    // 30 - ActualParametersSuffix: Option<ActualParametersOpt>::None "\)";
+    Production {
+        lhs: 3,
         production: &[ParseType::T(9)],
     },
-    // 26 - ActualParametersSuffix: expression expressionlistrest "\)";
+    // 31 - ActualParametersOpt: Expression ActualParametersOptList;
     Production {
         lhs: 1,
-        production: &[ParseType::T(9), ParseType::N(48), ParseType::N(46)],
+        production: &[ParseType::N(2), ParseType::N(12)],
     },
-    // 27 - expressionlistrest: "," expression expressionlistrest;
+    // 32 - ActualParametersOptList: "," Expression ActualParametersOptList;
     Production {
-        lhs: 48,
-        production: &[ParseType::N(48), ParseType::N(46), ParseType::T(14)],
+        lhs: 2,
+        production: &[ParseType::N(2), ParseType::N(12), ParseType::T(14)],
     },
-    // 28 - expressionlistrest: ;
+    // 33 - ActualParametersOptList: Vec<ActualParametersOptList>::New;
     Production {
-        lhs: 48,
+        lhs: 2,
         production: &[],
     },
-    // 29 - ProcedureCall: ident ProcedureCallSuffix;
+    // 34 - ProcedureCall: Ident ProcedureCallSuffix;
     Production {
-        lhs: 23,
-        production: &[ParseType::N(24), ParseType::N(50)],
+        lhs: 38,
+        production: &[ParseType::N(40), ParseType::N(23)],
     },
-    // 30 - ProcedureCallSuffix: ActualParameters;
+    // 35 - ProcedureCallSuffix: ProcedureCallOpt;
     Production {
-        lhs: 24,
+        lhs: 40,
+        production: &[ParseType::N(39)],
+    },
+    // 36 - ProcedureCallSuffix: Option<ProcedureCallOpt>::None;
+    Production {
+        lhs: 40,
+        production: &[],
+    },
+    // 37 - ProcedureCallOpt: ActualParameters;
+    Production {
+        lhs: 39,
         production: &[ParseType::N(0)],
     },
-    // 31 - ProcedureCallSuffix: ;
+    // 38 - IfStatement: IfPrefix IfStatementSuffix;
     Production {
-        lhs: 24,
-        production: &[],
+        lhs: 28,
+        production: &[ParseType::N(30), ParseType::N(26)],
     },
-    // 32 - IfStatement: IfPrefix IfStatementSuffix;
+    // 39 - IfStatementSuffix: IfStatementOpt "END";
     Production {
-        lhs: 16,
-        production: &[ParseType::N(17), ParseType::N(15)],
+        lhs: 30,
+        production: &[ParseType::T(15), ParseType::N(29)],
     },
-    // 33 - IfStatementSuffix: "ELSE" StatementSequence "END";
+    // 40 - IfStatementSuffix: Option<IfStatementOpt>::None "END";
     Production {
-        lhs: 17,
-        production: &[ParseType::T(16), ParseType::N(34), ParseType::T(15)],
+        lhs: 30,
+        production: &[ParseType::T(15)],
     },
-    // 34 - IfStatementSuffix: "END";
+    // 41 - IfStatementOpt: "ELSE" StatementSequence;
     Production {
-        lhs: 17,
-        production: &[ParseType::T(16)],
+        lhs: 29,
+        production: &[ParseType::N(60), ParseType::T(16)],
     },
-    // 35 - IfPrefix: "IF" expression "THEN" StatementSequence elseiflist;
+    // 42 - IfPrefix: "IF" Expression "THEN" StatementSequence IfPrefixList;
     Production {
-        lhs: 15,
+        lhs: 26,
         production: &[
-            ParseType::N(45),
-            ParseType::N(34),
+            ParseType::N(27),
+            ParseType::N(60),
             ParseType::T(18),
-            ParseType::N(46),
+            ParseType::N(12),
             ParseType::T(17),
         ],
     },
-    // 36 - elseiflist: "ELSIF" expression "THEN" StatementSequence elseiflist;
+    // 43 - IfPrefixList: "ELSIF" Expression "THEN" StatementSequence IfPrefixList;
     Production {
-        lhs: 45,
+        lhs: 27,
         production: &[
-            ParseType::N(45),
-            ParseType::N(34),
+            ParseType::N(27),
+            ParseType::N(60),
             ParseType::T(18),
-            ParseType::N(46),
+            ParseType::N(12),
             ParseType::T(19),
         ],
     },
-    // 37 - elseiflist: ;
+    // 44 - IfPrefixList: Vec<IfPrefixList>::New;
     Production {
-        lhs: 45,
+        lhs: 27,
         production: &[],
     },
-    // 38 - WhileStatement: "WHILE" expression "DO" StatementSequence "END";
+    // 45 - WhileStatement: "WHILE" Expression "DO" StatementSequence "END";
     Production {
-        lhs: 39,
+        lhs: 71,
         production: &[
-            ParseType::T(16),
-            ParseType::N(34),
+            ParseType::T(15),
+            ParseType::N(60),
             ParseType::T(21),
-            ParseType::N(46),
+            ParseType::N(12),
             ParseType::T(20),
         ],
     },
-    // 39 - RepeatStatement: "REPEAT" StatementSequence "UNTIL" expression;
+    // 46 - RepeatStatement: "REPEAT" StatementSequence "UNTIL" Expression;
     Production {
-        lhs: 32,
+        lhs: 54,
         production: &[
-            ParseType::N(46),
+            ParseType::N(12),
             ParseType::T(23),
-            ParseType::N(34),
+            ParseType::N(60),
             ParseType::T(22),
         ],
     },
-    // 40 - statement: assignment;
+    // 47 - Statement: Assignment;
     Production {
-        lhs: 56,
-        production: &[ParseType::N(40)],
+        lhs: 59,
+        production: &[ParseType::N(9)],
     },
-    // 41 - statement: ProcedureCall;
+    // 48 - Statement: ProcedureCall;
     Production {
-        lhs: 56,
-        production: &[ParseType::N(23)],
+        lhs: 59,
+        production: &[ParseType::N(38)],
     },
-    // 42 - statement: IfStatement;
+    // 49 - Statement: IfStatement;
     Production {
-        lhs: 56,
-        production: &[ParseType::N(16)],
+        lhs: 59,
+        production: &[ParseType::N(28)],
     },
-    // 43 - statement: WhileStatement;
+    // 50 - Statement: WhileStatement;
     Production {
-        lhs: 56,
-        production: &[ParseType::N(39)],
+        lhs: 59,
+        production: &[ParseType::N(71)],
     },
-    // 44 - statement: RepeatStatement;
+    // 51 - Statement: RepeatStatement;
     Production {
-        lhs: 56,
-        production: &[ParseType::N(32)],
+        lhs: 59,
+        production: &[ParseType::N(54)],
     },
-    // 45 - statement: ;
+    // 52 - StatementSequence: StatementSequenceOpt StatementSequenceList;
     Production {
-        lhs: 56,
+        lhs: 60,
+        production: &[ParseType::N(61), ParseType::N(63)],
+    },
+    // 53 - StatementSequence: Option<StatementSequenceOpt>::None StatementSequenceList;
+    Production {
+        lhs: 60,
+        production: &[ParseType::N(61)],
+    },
+    // 54 - StatementSequenceOpt: Statement;
+    Production {
+        lhs: 63,
+        production: &[ParseType::N(59)],
+    },
+    // 55 - StatementSequenceList: ";" StatementSequenceListSuffix;
+    Production {
+        lhs: 61,
+        production: &[ParseType::N(62), ParseType::T(24)],
+    },
+    // 56 - StatementSequenceListSuffix: StatementSequenceOpt StatementSequenceList;
+    Production {
+        lhs: 62,
+        production: &[ParseType::N(61), ParseType::N(63)],
+    },
+    // 57 - StatementSequenceListSuffix: Option<StatementSequenceListOpt>::None StatementSequenceList;
+    Production {
+        lhs: 62,
+        production: &[ParseType::N(61)],
+    },
+    // 58 - StatementSequenceList: Vec<StatementSequenceList>::New;
+    Production {
+        lhs: 61,
         production: &[],
     },
-    // 46 - StatementSequence: statement StatementSequenceRest;
+    // 59 - IdentList: Ident IdentListList;
     Production {
-        lhs: 34,
-        production: &[ParseType::N(35), ParseType::N(56)],
+        lhs: 24,
+        production: &[ParseType::N(25), ParseType::N(23)],
     },
-    // 47 - StatementSequenceRest: ";" statement StatementSequenceRest;
+    // 60 - IdentListList: "," Ident IdentListList;
     Production {
-        lhs: 35,
-        production: &[ParseType::N(35), ParseType::N(56), ParseType::T(24)],
+        lhs: 25,
+        production: &[ParseType::N(25), ParseType::N(23), ParseType::T(14)],
     },
-    // 48 - StatementSequenceRest: ;
+    // 61 - IdentListList: Vec<IdentListList>::New;
     Production {
-        lhs: 35,
+        lhs: 25,
         production: &[],
     },
-    // 49 - IdentList: ident IdentListRest;
+    // 62 - ArrayType: "ARRAY" Expression "OF" Type;
     Production {
-        lhs: 13,
-        production: &[ParseType::N(14), ParseType::N(50)],
-    },
-    // 50 - IdentListRest: "," ident IdentListRest;
-    Production {
-        lhs: 14,
-        production: &[ParseType::N(14), ParseType::N(50), ParseType::T(14)],
-    },
-    // 51 - IdentListRest: ;
-    Production {
-        lhs: 14,
-        production: &[],
-    },
-    // 52 - ArrayType: "ARRAY" expression "OF" type;
-    Production {
-        lhs: 4,
+        lhs: 7,
         production: &[
-            ParseType::N(58),
+            ParseType::N(65),
             ParseType::T(26),
-            ParseType::N(46),
+            ParseType::N(12),
             ParseType::T(25),
         ],
     },
-    // 53 - FieldList: IdentList ":" type;
+    // 63 - FieldList: IdentList ":" Type;
     Production {
-        lhs: 9,
-        production: &[ParseType::N(58), ParseType::T(27), ParseType::N(13)],
+        lhs: 18,
+        production: &[ParseType::N(65), ParseType::T(27), ParseType::N(24)],
     },
-    // 54 - FieldList: ;
+    // 64 - RecordType: "RECORD" RecordTypeSuffix;
     Production {
-        lhs: 9,
+        lhs: 47,
+        production: &[ParseType::N(51), ParseType::T(28)],
+    },
+    // 65 - RecordTypeSuffix: RecordTypeOpt RecordTypeList "END";
+    Production {
+        lhs: 51,
+        production: &[ParseType::T(15), ParseType::N(48), ParseType::N(50)],
+    },
+    // 66 - RecordTypeSuffix: Option<RecordTypeOpt>::None RecordTypeList "END";
+    Production {
+        lhs: 51,
+        production: &[ParseType::T(15), ParseType::N(48)],
+    },
+    // 67 - RecordTypeOpt: FieldList;
+    Production {
+        lhs: 50,
+        production: &[ParseType::N(18)],
+    },
+    // 68 - RecordTypeList: ";" RecordTypeListSuffix;
+    Production {
+        lhs: 48,
+        production: &[ParseType::N(49), ParseType::T(24)],
+    },
+    // 69 - RecordTypeListSuffix: RecordTypeOpt RecordTypeList;
+    Production {
+        lhs: 49,
+        production: &[ParseType::N(48), ParseType::N(50)],
+    },
+    // 70 - RecordTypeListSuffix: Option<RecordTypeListOpt>::None RecordTypeList;
+    Production {
+        lhs: 49,
+        production: &[ParseType::N(48)],
+    },
+    // 71 - RecordTypeList: Vec<RecordTypeList>::New;
+    Production {
+        lhs: 48,
         production: &[],
     },
-    // 55 - RecordType: "RECORD" FieldList FieldListRest "END";
+    // 72 - Type: Ident;
     Production {
-        lhs: 29,
+        lhs: 65,
+        production: &[ParseType::N(23)],
+    },
+    // 73 - Type: ArrayType;
+    Production {
+        lhs: 65,
+        production: &[ParseType::N(7)],
+    },
+    // 74 - Type: RecordType;
+    Production {
+        lhs: 65,
+        production: &[ParseType::N(47)],
+    },
+    // 75 - FPSection: FPSectionOpt IdentList ":" Type;
+    Production {
+        lhs: 15,
         production: &[
-            ParseType::T(16),
-            ParseType::N(10),
-            ParseType::N(9),
-            ParseType::T(28),
-        ],
-    },
-    // 56 - FieldListRest: ";" FieldList FieldListRest;
-    Production {
-        lhs: 10,
-        production: &[ParseType::N(10), ParseType::N(9), ParseType::T(24)],
-    },
-    // 57 - FieldListRest: ;
-    Production {
-        lhs: 10,
-        production: &[],
-    },
-    // 58 - type: ident;
-    Production {
-        lhs: 58,
-        production: &[ParseType::N(50)],
-    },
-    // 59 - type: ArrayType;
-    Production {
-        lhs: 58,
-        production: &[ParseType::N(4)],
-    },
-    // 60 - type: RecordType;
-    Production {
-        lhs: 58,
-        production: &[ParseType::N(29)],
-    },
-    // 61 - FPSection: "VAR" IdentList ":" type;
-    Production {
-        lhs: 7,
-        production: &[
-            ParseType::N(58),
+            ParseType::N(65),
             ParseType::T(27),
-            ParseType::N(13),
-            ParseType::T(29),
+            ParseType::N(24),
+            ParseType::N(16),
         ],
     },
-    // 62 - FPSection: IdentList ":" type;
+    // 76 - FPSection: Option<FPSectionOpt>::None IdentList ":" Type;
     Production {
-        lhs: 7,
-        production: &[ParseType::N(58), ParseType::T(27), ParseType::N(13)],
+        lhs: 15,
+        production: &[ParseType::N(65), ParseType::T(27), ParseType::N(24)],
     },
-    // 63 - FormalParameters: "\(" FormalParametersSuffix;
+    // 77 - FPSectionOpt: "VAR";
     Production {
-        lhs: 11,
-        production: &[ParseType::N(12), ParseType::T(8)],
+        lhs: 16,
+        production: &[ParseType::T(29)],
     },
-    // 64 - FormalParametersSuffix: "\)";
+    // 78 - FormalParameters: "\(" FormalParametersSuffix;
     Production {
-        lhs: 12,
+        lhs: 19,
+        production: &[ParseType::N(22), ParseType::T(8)],
+    },
+    // 79 - FormalParametersSuffix: FormalParametersOpt "\)";
+    Production {
+        lhs: 22,
+        production: &[ParseType::T(9), ParseType::N(20)],
+    },
+    // 80 - FormalParametersSuffix: Option<FormalParametersOpt>::None "\)";
+    Production {
+        lhs: 22,
         production: &[ParseType::T(9)],
     },
-    // 65 - FormalParametersSuffix: FPSection FPSectionRest "\)";
-    Production {
-        lhs: 12,
-        production: &[ParseType::T(9), ParseType::N(8), ParseType::N(7)],
-    },
-    // 66 - FPSectionRest: ";" FPSection FPSectionRest;
-    Production {
-        lhs: 8,
-        production: &[ParseType::N(8), ParseType::N(7), ParseType::T(24)],
-    },
-    // 67 - FPSectionRest: ;
-    Production {
-        lhs: 8,
-        production: &[],
-    },
-    // 68 - ProcedureHeading: "PROCEDURE" ident ProcedureHeadingSuffix;
-    Production {
-        lhs: 27,
-        production: &[ParseType::N(28), ParseType::N(50), ParseType::T(30)],
-    },
-    // 69 - ProcedureHeadingSuffix: FormalParameters;
-    Production {
-        lhs: 28,
-        production: &[ParseType::N(11)],
-    },
-    // 70 - ProcedureHeadingSuffix: ;
-    Production {
-        lhs: 28,
-        production: &[],
-    },
-    // 71 - ProcedureBody: declarations ProcedureBodySuffix1;
+    // 81 - FormalParametersOpt: FPSection FormalParametersOptList;
     Production {
         lhs: 20,
-        production: &[ParseType::N(22), ParseType::N(41)],
+        production: &[ParseType::N(21), ParseType::N(15)],
     },
-    // 72 - ProcedureBodySuffix1: "BEGIN" StatementSequence ProcedureBodySuffix;
+    // 82 - FormalParametersOptList: ";" FPSection FormalParametersOptList;
     Production {
-        lhs: 22,
-        production: &[ParseType::N(21), ParseType::N(34), ParseType::T(31)],
+        lhs: 21,
+        production: &[ParseType::N(21), ParseType::N(15), ParseType::T(24)],
     },
-    // 73 - ProcedureBodySuffix1: "RETURN" expression "END" ident;
+    // 83 - FormalParametersOptList: Vec<FormalParametersOptList>::New;
     Production {
-        lhs: 22,
+        lhs: 21,
+        production: &[],
+    },
+    // 84 - ProcedureHeading: "PROCEDURE" Ident ProcedureHeadingSuffix;
+    Production {
+        lhs: 44,
+        production: &[ParseType::N(46), ParseType::N(23), ParseType::T(30)],
+    },
+    // 85 - ProcedureHeadingSuffix: ProcedureHeadingOpt;
+    Production {
+        lhs: 46,
+        production: &[ParseType::N(45)],
+    },
+    // 86 - ProcedureHeadingSuffix: Option<ProcedureHeadingOpt>::None;
+    Production {
+        lhs: 46,
+        production: &[],
+    },
+    // 87 - ProcedureHeadingOpt: FormalParameters;
+    Production {
+        lhs: 45,
+        production: &[ParseType::N(19)],
+    },
+    // 88 - ProcedureBody: declarations ProcedureBodySuffix1;
+    Production {
+        lhs: 35,
+        production: &[ParseType::N(37), ParseType::N(72)],
+    },
+    // 89 - ProcedureBodySuffix1: "BEGIN" StatementSequence ProcedureBodySuffix;
+    Production {
+        lhs: 37,
+        production: &[ParseType::N(36), ParseType::N(60), ParseType::T(31)],
+    },
+    // 90 - ProcedureBodySuffix1: "RETURN" Expression "END" Ident;
+    Production {
+        lhs: 37,
         production: &[
-            ParseType::N(50),
-            ParseType::T(16),
-            ParseType::N(46),
+            ParseType::N(23),
+            ParseType::T(15),
+            ParseType::N(12),
             ParseType::T(32),
         ],
     },
-    // 74 - ProcedureBodySuffix1: "END" ident;
+    // 91 - ProcedureBodySuffix1: "END" Ident;
     Production {
-        lhs: 22,
-        production: &[ParseType::N(50), ParseType::T(16)],
+        lhs: 37,
+        production: &[ParseType::N(23), ParseType::T(15)],
     },
-    // 75 - ProcedureBodySuffix: "RETURN" expression "END" ident;
+    // 92 - ProcedureBodySuffix: "RETURN" Expression "END" Ident;
     Production {
-        lhs: 21,
+        lhs: 36,
         production: &[
-            ParseType::N(50),
-            ParseType::T(16),
-            ParseType::N(46),
+            ParseType::N(23),
+            ParseType::T(15),
+            ParseType::N(12),
             ParseType::T(32),
         ],
     },
-    // 76 - ProcedureBodySuffix: "END" ident;
-    Production {
-        lhs: 21,
-        production: &[ParseType::N(50), ParseType::T(16)],
-    },
-    // 77 - ProcedureDeclaration: ProcedureHeading ";" ProcedureBody;
-    Production {
-        lhs: 25,
-        production: &[ParseType::N(20), ParseType::T(24), ParseType::N(27)],
-    },
-    // 78 - declarations: "TYPE" TypeDecls declarationsSuffix2;
-    Production {
-        lhs: 41,
-        production: &[ParseType::N(44), ParseType::N(36), ParseType::T(33)],
-    },
-    // 79 - declarations: "CONST" ConstDecls declarationsSuffix1;
-    Production {
-        lhs: 41,
-        production: &[ParseType::N(43), ParseType::N(6), ParseType::T(34)],
-    },
-    // 80 - declarationsSuffix2: "VAR" VarDecls ProcedureDeclarationList;
-    Production {
-        lhs: 44,
-        production: &[ParseType::N(26), ParseType::N(38), ParseType::T(29)],
-    },
-    // 81 - declarationsSuffix2: ProcedureDeclarationList;
-    Production {
-        lhs: 44,
-        production: &[ParseType::N(26)],
-    },
-    // 82 - declarations: "VAR" VarDecls ProcedureDeclarationList;
-    Production {
-        lhs: 41,
-        production: &[ParseType::N(26), ParseType::N(38), ParseType::T(29)],
-    },
-    // 83 - declarations: ProcedureDeclarationList;
-    Production {
-        lhs: 41,
-        production: &[ParseType::N(26)],
-    },
-    // 84 - declarationsSuffix1: "TYPE" TypeDecls declarationsSuffix;
-    Production {
-        lhs: 43,
-        production: &[ParseType::N(42), ParseType::N(36), ParseType::T(33)],
-    },
-    // 85 - declarationsSuffix1: "VAR" VarDecls ProcedureDeclarationList;
-    Production {
-        lhs: 43,
-        production: &[ParseType::N(26), ParseType::N(38), ParseType::T(29)],
-    },
-    // 86 - declarationsSuffix1: ProcedureDeclarationList;
-    Production {
-        lhs: 43,
-        production: &[ParseType::N(26)],
-    },
-    // 87 - declarationsSuffix: "VAR" VarDecls ProcedureDeclarationList;
-    Production {
-        lhs: 42,
-        production: &[ParseType::N(26), ParseType::N(38), ParseType::T(29)],
-    },
-    // 88 - declarationsSuffix: ProcedureDeclarationList;
-    Production {
-        lhs: 42,
-        production: &[ParseType::N(26)],
-    },
-    // 89 - ProcedureDeclarationList: ProcedureDeclaration ";" ProcedureDeclarationList;
-    Production {
-        lhs: 26,
-        production: &[ParseType::N(26), ParseType::T(24), ParseType::N(25)],
-    },
-    // 90 - ProcedureDeclarationList: ;
-    Production {
-        lhs: 26,
-        production: &[],
-    },
-    // 91 - ConstDecls: ident AssignOp expression ";" ConstDecls;
-    Production {
-        lhs: 6,
-        production: &[
-            ParseType::N(6),
-            ParseType::T(24),
-            ParseType::N(46),
-            ParseType::N(5),
-            ParseType::N(50),
-        ],
-    },
-    // 92 - ConstDecls: ;
-    Production {
-        lhs: 6,
-        production: &[],
-    },
-    // 93 - TypeDecls: ident AssignOp type ";" TypeDecls;
+    // 93 - ProcedureBodySuffix: "END" Ident;
     Production {
         lhs: 36,
-        production: &[
-            ParseType::N(36),
-            ParseType::T(24),
-            ParseType::N(58),
-            ParseType::N(5),
-            ParseType::N(50),
-        ],
+        production: &[ParseType::N(23), ParseType::T(15)],
     },
-    // 94 - TypeDecls: ;
+    // 94 - ProcedureDeclaration: ProcedureHeading ";" ProcedureBody;
     Production {
-        lhs: 36,
+        lhs: 41,
+        production: &[ParseType::N(35), ParseType::T(24), ParseType::N(44)],
+    },
+    // 95 - declarations: "Type" TypeDecls declarationsSuffix2;
+    Production {
+        lhs: 72,
+        production: &[ParseType::N(76), ParseType::N(66), ParseType::T(33)],
+    },
+    // 96 - declarations: "CONST" ConstDecls declarationsSuffix1;
+    Production {
+        lhs: 72,
+        production: &[ParseType::N(75), ParseType::N(10), ParseType::T(34)],
+    },
+    // 97 - declarationsSuffix2: declarationsOpt ProcedureDeclarationList;
+    Production {
+        lhs: 76,
+        production: &[ParseType::N(42), ParseType::N(73)],
+    },
+    // 98 - declarationsSuffix2: Option<declarationsOpt2>::None ProcedureDeclarationList;
+    Production {
+        lhs: 76,
+        production: &[ParseType::N(42)],
+    },
+    // 99 - declarations: "VAR" VarDecls ProcedureDeclarationList;
+    Production {
+        lhs: 72,
+        production: &[ParseType::N(42), ParseType::N(69), ParseType::T(29)],
+    },
+    // 100 - declarations: ProcedureDeclarationList;
+    Production {
+        lhs: 72,
+        production: &[ParseType::N(42)],
+    },
+    // 101 - declarationsSuffix1: "Type" TypeDecls declarationsSuffix;
+    Production {
+        lhs: 75,
+        production: &[ParseType::N(74), ParseType::N(66), ParseType::T(33)],
+    },
+    // 102 - declarationsSuffix1: declarationsOpt ProcedureDeclarationList;
+    Production {
+        lhs: 75,
+        production: &[ParseType::N(42), ParseType::N(73)],
+    },
+    // 103 - declarationsSuffix1: Option<declarationsOpt1>::None ProcedureDeclarationList;
+    Production {
+        lhs: 75,
+        production: &[ParseType::N(42)],
+    },
+    // 104 - declarationsSuffix: declarationsOpt ProcedureDeclarationList;
+    Production {
+        lhs: 74,
+        production: &[ParseType::N(42), ParseType::N(73)],
+    },
+    // 105 - declarationsSuffix: Option<declarationsOpt>::None ProcedureDeclarationList;
+    Production {
+        lhs: 74,
+        production: &[ParseType::N(42)],
+    },
+    // 106 - declarationsOpt: "VAR" VarDecls;
+    Production {
+        lhs: 73,
+        production: &[ParseType::N(69), ParseType::T(29)],
+    },
+    // 107 - ProcedureDeclarationList: ProcedureDeclarationListList;
+    Production {
+        lhs: 42,
+        production: &[ParseType::N(43)],
+    },
+    // 108 - ProcedureDeclarationListList: ProcedureDeclaration ";" ProcedureDeclarationListList;
+    Production {
+        lhs: 43,
+        production: &[ParseType::N(43), ParseType::T(24), ParseType::N(41)],
+    },
+    // 109 - ProcedureDeclarationListList: Vec<ProcedureDeclarationListList>::New;
+    Production {
+        lhs: 43,
         production: &[],
     },
-    // 95 - VarDecls: IdentList ":" type ";" VarDecls;
+    // 110 - ConstDecls: ConstDeclsList;
     Production {
-        lhs: 38,
+        lhs: 10,
+        production: &[ParseType::N(11)],
+    },
+    // 111 - ConstDeclsList: Ident AssignOp Expression ";" ConstDeclsList;
+    Production {
+        lhs: 11,
         production: &[
-            ParseType::N(38),
+            ParseType::N(11),
             ParseType::T(24),
-            ParseType::N(58),
+            ParseType::N(12),
+            ParseType::N(8),
+            ParseType::N(23),
+        ],
+    },
+    // 112 - ConstDeclsList: Vec<ConstDeclsList>::New;
+    Production {
+        lhs: 11,
+        production: &[],
+    },
+    // 113 - TypeDecls: TypeDeclsList;
+    Production {
+        lhs: 66,
+        production: &[ParseType::N(67)],
+    },
+    // 114 - TypeDeclsList: Ident AssignOp Type ";" TypeDeclsList;
+    Production {
+        lhs: 67,
+        production: &[
+            ParseType::N(67),
+            ParseType::T(24),
+            ParseType::N(65),
+            ParseType::N(8),
+            ParseType::N(23),
+        ],
+    },
+    // 115 - TypeDeclsList: Vec<TypeDeclsList>::New;
+    Production {
+        lhs: 67,
+        production: &[],
+    },
+    // 116 - VarDecls: VarDeclsList;
+    Production {
+        lhs: 69,
+        production: &[ParseType::N(70)],
+    },
+    // 117 - VarDeclsList: IdentList ":" Type ";" VarDeclsList;
+    Production {
+        lhs: 70,
+        production: &[
+            ParseType::N(70),
+            ParseType::T(24),
+            ParseType::N(65),
             ParseType::T(27),
-            ParseType::N(13),
+            ParseType::N(24),
         ],
     },
-    // 96 - VarDecls: ;
+    // 118 - VarDeclsList: Vec<VarDeclsList>::New;
     Production {
-        lhs: 38,
+        lhs: 70,
         production: &[],
     },
-    // 97 - module: "MODULE" ident ";" declarations moduleSuffix;
+    // 119 - module: "MODULE" Ident ";" declarations moduleSuffix;
     Production {
-        lhs: 52,
+        lhs: 77,
         production: &[
-            ParseType::N(53),
-            ParseType::N(41),
+            ParseType::N(79),
+            ParseType::N(72),
             ParseType::T(24),
-            ParseType::N(50),
+            ParseType::N(23),
             ParseType::T(35),
         ],
     },
-    // 98 - moduleSuffix: "BEGIN" StatementSequence "END" ident "\.";
+    // 120 - moduleSuffix: moduleOpt "END" Ident "\.";
     Production {
-        lhs: 53,
+        lhs: 79,
         production: &[
             ParseType::T(5),
-            ParseType::N(50),
-            ParseType::T(16),
-            ParseType::N(34),
-            ParseType::T(31),
+            ParseType::N(23),
+            ParseType::T(15),
+            ParseType::N(78),
         ],
     },
-    // 99 - moduleSuffix: "END" ident "\.";
+    // 121 - moduleSuffix: Option<moduleOpt>::None "END" Ident "\.";
     Production {
-        lhs: 53,
-        production: &[ParseType::T(5), ParseType::N(50), ParseType::T(16)],
+        lhs: 79,
+        production: &[ParseType::T(5), ParseType::N(23), ParseType::T(15)],
     },
-    // 100 - MulOperator: "\*|/|DIV|MOD|&";
+    // 122 - moduleOpt: "BEGIN" StatementSequence;
     Production {
-        lhs: 19,
+        lhs: 78,
+        production: &[ParseType::N(60), ParseType::T(31)],
+    },
+    // 123 - MulOperator: "\*|/|DIV|MOD|&";
+    Production {
+        lhs: 34,
         production: &[ParseType::T(36)],
     },
-    // 101 - AddOperator: "\+|-|OR";
+    // 124 - AddOperator: "\+|-|OR";
     Production {
-        lhs: 3,
+        lhs: 6,
         production: &[ParseType::T(37)],
     },
-    // 102 - UnaryOp: "\+|-";
+    // 125 - UnaryOp: "\+|-";
     Production {
-        lhs: 37,
+        lhs: 68,
         production: &[ParseType::T(38)],
     },
-    // 103 - ident: "[a-zA-Z][a-zA-Z0-9]*";
+    // 126 - Ident: "[a-zA-Z][a-zA-Z0-9]*";
     Production {
-        lhs: 50,
+        lhs: 23,
         production: &[ParseType::T(39)],
     },
-    // 104 - integer: "[0-9]+";
+    // 127 - Integer: "[0-9]+";
     Production {
-        lhs: 51,
+        lhs: 31,
         production: &[ParseType::T(40)],
     },
 ];
@@ -1479,7 +1705,7 @@ where
     T: AsRef<Path>,
 {
     let mut llk_parser = LLKParser::new(
-        52,
+        77,
         LOOKAHEAD_AUTOMATA,
         PRODUCTIONS,
         TERMINAL_NAMES,

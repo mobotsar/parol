@@ -7,7 +7,1466 @@
 use crate::oberon_0_grammar::Oberon0Grammar;
 use id_tree::Tree;
 use miette::{miette, Result};
+use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+
+//
+// Output Types of productions deduced from the structure of the transformed grammar
+//
+
+/// Type derived for production 0
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Selector0 {
+    selector_list_0: Box<SelectorList>,
+}
+
+/// Type derived for production 2
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SelectorListGroup2 {
+    dot_0: OwnedToken, /* \. */
+    ident_1: Box<Ident>,
+}
+
+/// Type derived for production 3
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SelectorListGroup3 {
+    l_bracket_0: OwnedToken, /* \[ */
+    expression_1: Box<Expression>,
+    r_bracket_2: OwnedToken, /* ] */
+}
+
+/// Type derived for production 5
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor5 {
+    ident_0: Box<Ident>,
+    selector_1: Box<Selector>,
+}
+
+/// Type derived for production 6
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor6 {
+    integer_0: Box<Integer>,
+}
+
+/// Type derived for production 7
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor7 {
+    l_paren_0: OwnedToken, /* \( */
+    expression_1: Box<Expression>,
+    r_paren_2: OwnedToken, /* \) */
+}
+
+/// Type derived for production 8
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor8 {
+    tilde_0: OwnedToken, /* ~ */
+    factor_1: Box<Factor>,
+}
+
+/// Type derived for production 9
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor9 {
+    unary_op_0: Box<UnaryOp>,
+    factor_1: Box<Factor>,
+}
+
+/// Type derived for production 10
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Term10 {
+    factor_0: Box<Factor>,
+    mul_expression_1: Box<MulExpression>,
+}
+
+/// Type derived for production 11
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct MulExpression11 {
+    mul_expression_list_0: Box<MulExpressionList>,
+}
+
+/// Type derived for production 14
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SimpleExpression14 {
+    term_0: Box<Term>,
+    add_expression_1: Box<AddExpression>,
+}
+
+/// Type derived for production 15
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AddExpression15 {
+    add_expression_list_0: Box<AddExpressionList>,
+}
+
+/// Type derived for production 18
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AssignOp18 {
+    colon_equ_0: OwnedToken, /* := */
+}
+
+/// Type derived for production 19
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RelationOp19 {
+    assign_op_0: Box<AssignOp>,
+}
+
+/// Type derived for production 20
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RelationOp20 {
+    relational_ops_0: Box<RelationalOps>,
+}
+
+/// Type derived for production 21
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RelationalOps21 {
+    relational_ops_0: OwnedToken, /* >=|<=|\#|<|> */
+}
+
+/// Type derived for production 22
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AssignOp22 {
+    equ_0: OwnedToken, /* = */
+}
+
+/// Type derived for production 23
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Expression23 {
+    simple_expression_0: Box<SimpleExpression>,
+    expression_suffix_1: Box<ExpressionSuffix>,
+}
+
+/// Type derived for production 24
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ExpressionSuffix24 {
+    opt: Option<Box<ExpressionOpt>>,
+}
+
+/// Type derived for production 25
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ExpressionSuffix25 {
+    opt: Option<Box<ExpressionOpt>>,
+}
+
+/// Type derived for production 26
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ExpressionOpt26 {
+    relation_op_0: Box<RelationOp>,
+    simple_expression_1: Box<SimpleExpression>,
+}
+
+/// Type derived for production 27
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Assignment27 {
+    ident_0: Box<Ident>,
+    selector_1: Box<Selector>,
+    assign_op_2: Box<AssignOp>,
+    expression_3: Box<Expression>,
+}
+
+/// Type derived for production 28
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParameters28 {
+    l_paren_0: OwnedToken, /* \( */
+    actual_parameters_suffix_1: Box<ActualParametersSuffix>,
+}
+
+/// Type derived for production 29
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParametersSuffix29 {
+    actual_parameters_opt_0: Box<ActualParametersOpt>,
+    r_paren_1: OwnedToken, /* \) */
+}
+
+/// Type derived for production 30
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParametersSuffix30 {
+    r_paren_0: (),
+}
+
+/// Type derived for production 31
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParametersOpt31 {
+    expression_0: Box<Expression>,
+    actual_parameters_opt_list_1: Box<ActualParametersOptList>,
+}
+
+/// Type derived for production 34
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCall34 {
+    ident_0: Box<Ident>,
+    procedure_call_suffix_1: Box<ProcedureCallSuffix>,
+}
+
+/// Type derived for production 35
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCallSuffix35 {
+    opt: Option<Box<ProcedureCallOpt>>,
+}
+
+/// Type derived for production 36
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCallSuffix36 {
+    opt: Option<Box<ProcedureCallOpt>>,
+}
+
+/// Type derived for production 37
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCallOpt37 {
+    actual_parameters_0: Box<ActualParameters>,
+}
+
+/// Type derived for production 38
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfStatement38 {
+    if_prefix_0: Box<IfPrefix>,
+    if_statement_suffix_1: Box<IfStatementSuffix>,
+}
+
+/// Type derived for production 39
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfStatementSuffix39 {
+    if_statement_opt_0: Box<IfStatementOpt>,
+    e_n_d_1: OwnedToken, /* END */
+}
+
+/// Type derived for production 40
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfStatementSuffix40 {
+    e_n_d_0: (),
+}
+
+/// Type derived for production 41
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfStatementOpt41 {
+    e_l_s_e_0: OwnedToken, /* ELSE */
+    statement_sequence_1: Box<StatementSequence>,
+}
+
+/// Type derived for production 42
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfPrefix42 {
+    i_f_0: OwnedToken, /* IF */
+    expression_1: Box<Expression>,
+    t_h_e_n_2: OwnedToken, /* THEN */
+    statement_sequence_3: Box<StatementSequence>,
+    if_prefix_list_4: Box<IfPrefixList>,
+}
+
+/// Type derived for production 45
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct WhileStatement45 {
+    w_h_i_l_e_0: OwnedToken, /* WHILE */
+    expression_1: Box<Expression>,
+    d_o_2: OwnedToken, /* DO */
+    statement_sequence_3: Box<StatementSequence>,
+    e_n_d_4: OwnedToken, /* END */
+}
+
+/// Type derived for production 46
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RepeatStatement46 {
+    r_e_p_e_a_t_0: OwnedToken, /* REPEAT */
+    statement_sequence_1: Box<StatementSequence>,
+    u_n_t_i_l_2: OwnedToken, /* UNTIL */
+    expression_3: Box<Expression>,
+}
+
+/// Type derived for production 47
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Statement47 {
+    assignment_0: Box<Assignment>,
+}
+
+/// Type derived for production 48
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Statement48 {
+    procedure_call_0: Box<ProcedureCall>,
+}
+
+/// Type derived for production 49
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Statement49 {
+    if_statement_0: Box<IfStatement>,
+}
+
+/// Type derived for production 50
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Statement50 {
+    while_statement_0: Box<WhileStatement>,
+}
+
+/// Type derived for production 51
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Statement51 {
+    repeat_statement_0: Box<RepeatStatement>,
+}
+
+/// Type derived for production 52
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequence52 {
+    statement_sequence_opt_0: Box<StatementSequenceOpt>,
+    statement_sequence_list_1: Box<StatementSequenceList>,
+}
+
+/// Type derived for production 53
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequence53 {
+    statement_sequence_list_0: (),
+}
+
+/// Type derived for production 54
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequenceOpt54 {
+    statement_0: Box<Statement>,
+}
+
+/// Type derived for production 56
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequenceListSuffix56 {
+    statement_sequence_opt_0: Box<StatementSequenceOpt>,
+    statement_sequence_list_1: Box<StatementSequenceList>,
+}
+
+/// Type derived for production 57
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequenceListSuffix57 {
+    statement_sequence_list_0: (),
+}
+
+/// Type derived for production 59
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IdentList59 {
+    ident_0: Box<Ident>,
+    ident_list_list_1: Box<IdentListList>,
+}
+
+/// Type derived for production 62
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ArrayType62 {
+    a_r_r_a_y_0: OwnedToken, /* ARRAY */
+    expression_1: Box<Expression>,
+    o_f_2: OwnedToken, /* OF */
+    type_3: Box<Type>,
+}
+
+/// Type derived for production 63
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FieldList63 {
+    ident_list_0: Box<IdentList>,
+    colon_1: OwnedToken, /* : */
+    type_2: Box<Type>,
+}
+
+/// Type derived for production 64
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordType64 {
+    r_e_c_o_r_d_0: OwnedToken, /* RECORD */
+    record_type_suffix_1: Box<RecordTypeSuffix>,
+}
+
+/// Type derived for production 65
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeSuffix65 {
+    record_type_opt_0: Box<RecordTypeOpt>,
+    record_type_list_1: Box<RecordTypeList>,
+    e_n_d_2: OwnedToken, /* END */
+}
+
+/// Type derived for production 66
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeSuffix66 {
+    record_type_list_1: Box<RecordTypeList>,
+    e_n_d_2: OwnedToken, /* END */
+}
+
+/// Type derived for production 67
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeOpt67 {
+    field_list_0: Box<FieldList>,
+}
+
+/// Type derived for production 69
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeListSuffix69 {
+    record_type_opt_0: Box<RecordTypeOpt>,
+    record_type_list_1: Box<RecordTypeList>,
+}
+
+/// Type derived for production 70
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeListSuffix70 {
+    record_type_list_0: (),
+}
+
+/// Type derived for production 72
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Type72 {
+    ident_0: Box<Ident>,
+}
+
+/// Type derived for production 73
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Type73 {
+    array_type_0: Box<ArrayType>,
+}
+
+/// Type derived for production 74
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Type74 {
+    record_type_0: Box<RecordType>,
+}
+
+/// Type derived for production 75
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FPSection75 {
+    f_p_section_opt_0: Box<FPSectionOpt>,
+    ident_list_1: Box<IdentList>,
+    colon_2: OwnedToken, /* : */
+    type_3: Box<Type>,
+}
+
+/// Type derived for production 76
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FPSection76 {
+    ident_list_1: Box<IdentList>,
+    colon_2: OwnedToken, /* : */
+    type_3: Box<Type>,
+}
+
+/// Type derived for production 77
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FPSectionOpt77 {
+    f_p_section_opt_0: OwnedToken, /* VAR */
+}
+
+/// Type derived for production 78
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParameters78 {
+    l_paren_0: OwnedToken, /* \( */
+    formal_parameters_suffix_1: Box<FormalParametersSuffix>,
+}
+
+/// Type derived for production 79
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParametersSuffix79 {
+    formal_parameters_opt_0: Box<FormalParametersOpt>,
+    r_paren_1: OwnedToken, /* \) */
+}
+
+/// Type derived for production 80
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParametersSuffix80 {
+    r_paren_0: (),
+}
+
+/// Type derived for production 81
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParametersOpt81 {
+    f_p_section_0: Box<FPSection>,
+    formal_parameters_opt_list_1: Box<FormalParametersOptList>,
+}
+
+/// Type derived for production 84
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeading84 {
+    p_r_o_c_e_d_u_r_e_0: OwnedToken, /* PROCEDURE */
+    ident_1: Box<Ident>,
+    procedure_heading_suffix_2: Box<ProcedureHeadingSuffix>,
+}
+
+/// Type derived for production 85
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeadingSuffix85 {
+    opt: Option<Box<ProcedureHeadingOpt>>,
+}
+
+/// Type derived for production 86
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeadingSuffix86 {
+    opt: Option<Box<ProcedureHeadingOpt>>,
+}
+
+/// Type derived for production 87
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeadingOpt87 {
+    formal_parameters_0: Box<FormalParameters>,
+}
+
+/// Type derived for production 88
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBody88 {
+    declarations_0: Box<Declarations>,
+    procedure_body_suffix1_1: Box<ProcedureBodySuffix1>,
+}
+
+/// Type derived for production 89
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBodySuffix1_89 {
+    b_e_g_i_n_0: OwnedToken, /* BEGIN */
+    statement_sequence_1: Box<StatementSequence>,
+    procedure_body_suffix_2: Box<ProcedureBodySuffix>,
+}
+
+/// Type derived for production 90
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBodySuffix1_90 {
+    r_e_t_u_r_n_0: OwnedToken, /* RETURN */
+    expression_1: Box<Expression>,
+    e_n_d_2: OwnedToken, /* END */
+    ident_3: Box<Ident>,
+}
+
+/// Type derived for production 91
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBodySuffix1_91 {
+    e_n_d_0: OwnedToken, /* END */
+    ident_1: Box<Ident>,
+}
+
+/// Type derived for production 92
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBodySuffix92 {
+    r_e_t_u_r_n_0: OwnedToken, /* RETURN */
+    expression_1: Box<Expression>,
+    e_n_d_2: OwnedToken, /* END */
+    ident_3: Box<Ident>,
+}
+
+/// Type derived for production 93
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBodySuffix93 {
+    e_n_d_0: OwnedToken, /* END */
+    ident_1: Box<Ident>,
+}
+
+/// Type derived for production 94
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureDeclaration94 {
+    procedure_heading_0: Box<ProcedureHeading>,
+    semicolon_1: OwnedToken, /* ; */
+    procedure_body_2: Box<ProcedureBody>,
+}
+
+/// Type derived for production 95
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declarations95 {
+    type_0: OwnedToken, /* Type */
+    type_decls_1: Box<TypeDecls>,
+    declarations_suffix2_2: Box<DeclarationsSuffix2>,
+}
+
+/// Type derived for production 96
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declarations96 {
+    c_o_n_s_t_0: OwnedToken, /* CONST */
+    const_decls_1: Box<ConstDecls>,
+    declarations_suffix1_2: Box<DeclarationsSuffix1>,
+}
+
+/// Type derived for production 97
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix2_97 {
+    declarations_opt_0: Box<DeclarationsOpt>,
+    procedure_declaration_list_1: Box<ProcedureDeclarationList>,
+}
+
+/// Type derived for production 98
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix2_98 {
+    procedure_declaration_list_0: (),
+}
+
+/// Type derived for production 99
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declarations99 {
+    f_p_section_opt_0: OwnedToken, /* VAR */
+    var_decls_1: Box<VarDecls>,
+    procedure_declaration_list_2: Box<ProcedureDeclarationList>,
+}
+
+/// Type derived for production 100
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declarations100 {
+    procedure_declaration_list_0: Box<ProcedureDeclarationList>,
+}
+
+/// Type derived for production 101
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix1_101 {
+    type_0: OwnedToken, /* Type */
+    type_decls_1: Box<TypeDecls>,
+    declarations_suffix_2: Box<DeclarationsSuffix>,
+}
+
+/// Type derived for production 102
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix1_102 {
+    declarations_opt_0: Box<DeclarationsOpt>,
+    procedure_declaration_list_1: Box<ProcedureDeclarationList>,
+}
+
+/// Type derived for production 103
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix1_103 {
+    procedure_declaration_list_0: (),
+}
+
+/// Type derived for production 104
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix104 {
+    declarations_opt_0: Box<DeclarationsOpt>,
+    procedure_declaration_list_1: Box<ProcedureDeclarationList>,
+}
+
+/// Type derived for production 105
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsSuffix105 {
+    procedure_declaration_list_0: (),
+}
+
+/// Type derived for production 106
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsOpt106 {
+    f_p_section_opt_0: OwnedToken, /* VAR */
+    var_decls_1: Box<VarDecls>,
+}
+
+/// Type derived for production 107
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureDeclarationList107 {
+    procedure_declaration_list_list_0: Box<ProcedureDeclarationListList>,
+}
+
+/// Type derived for production 110
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ConstDecls110 {
+    const_decls_list_0: Box<ConstDeclsList>,
+}
+
+/// Type derived for production 113
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct TypeDecls113 {
+    type_decls_list_0: Box<TypeDeclsList>,
+}
+
+/// Type derived for production 116
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct VarDecls116 {
+    var_decls_list_0: Box<VarDeclsList>,
+}
+
+/// Type derived for production 119
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Module119 {
+    m_o_d_u_l_e_0: OwnedToken, /* MODULE */
+    ident_1: Box<Ident>,
+    semicolon_2: OwnedToken, /* ; */
+    declarations_3: Box<Declarations>,
+    module_suffix_4: Box<ModuleSuffix>,
+}
+
+/// Type derived for production 120
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ModuleSuffix120 {
+    module_opt_0: Box<ModuleOpt>,
+    e_n_d_1: OwnedToken, /* END */
+    ident_2: Box<Ident>,
+    dot_3: OwnedToken, /* \. */
+}
+
+/// Type derived for production 121
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ModuleSuffix121 {
+    e_n_d_1: OwnedToken, /* END */
+    ident_2: Box<Ident>,
+    dot_3: OwnedToken, /* \. */
+}
+
+/// Type derived for production 122
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ModuleOpt122 {
+    b_e_g_i_n_0: OwnedToken, /* BEGIN */
+    statement_sequence_1: Box<StatementSequence>,
+}
+
+/// Type derived for production 123
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct MulOperator123 {
+    mul_operator_0: OwnedToken, /* \*|/|DIV|MOD|& */
+}
+
+/// Type derived for production 124
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AddOperator124 {
+    add_operator_0: OwnedToken, /* \+|-|OR */
+}
+
+/// Type derived for production 125
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct UnaryOp125 {
+    unary_op_0: OwnedToken, /* \+|- */
+}
+
+/// Type derived for production 126
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Ident126 {
+    ident_0: OwnedToken, /* [a-zA-Z][a-zA-Z0-9]* */
+}
+
+/// Type derived for production 127
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Integer127 {
+    integer_0: OwnedToken, /* [0-9]+ */
+}
+
+//
+// Types of non-terminals deduced from the structure of the transformed grammar
+//
+
+/// Type derived for non-terminal ActualParameters
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParameters {
+    l_paren_0: OwnedToken, /* \( */
+    actual_parameters_suffix_1: Box<ActualParametersSuffix>,
+}
+
+/// Type derived for non-terminal ActualParametersOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParametersOpt {
+    expression_0: Box<Expression>,
+    actual_parameters_opt_list_1: Box<ActualParametersOptList>,
+}
+
+/// Type derived for non-terminal ActualParametersOptList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ActualParametersOptList {
+    vec: Vec<(OwnedToken /* , */, Expression)>,
+}
+
+/// Type derived for non-terminal ActualParametersSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ActualParametersSuffix {
+    ActualParametersSuffix0(Box<ActualParametersSuffix29>),
+    ActualParametersSuffix1(Box<ActualParametersSuffix30>),
+}
+
+/// Type derived for non-terminal AddExpression
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AddExpression {
+    add_expression_list_0: Box<AddExpressionList>,
+}
+
+/// Type derived for non-terminal AddExpressionList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AddExpressionList {
+    vec: Vec<(AddOperator, Term)>,
+}
+
+/// Type derived for non-terminal AddOperator
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AddOperator {
+    add_operator_0: OwnedToken, /* \+|-|OR */
+}
+
+/// Type derived for non-terminal ArrayType
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ArrayType {
+    a_r_r_a_y_0: OwnedToken, /* ARRAY */
+    expression_1: Box<Expression>,
+    o_f_2: OwnedToken, /* OF */
+    type_3: Box<Type>,
+}
+
+/// Type derived for non-terminal AssignOp
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum AssignOp {
+    AssignOp0(Box<AssignOp18>),
+    AssignOp1(Box<AssignOp22>),
+}
+
+/// Type derived for non-terminal Assignment
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Assignment {
+    ident_0: Box<Ident>,
+    selector_1: Box<Selector>,
+    assign_op_2: Box<AssignOp>,
+    expression_3: Box<Expression>,
+}
+
+/// Type derived for non-terminal ConstDecls
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ConstDecls {
+    const_decls_list_0: Box<ConstDeclsList>,
+}
+
+/// Type derived for non-terminal ConstDeclsList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ConstDeclsList {
+    vec: Vec<(Ident, AssignOp, Expression, OwnedToken /* ; */)>,
+}
+
+/// Type derived for non-terminal Expression
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Expression {
+    simple_expression_0: Box<SimpleExpression>,
+    expression_suffix_1: Box<ExpressionSuffix>,
+}
+
+/// Type derived for non-terminal ExpressionOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ExpressionOpt {
+    relation_op_0: Box<RelationOp>,
+    simple_expression_1: Box<SimpleExpression>,
+}
+
+/// Type derived for non-terminal ExpressionSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ExpressionSuffix {
+    opt: Option<Box<ExpressionOpt>>,
+}
+
+/// Type derived for non-terminal FPSection
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum FPSection {
+    FPSection0(Box<FPSection75>),
+    FPSection1(Box<FPSection76>),
+}
+
+/// Type derived for non-terminal FPSectionOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FPSectionOpt {
+    f_p_section_opt_0: OwnedToken, /* VAR */
+}
+
+/// Type derived for non-terminal Factor
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Factor {
+    Factor0(Box<Factor5>),
+    Factor1(Box<Factor6>),
+    Factor2(Box<Factor7>),
+    Factor3(Box<Factor8>),
+    Factor4(Box<Factor9>),
+}
+
+/// Type derived for non-terminal FieldList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FieldList {
+    ident_list_0: Box<IdentList>,
+    colon_1: OwnedToken, /* : */
+    type_2: Box<Type>,
+}
+
+/// Type derived for non-terminal FormalParameters
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParameters {
+    l_paren_0: OwnedToken, /* \( */
+    formal_parameters_suffix_1: Box<FormalParametersSuffix>,
+}
+
+/// Type derived for non-terminal FormalParametersOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParametersOpt {
+    f_p_section_0: Box<FPSection>,
+    formal_parameters_opt_list_1: Box<FormalParametersOptList>,
+}
+
+/// Type derived for non-terminal FormalParametersOptList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct FormalParametersOptList {
+    vec: Vec<(OwnedToken /* ; */, FPSection)>,
+}
+
+/// Type derived for non-terminal FormalParametersSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum FormalParametersSuffix {
+    FormalParametersSuffix0(Box<FormalParametersSuffix79>),
+    FormalParametersSuffix1(Box<FormalParametersSuffix80>),
+}
+
+/// Type derived for non-terminal Ident
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Ident {
+    ident_0: OwnedToken, /* [a-zA-Z][a-zA-Z0-9]* */
+}
+
+/// Type derived for non-terminal IdentList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IdentList {
+    ident_0: Box<Ident>,
+    ident_list_list_1: Box<IdentListList>,
+}
+
+/// Type derived for non-terminal IdentListList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IdentListList {
+    vec: Vec<(OwnedToken /* , */, Ident)>,
+}
+
+/// Type derived for non-terminal IfPrefix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfPrefix {
+    i_f_0: OwnedToken, /* IF */
+    expression_1: Box<Expression>,
+    t_h_e_n_2: OwnedToken, /* THEN */
+    statement_sequence_3: Box<StatementSequence>,
+    if_prefix_list_4: Box<IfPrefixList>,
+}
+
+/// Type derived for non-terminal IfPrefixList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfPrefixList {
+    vec: Vec<(
+        OwnedToken, /* ELSIF */
+        Expression,
+        OwnedToken, /* THEN */
+        StatementSequence,
+    )>,
+}
+
+/// Type derived for non-terminal IfStatement
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfStatement {
+    if_prefix_0: Box<IfPrefix>,
+    if_statement_suffix_1: Box<IfStatementSuffix>,
+}
+
+/// Type derived for non-terminal IfStatementOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct IfStatementOpt {
+    e_l_s_e_0: OwnedToken, /* ELSE */
+    statement_sequence_1: Box<StatementSequence>,
+}
+
+/// Type derived for non-terminal IfStatementSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum IfStatementSuffix {
+    IfStatementSuffix0(Box<IfStatementSuffix39>),
+    IfStatementSuffix1(Box<IfStatementSuffix40>),
+}
+
+/// Type derived for non-terminal Integer
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Integer {
+    integer_0: OwnedToken, /* [0-9]+ */
+}
+
+/// Type derived for non-terminal MulExpression
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct MulExpression {
+    mul_expression_list_0: Box<MulExpressionList>,
+}
+
+/// Type derived for non-terminal MulExpressionList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct MulExpressionList {
+    vec: Vec<(MulOperator, Factor)>,
+}
+
+/// Type derived for non-terminal MulOperator
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct MulOperator {
+    mul_operator_0: OwnedToken, /* \*|/|DIV|MOD|& */
+}
+
+/// Type derived for non-terminal ProcedureBody
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureBody {
+    declarations_0: Box<Declarations>,
+    procedure_body_suffix1_1: Box<ProcedureBodySuffix1>,
+}
+
+/// Type derived for non-terminal ProcedureBodySuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ProcedureBodySuffix {
+    ProcedureBodySuffix0(Box<ProcedureBodySuffix92>),
+    ProcedureBodySuffix1(Box<ProcedureBodySuffix93>),
+}
+
+/// Type derived for non-terminal ProcedureBodySuffix1
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ProcedureBodySuffix1 {
+    ProcedureBodySuffix1_0(Box<ProcedureBodySuffix1_89>),
+    ProcedureBodySuffix1_1(Box<ProcedureBodySuffix1_90>),
+    ProcedureBodySuffix1_2(Box<ProcedureBodySuffix1_91>),
+}
+
+/// Type derived for non-terminal ProcedureCall
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCall {
+    ident_0: Box<Ident>,
+    procedure_call_suffix_1: Box<ProcedureCallSuffix>,
+}
+
+/// Type derived for non-terminal ProcedureCallOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCallOpt {
+    actual_parameters_0: Box<ActualParameters>,
+}
+
+/// Type derived for non-terminal ProcedureCallSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureCallSuffix {
+    opt: Option<Box<ProcedureCallOpt>>,
+}
+
+/// Type derived for non-terminal ProcedureDeclaration
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureDeclaration {
+    procedure_heading_0: Box<ProcedureHeading>,
+    semicolon_1: OwnedToken, /* ; */
+    procedure_body_2: Box<ProcedureBody>,
+}
+
+/// Type derived for non-terminal ProcedureDeclarationList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureDeclarationList {
+    procedure_declaration_list_list_0: Box<ProcedureDeclarationListList>,
+}
+
+/// Type derived for non-terminal ProcedureDeclarationListList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureDeclarationListList {
+    vec: Vec<(ProcedureDeclaration, OwnedToken /* ; */)>,
+}
+
+/// Type derived for non-terminal ProcedureHeading
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeading {
+    p_r_o_c_e_d_u_r_e_0: OwnedToken, /* PROCEDURE */
+    ident_1: Box<Ident>,
+    procedure_heading_suffix_2: Box<ProcedureHeadingSuffix>,
+}
+
+/// Type derived for non-terminal ProcedureHeadingOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeadingOpt {
+    formal_parameters_0: Box<FormalParameters>,
+}
+
+/// Type derived for non-terminal ProcedureHeadingSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ProcedureHeadingSuffix {
+    opt: Option<Box<ProcedureHeadingOpt>>,
+}
+
+/// Type derived for non-terminal RecordType
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordType {
+    r_e_c_o_r_d_0: OwnedToken, /* RECORD */
+    record_type_suffix_1: Box<RecordTypeSuffix>,
+}
+
+/// Type derived for non-terminal RecordTypeList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeList {
+    vec: Vec<OwnedToken /* ; */>,
+}
+
+/// Type derived for non-terminal RecordTypeListSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum RecordTypeListSuffix {
+    RecordTypeListSuffix0(Box<RecordTypeListSuffix69>),
+    RecordTypeListSuffix1(Box<RecordTypeListSuffix70>),
+}
+
+/// Type derived for non-terminal RecordTypeOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RecordTypeOpt {
+    field_list_0: Box<FieldList>,
+}
+
+/// Type derived for non-terminal RecordTypeSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum RecordTypeSuffix {
+    RecordTypeSuffix0(Box<RecordTypeSuffix65>),
+    RecordTypeSuffix1(Box<RecordTypeSuffix66>),
+}
+
+/// Type derived for non-terminal RelationOp
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum RelationOp {
+    RelationOp0(Box<RelationOp19>),
+    RelationOp1(Box<RelationOp20>),
+}
+
+/// Type derived for non-terminal RelationalOps
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RelationalOps {
+    relational_ops_0: OwnedToken, /* >=|<=|\#|<|> */
+}
+
+/// Type derived for non-terminal RepeatStatement
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct RepeatStatement {
+    r_e_p_e_a_t_0: OwnedToken, /* REPEAT */
+    statement_sequence_1: Box<StatementSequence>,
+    u_n_t_i_l_2: OwnedToken, /* UNTIL */
+    expression_3: Box<Expression>,
+}
+
+/// Type derived for non-terminal Selector
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Selector {
+    selector_list_0: Box<SelectorList>,
+}
+
+/// Type derived for non-terminal SelectorList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SelectorList {
+    vec: Vec<SelectorListGroup>,
+}
+
+/// Type derived for non-terminal SelectorListGroup
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum SelectorListGroup {
+    SelectorListGroup0(Box<SelectorListGroup2>),
+    SelectorListGroup1(Box<SelectorListGroup3>),
+}
+
+/// Type derived for non-terminal SimpleExpression
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SimpleExpression {
+    term_0: Box<Term>,
+    add_expression_1: Box<AddExpression>,
+}
+
+/// Type derived for non-terminal Statement
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Statement {
+    Statement0(Box<Statement47>),
+    Statement1(Box<Statement48>),
+    Statement2(Box<Statement49>),
+    Statement3(Box<Statement50>),
+    Statement4(Box<Statement51>),
+}
+
+/// Type derived for non-terminal StatementSequence
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum StatementSequence {
+    StatementSequence0(Box<StatementSequence52>),
+    StatementSequence1(Box<StatementSequence53>),
+}
+
+/// Type derived for non-terminal StatementSequenceList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequenceList {
+    vec: Vec<OwnedToken /* ; */>,
+}
+
+/// Type derived for non-terminal StatementSequenceListSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum StatementSequenceListSuffix {
+    StatementSequenceListSuffix0(Box<StatementSequenceListSuffix56>),
+    StatementSequenceListSuffix1(Box<StatementSequenceListSuffix57>),
+}
+
+/// Type derived for non-terminal StatementSequenceOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StatementSequenceOpt {
+    statement_0: Box<Statement>,
+}
+
+/// Type derived for non-terminal Term
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Term {
+    factor_0: Box<Factor>,
+    mul_expression_1: Box<MulExpression>,
+}
+
+/// Type derived for non-terminal Type
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Type {
+    Type0(Box<Type72>),
+    Type1(Box<Type73>),
+    Type2(Box<Type74>),
+}
+
+/// Type derived for non-terminal TypeDecls
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct TypeDecls {
+    type_decls_list_0: Box<TypeDeclsList>,
+}
+
+/// Type derived for non-terminal TypeDeclsList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct TypeDeclsList {
+    vec: Vec<(Ident, AssignOp, Type, OwnedToken /* ; */)>,
+}
+
+/// Type derived for non-terminal UnaryOp
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct UnaryOp {
+    unary_op_0: OwnedToken, /* \+|- */
+}
+
+/// Type derived for non-terminal VarDecls
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct VarDecls {
+    var_decls_list_0: Box<VarDeclsList>,
+}
+
+/// Type derived for non-terminal VarDeclsList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct VarDeclsList {
+    vec: Vec<(
+        IdentList,
+        OwnedToken, /* : */
+        Type,
+        OwnedToken, /* ; */
+    )>,
+}
+
+/// Type derived for non-terminal WhileStatement
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct WhileStatement {
+    w_h_i_l_e_0: OwnedToken, /* WHILE */
+    expression_1: Box<Expression>,
+    d_o_2: OwnedToken, /* DO */
+    statement_sequence_3: Box<StatementSequence>,
+    e_n_d_4: OwnedToken, /* END */
+}
+
+/// Type derived for non-terminal declarations
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Declarations {
+    Declarations0(Box<Declarations95>),
+    Declarations1(Box<Declarations96>),
+    Declarations2(Box<Declarations99>),
+    Declarations3(Box<Declarations100>),
+}
+
+/// Type derived for non-terminal declarationsOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct DeclarationsOpt {
+    f_p_section_opt_0: OwnedToken, /* VAR */
+    var_decls_1: Box<VarDecls>,
+}
+
+/// Type derived for non-terminal declarationsSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum DeclarationsSuffix {
+    DeclarationsSuffix0(Box<DeclarationsSuffix104>),
+    DeclarationsSuffix1(Box<DeclarationsSuffix105>),
+}
+
+/// Type derived for non-terminal declarationsSuffix1
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum DeclarationsSuffix1 {
+    DeclarationsSuffix1_0(Box<DeclarationsSuffix1_101>),
+    DeclarationsSuffix1_1(Box<DeclarationsSuffix1_102>),
+    DeclarationsSuffix1_2(Box<DeclarationsSuffix1_103>),
+}
+
+/// Type derived for non-terminal declarationsSuffix2
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum DeclarationsSuffix2 {
+    DeclarationsSuffix2_0(Box<DeclarationsSuffix2_97>),
+    DeclarationsSuffix2_1(Box<DeclarationsSuffix2_98>),
+}
+
+/// Type derived for non-terminal module
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Module {
+    m_o_d_u_l_e_0: OwnedToken, /* MODULE */
+    ident_1: Box<Ident>,
+    semicolon_2: OwnedToken, /* ; */
+    declarations_3: Box<Declarations>,
+    module_suffix_4: Box<ModuleSuffix>,
+}
+
+/// Type derived for non-terminal moduleOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ModuleOpt {
+    b_e_g_i_n_0: OwnedToken, /* BEGIN */
+    statement_sequence_1: Box<StatementSequence>,
+}
+
+/// Type derived for non-terminal moduleSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ModuleSuffix {
+    ModuleSuffix0(Box<ModuleSuffix120>),
+    ModuleSuffix1(Box<ModuleSuffix121>),
+}
 
 ///
 /// The `Oberon0GrammarTrait` trait is automatically generated for the
@@ -22,11 +1481,11 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 0:
     ///
-    /// selector: selectorlist;
+    /// Selector: SelectorList;
     ///
     fn selector_0(
         &mut self,
-        _selectorlist_0: &ParseTreeStackEntry,
+        _selector_list_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -34,13 +1493,12 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 1:
     ///
-    /// selectorlist: "\." ident selectorlist;
+    /// SelectorList: SelectorListGroup SelectorList;
     ///
-    fn selectorlist_1(
+    fn selector_list_1(
         &mut self,
-        _dot_0: &ParseTreeStackEntry,
-        _ident_1: &ParseTreeStackEntry,
-        _selectorlist_2: &ParseTreeStackEntry,
+        _selector_list_group_0: &ParseTreeStackEntry,
+        _selector_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -48,14 +1506,12 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 2:
     ///
-    /// selectorlist: "\[" expression "]" selectorlist;
+    /// SelectorListGroup: "\." Ident;
     ///
-    fn selectorlist_2(
+    fn selector_list_group_2(
         &mut self,
-        _l_bracket_0: &ParseTreeStackEntry,
-        _expression_1: &ParseTreeStackEntry,
-        _r_bracket_2: &ParseTreeStackEntry,
-        _selectorlist_3: &ParseTreeStackEntry,
+        _dot_0: &ParseTreeStackEntry,
+        _ident_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -63,17 +1519,31 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 3:
     ///
-    /// selectorlist: ;
+    /// SelectorListGroup: "\[" Expression "]";
     ///
-    fn selectorlist_3(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn selector_list_group_3(
+        &mut self,
+        _l_bracket_0: &ParseTreeStackEntry,
+        _expression_1: &ParseTreeStackEntry,
+        _r_bracket_2: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
         Ok(())
     }
 
     /// Semantic action for production 4:
     ///
-    /// factor: ident selector;
+    /// SelectorList: /* Vec<SelectorList>::New */;
     ///
-    fn factor_4(
+    fn selector_list_4(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 5:
+    ///
+    /// Factor: Ident Selector;
+    ///
+    fn factor_5(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _selector_1: &ParseTreeStackEntry,
@@ -82,11 +1552,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 5:
+    /// Semantic action for production 6:
     ///
-    /// factor: integer;
+    /// Factor: Integer;
     ///
-    fn factor_5(
+    fn factor_6(
         &mut self,
         _integer_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -94,11 +1564,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 6:
+    /// Semantic action for production 7:
     ///
-    /// factor: "\(" expression "\)";
+    /// Factor: "\(" Expression "\)";
     ///
-    fn factor_6(
+    fn factor_7(
         &mut self,
         _l_paren_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -108,11 +1578,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 7:
+    /// Semantic action for production 8:
     ///
-    /// factor: "~" factor;
+    /// Factor: "~" Factor;
     ///
-    fn factor_7(
+    fn factor_8(
         &mut self,
         _tilde_0: &ParseTreeStackEntry,
         _factor_1: &ParseTreeStackEntry,
@@ -121,11 +1591,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 8:
+    /// Semantic action for production 9:
     ///
-    /// factor: UnaryOp factor;
+    /// Factor: UnaryOp Factor;
     ///
-    fn factor_8(
+    fn factor_9(
         &mut self,
         _unary_op_0: &ParseTreeStackEntry,
         _factor_1: &ParseTreeStackEntry,
@@ -134,11 +1604,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 9:
+    /// Semantic action for production 10:
     ///
-    /// term: factor MulExpression;
+    /// Term: Factor MulExpression;
     ///
-    fn term_9(
+    fn term_10(
         &mut self,
         _factor_0: &ParseTreeStackEntry,
         _mul_expression_1: &ParseTreeStackEntry,
@@ -147,33 +1617,45 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 10:
+    /// Semantic action for production 11:
     ///
-    /// MulExpression: MulOperator factor MulExpression;
+    /// MulExpression: MulExpressionList;
     ///
-    fn mul_expression_10(
+    fn mul_expression_11(
         &mut self,
-        _mul_operator_0: &ParseTreeStackEntry,
-        _factor_1: &ParseTreeStackEntry,
-        _mul_expression_2: &ParseTreeStackEntry,
+        _mul_expression_list_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 11:
+    /// Semantic action for production 12:
     ///
-    /// MulExpression: ;
+    /// MulExpressionList: MulOperator Factor MulExpressionList;
     ///
-    fn mul_expression_11(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn mul_expression_list_12(
+        &mut self,
+        _mul_operator_0: &ParseTreeStackEntry,
+        _factor_1: &ParseTreeStackEntry,
+        _mul_expression_list_2: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 12:
+    /// Semantic action for production 13:
     ///
-    /// SimpleExpression: term AddExpression;
+    /// MulExpressionList: /* Vec<MulExpressionList>::New */;
     ///
-    fn simple_expression_12(
+    fn mul_expression_list_13(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 14:
+    ///
+    /// SimpleExpression: Term AddExpression;
+    ///
+    fn simple_expression_14(
         &mut self,
         _term_0: &ParseTreeStackEntry,
         _add_expression_1: &ParseTreeStackEntry,
@@ -182,35 +1664,13 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 13:
-    ///
-    /// AddExpression: AddOperator term AddExpression;
-    ///
-    fn add_expression_13(
-        &mut self,
-        _add_operator_0: &ParseTreeStackEntry,
-        _term_1: &ParseTreeStackEntry,
-        _add_expression_2: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 14:
-    ///
-    /// AddExpression: ;
-    ///
-    fn add_expression_14(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
     /// Semantic action for production 15:
     ///
-    /// AssignOp: ":=";
+    /// AddExpression: AddExpressionList;
     ///
-    fn assign_op_15(
+    fn add_expression_15(
         &mut self,
-        _colon_equ_0: &ParseTreeStackEntry,
+        _add_expression_list_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -218,11 +1678,13 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 16:
     ///
-    /// RelationOp: AssignOp;
+    /// AddExpressionList: AddOperator Term AddExpressionList;
     ///
-    fn relation_op_16(
+    fn add_expression_list_16(
         &mut self,
-        _assign_op_0: &ParseTreeStackEntry,
+        _add_operator_0: &ParseTreeStackEntry,
+        _term_1: &ParseTreeStackEntry,
+        _add_expression_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -230,23 +1692,19 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 17:
     ///
-    /// RelationOp: RelationalOps;
+    /// AddExpressionList: /* Vec<AddExpressionList>::New */;
     ///
-    fn relation_op_17(
-        &mut self,
-        _relational_ops_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
+    fn add_expression_list_17(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
     /// Semantic action for production 18:
     ///
-    /// RelationalOps: ">=|<=|\#|<|>";
+    /// AssignOp: ":=";
     ///
-    fn relational_ops_18(
+    fn assign_op_18(
         &mut self,
-        _relational_ops_0: &ParseTreeStackEntry,
+        _colon_equ_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -254,11 +1712,11 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 19:
     ///
-    /// AssignOp: "=";
+    /// RelationOp: AssignOp;
     ///
-    fn assign_op_19(
+    fn relation_op_19(
         &mut self,
-        _equ_0: &ParseTreeStackEntry,
+        _assign_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -266,9 +1724,45 @@ pub trait Oberon0GrammarTrait {
 
     /// Semantic action for production 20:
     ///
-    /// expression: SimpleExpression expressionSuffix;
+    /// RelationOp: RelationalOps;
     ///
-    fn expression_20(
+    fn relation_op_20(
+        &mut self,
+        _relational_ops_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 21:
+    ///
+    /// RelationalOps: ">=|<=|\#|<|>";
+    ///
+    fn relational_ops_21(
+        &mut self,
+        _relational_ops_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 22:
+    ///
+    /// AssignOp: "=";
+    ///
+    fn assign_op_22(
+        &mut self,
+        _equ_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 23:
+    ///
+    /// Expression: SimpleExpression ExpressionSuffix;
+    ///
+    fn expression_23(
         &mut self,
         _simple_expression_0: &ParseTreeStackEntry,
         _expression_suffix_1: &ParseTreeStackEntry,
@@ -277,11 +1771,31 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 21:
+    /// Semantic action for production 24:
     ///
-    /// expressionSuffix: RelationOp SimpleExpression;
+    /// ExpressionSuffix: ExpressionOpt;
     ///
-    fn expression_suffix_21(
+    fn expression_suffix_24(
+        &mut self,
+        _expression_opt_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 25:
+    ///
+    /// ExpressionSuffix: /* Option<ExpressionOpt>::None */;
+    ///
+    fn expression_suffix_25(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 26:
+    ///
+    /// ExpressionOpt: RelationOp SimpleExpression;
+    ///
+    fn expression_opt_26(
         &mut self,
         _relation_op_0: &ParseTreeStackEntry,
         _simple_expression_1: &ParseTreeStackEntry,
@@ -290,19 +1804,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 22:
+    /// Semantic action for production 27:
     ///
-    /// expressionSuffix: ;
+    /// Assignment: Ident Selector AssignOp Expression;
     ///
-    fn expression_suffix_22(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 23:
-    ///
-    /// assignment: ident selector AssignOp expression;
-    ///
-    fn assignment_23(
+    fn assignment_27(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _selector_1: &ParseTreeStackEntry,
@@ -313,11 +1819,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 24:
+    /// Semantic action for production 28:
     ///
     /// ActualParameters: "\(" ActualParametersSuffix;
     ///
-    fn actual_parameters_24(
+    fn actual_parameters_28(
         &mut self,
         _l_paren_0: &ParseTreeStackEntry,
         _actual_parameters_suffix_1: &ParseTreeStackEntry,
@@ -326,59 +1832,71 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 25:
+    /// Semantic action for production 29:
     ///
-    /// ActualParametersSuffix: "\)";
+    /// ActualParametersSuffix: ActualParametersOpt "\)";
     ///
-    fn actual_parameters_suffix_25(
+    fn actual_parameters_suffix_29(
         &mut self,
-        _r_paren_0: &ParseTreeStackEntry,
+        _actual_parameters_opt_0: &ParseTreeStackEntry,
+        _r_paren_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 26:
+    /// Semantic action for production 30:
     ///
-    /// ActualParametersSuffix: expression expressionlistrest "\)";
+    /// ActualParametersSuffix: /* Option<ActualParametersOpt>::None */ "\)";
     ///
-    fn actual_parameters_suffix_26(
+    fn actual_parameters_suffix_30(
+        &mut self,
+        _r_paren_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 31:
+    ///
+    /// ActualParametersOpt: Expression ActualParametersOptList;
+    ///
+    fn actual_parameters_opt_31(
         &mut self,
         _expression_0: &ParseTreeStackEntry,
-        _expressionlistrest_1: &ParseTreeStackEntry,
-        _r_paren_2: &ParseTreeStackEntry,
+        _actual_parameters_opt_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 27:
+    /// Semantic action for production 32:
     ///
-    /// expressionlistrest: "," expression expressionlistrest;
+    /// ActualParametersOptList: "," Expression ActualParametersOptList;
     ///
-    fn expressionlistrest_27(
+    fn actual_parameters_opt_list_32(
         &mut self,
         _comma_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
-        _expressionlistrest_2: &ParseTreeStackEntry,
+        _actual_parameters_opt_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 28:
+    /// Semantic action for production 33:
     ///
-    /// expressionlistrest: ;
+    /// ActualParametersOptList: /* Vec<ActualParametersOptList>::New */;
     ///
-    fn expressionlistrest_28(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn actual_parameters_opt_list_33(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 29:
+    /// Semantic action for production 34:
     ///
-    /// ProcedureCall: ident ProcedureCallSuffix;
+    /// ProcedureCall: Ident ProcedureCallSuffix;
     ///
-    fn procedure_call_29(
+    fn procedure_call_34(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _procedure_call_suffix_1: &ParseTreeStackEntry,
@@ -387,11 +1905,31 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 30:
+    /// Semantic action for production 35:
     ///
-    /// ProcedureCallSuffix: ActualParameters;
+    /// ProcedureCallSuffix: ProcedureCallOpt;
     ///
-    fn procedure_call_suffix_30(
+    fn procedure_call_suffix_35(
+        &mut self,
+        _procedure_call_opt_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 36:
+    ///
+    /// ProcedureCallSuffix: /* Option<ProcedureCallOpt>::None */;
+    ///
+    fn procedure_call_suffix_36(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 37:
+    ///
+    /// ProcedureCallOpt: ActualParameters;
+    ///
+    fn procedure_call_opt_37(
         &mut self,
         _actual_parameters_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -399,19 +1937,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 31:
-    ///
-    /// ProcedureCallSuffix: ;
-    ///
-    fn procedure_call_suffix_31(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 32:
+    /// Semantic action for production 38:
     ///
     /// IfStatement: IfPrefix IfStatementSuffix;
     ///
-    fn if_statement_32(
+    fn if_statement_38(
         &mut self,
         _if_prefix_0: &ParseTreeStackEntry,
         _if_statement_suffix_1: &ParseTreeStackEntry,
@@ -420,77 +1950,89 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 33:
+    /// Semantic action for production 39:
     ///
-    /// IfStatementSuffix: "ELSE" StatementSequence "END";
+    /// IfStatementSuffix: IfStatementOpt "END";
     ///
-    fn if_statement_suffix_33(
+    fn if_statement_suffix_39(
+        &mut self,
+        _if_statement_opt_0: &ParseTreeStackEntry,
+        _e_n_d_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 40:
+    ///
+    /// IfStatementSuffix: /* Option<IfStatementOpt>::None */ "END";
+    ///
+    fn if_statement_suffix_40(
+        &mut self,
+        _e_n_d_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 41:
+    ///
+    /// IfStatementOpt: "ELSE" StatementSequence;
+    ///
+    fn if_statement_opt_41(
         &mut self,
         _e_l_s_e_0: &ParseTreeStackEntry,
         _statement_sequence_1: &ParseTreeStackEntry,
-        _e_n_d_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 34:
+    /// Semantic action for production 42:
     ///
-    /// IfStatementSuffix: "END";
+    /// IfPrefix: "IF" Expression "THEN" StatementSequence IfPrefixList;
     ///
-    fn if_statement_suffix_34(
-        &mut self,
-        _e_n_d_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 35:
-    ///
-    /// IfPrefix: "IF" expression "THEN" StatementSequence elseiflist;
-    ///
-    fn if_prefix_35(
+    fn if_prefix_42(
         &mut self,
         _i_f_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
         _t_h_e_n_2: &ParseTreeStackEntry,
         _statement_sequence_3: &ParseTreeStackEntry,
-        _elseiflist_4: &ParseTreeStackEntry,
+        _if_prefix_list_4: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 36:
+    /// Semantic action for production 43:
     ///
-    /// elseiflist: "ELSIF" expression "THEN" StatementSequence elseiflist;
+    /// IfPrefixList: "ELSIF" Expression "THEN" StatementSequence IfPrefixList;
     ///
-    fn elseiflist_36(
+    fn if_prefix_list_43(
         &mut self,
         _e_l_s_i_f_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
         _t_h_e_n_2: &ParseTreeStackEntry,
         _statement_sequence_3: &ParseTreeStackEntry,
-        _elseiflist_4: &ParseTreeStackEntry,
+        _if_prefix_list_4: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 37:
+    /// Semantic action for production 44:
     ///
-    /// elseiflist: ;
+    /// IfPrefixList: /* Vec<IfPrefixList>::New */;
     ///
-    fn elseiflist_37(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn if_prefix_list_44(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 38:
+    /// Semantic action for production 45:
     ///
-    /// WhileStatement: "WHILE" expression "DO" StatementSequence "END";
+    /// WhileStatement: "WHILE" Expression "DO" StatementSequence "END";
     ///
-    fn while_statement_38(
+    fn while_statement_45(
         &mut self,
         _w_h_i_l_e_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -502,11 +2044,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 39:
+    /// Semantic action for production 46:
     ///
-    /// RepeatStatement: "REPEAT" StatementSequence "UNTIL" expression;
+    /// RepeatStatement: "REPEAT" StatementSequence "UNTIL" Expression;
     ///
-    fn repeat_statement_39(
+    fn repeat_statement_46(
         &mut self,
         _r_e_p_e_a_t_0: &ParseTreeStackEntry,
         _statement_sequence_1: &ParseTreeStackEntry,
@@ -517,11 +2059,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 40:
+    /// Semantic action for production 47:
     ///
-    /// statement: assignment;
+    /// Statement: Assignment;
     ///
-    fn statement_40(
+    fn statement_47(
         &mut self,
         _assignment_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -529,11 +2071,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 41:
+    /// Semantic action for production 48:
     ///
-    /// statement: ProcedureCall;
+    /// Statement: ProcedureCall;
     ///
-    fn statement_41(
+    fn statement_48(
         &mut self,
         _procedure_call_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -541,11 +2083,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 42:
+    /// Semantic action for production 49:
     ///
-    /// statement: IfStatement;
+    /// Statement: IfStatement;
     ///
-    fn statement_42(
+    fn statement_49(
         &mut self,
         _if_statement_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -553,11 +2095,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 43:
+    /// Semantic action for production 50:
     ///
-    /// statement: WhileStatement;
+    /// Statement: WhileStatement;
     ///
-    fn statement_43(
+    fn statement_50(
         &mut self,
         _while_statement_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -565,11 +2107,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 44:
+    /// Semantic action for production 51:
     ///
-    /// statement: RepeatStatement;
+    /// Statement: RepeatStatement;
     ///
-    fn statement_44(
+    fn statement_51(
         &mut self,
         _repeat_statement_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -577,89 +2119,129 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 45:
+    /// Semantic action for production 52:
     ///
-    /// statement: ;
+    /// StatementSequence: StatementSequenceOpt StatementSequenceList;
     ///
-    fn statement_45(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn statement_sequence_52(
+        &mut self,
+        _statement_sequence_opt_0: &ParseTreeStackEntry,
+        _statement_sequence_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 46:
+    /// Semantic action for production 53:
     ///
-    /// StatementSequence: statement StatementSequenceRest;
+    /// StatementSequence: /* Option<StatementSequenceOpt>::None */ StatementSequenceList;
     ///
-    fn statement_sequence_46(
+    fn statement_sequence_53(
+        &mut self,
+        _statement_sequence_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 54:
+    ///
+    /// StatementSequenceOpt: Statement;
+    ///
+    fn statement_sequence_opt_54(
         &mut self,
         _statement_0: &ParseTreeStackEntry,
-        _statement_sequence_rest_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 47:
+    /// Semantic action for production 55:
     ///
-    /// StatementSequenceRest: ";" statement StatementSequenceRest;
+    /// StatementSequenceList: ";" StatementSequenceListSuffix;
     ///
-    fn statement_sequence_rest_47(
+    fn statement_sequence_list_55(
         &mut self,
         _semicolon_0: &ParseTreeStackEntry,
-        _statement_1: &ParseTreeStackEntry,
-        _statement_sequence_rest_2: &ParseTreeStackEntry,
+        _statement_sequence_list_suffix_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 48:
+    /// Semantic action for production 56:
     ///
-    /// StatementSequenceRest: ;
+    /// StatementSequenceListSuffix: StatementSequenceOpt StatementSequenceList;
     ///
-    fn statement_sequence_rest_48(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn statement_sequence_list_suffix_56(
+        &mut self,
+        _statement_sequence_opt_0: &ParseTreeStackEntry,
+        _statement_sequence_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 49:
+    /// Semantic action for production 57:
     ///
-    /// IdentList: ident IdentListRest;
+    /// StatementSequenceListSuffix: /* Option<StatementSequenceListOpt>::None */ StatementSequenceList;
     ///
-    fn ident_list_49(
+    fn statement_sequence_list_suffix_57(
+        &mut self,
+        _statement_sequence_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 58:
+    ///
+    /// StatementSequenceList: /* Vec<StatementSequenceList>::New */;
+    ///
+    fn statement_sequence_list_58(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 59:
+    ///
+    /// IdentList: Ident IdentListList;
+    ///
+    fn ident_list_59(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
-        _ident_list_rest_1: &ParseTreeStackEntry,
+        _ident_list_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 50:
+    /// Semantic action for production 60:
     ///
-    /// IdentListRest: "," ident IdentListRest;
+    /// IdentListList: "," Ident IdentListList;
     ///
-    fn ident_list_rest_50(
+    fn ident_list_list_60(
         &mut self,
         _comma_0: &ParseTreeStackEntry,
         _ident_1: &ParseTreeStackEntry,
-        _ident_list_rest_2: &ParseTreeStackEntry,
+        _ident_list_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 51:
+    /// Semantic action for production 61:
     ///
-    /// IdentListRest: ;
+    /// IdentListList: /* Vec<IdentListList>::New */;
     ///
-    fn ident_list_rest_51(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn ident_list_list_61(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 52:
+    /// Semantic action for production 62:
     ///
-    /// ArrayType: "ARRAY" expression "OF" type;
+    /// ArrayType: "ARRAY" Expression "OF" Type;
     ///
-    fn array_type_52(
+    fn array_type_62(
         &mut self,
         _a_r_r_a_y_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -670,11 +2252,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 53:
+    /// Semantic action for production 63:
     ///
-    /// FieldList: IdentList ":" type;
+    /// FieldList: IdentList ":" Type;
     ///
-    fn field_list_53(
+    fn field_list_63(
         &mut self,
         _ident_list_0: &ParseTreeStackEntry,
         _colon_1: &ParseTreeStackEntry,
@@ -684,56 +2266,109 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 54:
+    /// Semantic action for production 64:
     ///
-    /// FieldList: ;
+    /// RecordType: "RECORD" RecordTypeSuffix;
     ///
-    fn field_list_54(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 55:
-    ///
-    /// RecordType: "RECORD" FieldList FieldListRest "END";
-    ///
-    fn record_type_55(
+    fn record_type_64(
         &mut self,
         _r_e_c_o_r_d_0: &ParseTreeStackEntry,
-        _field_list_1: &ParseTreeStackEntry,
-        _field_list_rest_2: &ParseTreeStackEntry,
-        _e_n_d_3: &ParseTreeStackEntry,
+        _record_type_suffix_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 56:
+    /// Semantic action for production 65:
     ///
-    /// FieldListRest: ";" FieldList FieldListRest;
+    /// RecordTypeSuffix: RecordTypeOpt RecordTypeList "END";
     ///
-    fn field_list_rest_56(
+    fn record_type_suffix_65(
+        &mut self,
+        _record_type_opt_0: &ParseTreeStackEntry,
+        _record_type_list_1: &ParseTreeStackEntry,
+        _e_n_d_2: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 66:
+    ///
+    /// RecordTypeSuffix: /* Option<RecordTypeOpt>::None */ RecordTypeList "END";
+    ///
+    fn record_type_suffix_66(
+        &mut self,
+        _record_type_list_1: &ParseTreeStackEntry,
+        _e_n_d_2: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 67:
+    ///
+    /// RecordTypeOpt: FieldList;
+    ///
+    fn record_type_opt_67(
+        &mut self,
+        _field_list_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 68:
+    ///
+    /// RecordTypeList: ";" RecordTypeListSuffix;
+    ///
+    fn record_type_list_68(
         &mut self,
         _semicolon_0: &ParseTreeStackEntry,
-        _field_list_1: &ParseTreeStackEntry,
-        _field_list_rest_2: &ParseTreeStackEntry,
+        _record_type_list_suffix_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 57:
+    /// Semantic action for production 69:
     ///
-    /// FieldListRest: ;
+    /// RecordTypeListSuffix: RecordTypeOpt RecordTypeList;
     ///
-    fn field_list_rest_57(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn record_type_list_suffix_69(
+        &mut self,
+        _record_type_opt_0: &ParseTreeStackEntry,
+        _record_type_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 58:
+    /// Semantic action for production 70:
     ///
-    /// type: ident;
+    /// RecordTypeListSuffix: /* Option<RecordTypeListOpt>::None */ RecordTypeList;
     ///
-    fn type_58(
+    fn record_type_list_suffix_70(
+        &mut self,
+        _record_type_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 71:
+    ///
+    /// RecordTypeList: /* Vec<RecordTypeList>::New */;
+    ///
+    fn record_type_list_71(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 72:
+    ///
+    /// Type: Ident;
+    ///
+    fn type_72(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -741,11 +2376,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 59:
+    /// Semantic action for production 73:
     ///
-    /// type: ArrayType;
+    /// Type: ArrayType;
     ///
-    fn type_59(
+    fn type_73(
         &mut self,
         _array_type_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -753,11 +2388,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 60:
+    /// Semantic action for production 74:
     ///
-    /// type: RecordType;
+    /// Type: RecordType;
     ///
-    fn type_60(
+    fn type_74(
         &mut self,
         _record_type_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -765,13 +2400,13 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 61:
+    /// Semantic action for production 75:
     ///
-    /// FPSection: "VAR" IdentList ":" type;
+    /// FPSection: FPSectionOpt IdentList ":" Type;
     ///
-    fn f_p_section_61(
+    fn f_p_section_75(
         &mut self,
-        _v_a_r_0: &ParseTreeStackEntry,
+        _f_p_section_opt_0: &ParseTreeStackEntry,
         _ident_list_1: &ParseTreeStackEntry,
         _colon_2: &ParseTreeStackEntry,
         _type_3: &ParseTreeStackEntry,
@@ -780,25 +2415,37 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 62:
+    /// Semantic action for production 76:
     ///
-    /// FPSection: IdentList ":" type;
+    /// FPSection: /* Option<FPSectionOpt>::None */ IdentList ":" Type;
     ///
-    fn f_p_section_62(
+    fn f_p_section_76(
         &mut self,
-        _ident_list_0: &ParseTreeStackEntry,
-        _colon_1: &ParseTreeStackEntry,
-        _type_2: &ParseTreeStackEntry,
+        _ident_list_1: &ParseTreeStackEntry,
+        _colon_2: &ParseTreeStackEntry,
+        _type_3: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 63:
+    /// Semantic action for production 77:
+    ///
+    /// FPSectionOpt: "VAR";
+    ///
+    fn f_p_section_opt_77(
+        &mut self,
+        _f_p_section_opt_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 78:
     ///
     /// FormalParameters: "\(" FormalParametersSuffix;
     ///
-    fn formal_parameters_63(
+    fn formal_parameters_78(
         &mut self,
         _l_paren_0: &ParseTreeStackEntry,
         _formal_parameters_suffix_1: &ParseTreeStackEntry,
@@ -807,59 +2454,71 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 64:
+    /// Semantic action for production 79:
     ///
-    /// FormalParametersSuffix: "\)";
+    /// FormalParametersSuffix: FormalParametersOpt "\)";
     ///
-    fn formal_parameters_suffix_64(
+    fn formal_parameters_suffix_79(
         &mut self,
-        _r_paren_0: &ParseTreeStackEntry,
+        _formal_parameters_opt_0: &ParseTreeStackEntry,
+        _r_paren_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 65:
+    /// Semantic action for production 80:
     ///
-    /// FormalParametersSuffix: FPSection FPSectionRest "\)";
+    /// FormalParametersSuffix: /* Option<FormalParametersOpt>::None */ "\)";
     ///
-    fn formal_parameters_suffix_65(
+    fn formal_parameters_suffix_80(
+        &mut self,
+        _r_paren_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 81:
+    ///
+    /// FormalParametersOpt: FPSection FormalParametersOptList;
+    ///
+    fn formal_parameters_opt_81(
         &mut self,
         _f_p_section_0: &ParseTreeStackEntry,
-        _f_p_section_rest_1: &ParseTreeStackEntry,
-        _r_paren_2: &ParseTreeStackEntry,
+        _formal_parameters_opt_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 66:
+    /// Semantic action for production 82:
     ///
-    /// FPSectionRest: ";" FPSection FPSectionRest;
+    /// FormalParametersOptList: ";" FPSection FormalParametersOptList;
     ///
-    fn f_p_section_rest_66(
+    fn formal_parameters_opt_list_82(
         &mut self,
         _semicolon_0: &ParseTreeStackEntry,
         _f_p_section_1: &ParseTreeStackEntry,
-        _f_p_section_rest_2: &ParseTreeStackEntry,
+        _formal_parameters_opt_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 67:
+    /// Semantic action for production 83:
     ///
-    /// FPSectionRest: ;
+    /// FormalParametersOptList: /* Vec<FormalParametersOptList>::New */;
     ///
-    fn f_p_section_rest_67(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn formal_parameters_opt_list_83(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 68:
+    /// Semantic action for production 84:
     ///
-    /// ProcedureHeading: "PROCEDURE" ident ProcedureHeadingSuffix;
+    /// ProcedureHeading: "PROCEDURE" Ident ProcedureHeadingSuffix;
     ///
-    fn procedure_heading_68(
+    fn procedure_heading_84(
         &mut self,
         _p_r_o_c_e_d_u_r_e_0: &ParseTreeStackEntry,
         _ident_1: &ParseTreeStackEntry,
@@ -869,11 +2528,31 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 69:
+    /// Semantic action for production 85:
     ///
-    /// ProcedureHeadingSuffix: FormalParameters;
+    /// ProcedureHeadingSuffix: ProcedureHeadingOpt;
     ///
-    fn procedure_heading_suffix_69(
+    fn procedure_heading_suffix_85(
+        &mut self,
+        _procedure_heading_opt_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 86:
+    ///
+    /// ProcedureHeadingSuffix: /* Option<ProcedureHeadingOpt>::None */;
+    ///
+    fn procedure_heading_suffix_86(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 87:
+    ///
+    /// ProcedureHeadingOpt: FormalParameters;
+    ///
+    fn procedure_heading_opt_87(
         &mut self,
         _formal_parameters_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -881,19 +2560,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 70:
-    ///
-    /// ProcedureHeadingSuffix: ;
-    ///
-    fn procedure_heading_suffix_70(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 71:
+    /// Semantic action for production 88:
     ///
     /// ProcedureBody: declarations ProcedureBodySuffix1;
     ///
-    fn procedure_body_71(
+    fn procedure_body_88(
         &mut self,
         _declarations_0: &ParseTreeStackEntry,
         _procedure_body_suffix1_1: &ParseTreeStackEntry,
@@ -902,11 +2573,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 72:
+    /// Semantic action for production 89:
     ///
     /// ProcedureBodySuffix1: "BEGIN" StatementSequence ProcedureBodySuffix;
     ///
-    fn procedure_body_suffix1_72(
+    fn procedure_body_suffix1_89(
         &mut self,
         _b_e_g_i_n_0: &ParseTreeStackEntry,
         _statement_sequence_1: &ParseTreeStackEntry,
@@ -916,11 +2587,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 73:
+    /// Semantic action for production 90:
     ///
-    /// ProcedureBodySuffix1: "RETURN" expression "END" ident;
+    /// ProcedureBodySuffix1: "RETURN" Expression "END" Ident;
     ///
-    fn procedure_body_suffix1_73(
+    fn procedure_body_suffix1_90(
         &mut self,
         _r_e_t_u_r_n_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -931,11 +2602,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 74:
+    /// Semantic action for production 91:
     ///
-    /// ProcedureBodySuffix1: "END" ident;
+    /// ProcedureBodySuffix1: "END" Ident;
     ///
-    fn procedure_body_suffix1_74(
+    fn procedure_body_suffix1_91(
         &mut self,
         _e_n_d_0: &ParseTreeStackEntry,
         _ident_1: &ParseTreeStackEntry,
@@ -944,11 +2615,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 75:
+    /// Semantic action for production 92:
     ///
-    /// ProcedureBodySuffix: "RETURN" expression "END" ident;
+    /// ProcedureBodySuffix: "RETURN" Expression "END" Ident;
     ///
-    fn procedure_body_suffix_75(
+    fn procedure_body_suffix_92(
         &mut self,
         _r_e_t_u_r_n_0: &ParseTreeStackEntry,
         _expression_1: &ParseTreeStackEntry,
@@ -959,11 +2630,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 76:
+    /// Semantic action for production 93:
     ///
-    /// ProcedureBodySuffix: "END" ident;
+    /// ProcedureBodySuffix: "END" Ident;
     ///
-    fn procedure_body_suffix_76(
+    fn procedure_body_suffix_93(
         &mut self,
         _e_n_d_0: &ParseTreeStackEntry,
         _ident_1: &ParseTreeStackEntry,
@@ -972,11 +2643,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 77:
+    /// Semantic action for production 94:
     ///
     /// ProcedureDeclaration: ProcedureHeading ";" ProcedureBody;
     ///
-    fn procedure_declaration_77(
+    fn procedure_declaration_94(
         &mut self,
         _procedure_heading_0: &ParseTreeStackEntry,
         _semicolon_1: &ParseTreeStackEntry,
@@ -986,13 +2657,13 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 78:
+    /// Semantic action for production 95:
     ///
-    /// declarations: "TYPE" TypeDecls declarationsSuffix2;
+    /// declarations: "Type" TypeDecls declarationsSuffix2;
     ///
-    fn declarations_78(
+    fn declarations_95(
         &mut self,
-        _t_y_p_e_0: &ParseTreeStackEntry,
+        _type_0: &ParseTreeStackEntry,
         _type_decls_1: &ParseTreeStackEntry,
         _declarations_suffix2_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1000,11 +2671,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 79:
+    /// Semantic action for production 96:
     ///
     /// declarations: "CONST" ConstDecls declarationsSuffix1;
     ///
-    fn declarations_79(
+    fn declarations_96(
         &mut self,
         _c_o_n_s_t_0: &ParseTreeStackEntry,
         _const_decls_1: &ParseTreeStackEntry,
@@ -1014,39 +2685,38 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 80:
+    /// Semantic action for production 97:
     ///
-    /// declarationsSuffix2: "VAR" VarDecls ProcedureDeclarationList;
+    /// declarationsSuffix2: declarationsOpt ProcedureDeclarationList;
     ///
-    fn declarations_suffix2_80(
+    fn declarations_suffix2_97(
         &mut self,
-        _v_a_r_0: &ParseTreeStackEntry,
-        _var_decls_1: &ParseTreeStackEntry,
-        _procedure_declaration_list_2: &ParseTreeStackEntry,
+        _declarations_opt_0: &ParseTreeStackEntry,
+        _procedure_declaration_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 81:
+    /// Semantic action for production 98:
     ///
-    /// declarationsSuffix2: ProcedureDeclarationList;
+    /// declarationsSuffix2: /* Option<declarationsOpt2>::None */ ProcedureDeclarationList;
     ///
-    fn declarations_suffix2_81(
+    fn declarations_suffix2_98(
         &mut self,
-        _procedure_declaration_list_0: &ParseTreeStackEntry,
+        _procedure_declaration_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 82:
+    /// Semantic action for production 99:
     ///
     /// declarations: "VAR" VarDecls ProcedureDeclarationList;
     ///
-    fn declarations_82(
+    fn declarations_99(
         &mut self,
-        _v_a_r_0: &ParseTreeStackEntry,
+        _f_p_section_opt_0: &ParseTreeStackEntry,
         _var_decls_1: &ParseTreeStackEntry,
         _procedure_declaration_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1054,11 +2724,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 83:
+    /// Semantic action for production 100:
     ///
     /// declarations: ProcedureDeclarationList;
     ///
-    fn declarations_83(
+    fn declarations_100(
         &mut self,
         _procedure_declaration_list_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1066,13 +2736,13 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 84:
+    /// Semantic action for production 101:
     ///
-    /// declarationsSuffix1: "TYPE" TypeDecls declarationsSuffix;
+    /// declarationsSuffix1: "Type" TypeDecls declarationsSuffix;
     ///
-    fn declarations_suffix1_84(
+    fn declarations_suffix1_101(
         &mut self,
-        _t_y_p_e_0: &ParseTreeStackEntry,
+        _type_0: &ParseTreeStackEntry,
         _type_decls_1: &ParseTreeStackEntry,
         _declarations_suffix_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1080,157 +2750,219 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 85:
+    /// Semantic action for production 102:
     ///
-    /// declarationsSuffix1: "VAR" VarDecls ProcedureDeclarationList;
+    /// declarationsSuffix1: declarationsOpt ProcedureDeclarationList;
     ///
-    fn declarations_suffix1_85(
+    fn declarations_suffix1_102(
         &mut self,
-        _v_a_r_0: &ParseTreeStackEntry,
+        _declarations_opt_0: &ParseTreeStackEntry,
+        _procedure_declaration_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 103:
+    ///
+    /// declarationsSuffix1: /* Option<declarationsOpt1>::None */ ProcedureDeclarationList;
+    ///
+    fn declarations_suffix1_103(
+        &mut self,
+        _procedure_declaration_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 104:
+    ///
+    /// declarationsSuffix: declarationsOpt ProcedureDeclarationList;
+    ///
+    fn declarations_suffix_104(
+        &mut self,
+        _declarations_opt_0: &ParseTreeStackEntry,
+        _procedure_declaration_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 105:
+    ///
+    /// declarationsSuffix: /* Option<declarationsOpt>::None */ ProcedureDeclarationList;
+    ///
+    fn declarations_suffix_105(
+        &mut self,
+        _procedure_declaration_list_1: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 106:
+    ///
+    /// declarationsOpt: "VAR" VarDecls;
+    ///
+    fn declarations_opt_106(
+        &mut self,
+        _f_p_section_opt_0: &ParseTreeStackEntry,
         _var_decls_1: &ParseTreeStackEntry,
-        _procedure_declaration_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 86:
+    /// Semantic action for production 107:
     ///
-    /// declarationsSuffix1: ProcedureDeclarationList;
+    /// ProcedureDeclarationList: ProcedureDeclarationListList;
     ///
-    fn declarations_suffix1_86(
+    fn procedure_declaration_list_107(
         &mut self,
-        _procedure_declaration_list_0: &ParseTreeStackEntry,
+        _procedure_declaration_list_list_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 87:
+    /// Semantic action for production 108:
     ///
-    /// declarationsSuffix: "VAR" VarDecls ProcedureDeclarationList;
+    /// ProcedureDeclarationListList: ProcedureDeclaration ";" ProcedureDeclarationListList;
     ///
-    fn declarations_suffix_87(
-        &mut self,
-        _v_a_r_0: &ParseTreeStackEntry,
-        _var_decls_1: &ParseTreeStackEntry,
-        _procedure_declaration_list_2: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 88:
-    ///
-    /// declarationsSuffix: ProcedureDeclarationList;
-    ///
-    fn declarations_suffix_88(
-        &mut self,
-        _procedure_declaration_list_0: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 89:
-    ///
-    /// ProcedureDeclarationList: ProcedureDeclaration ";" ProcedureDeclarationList;
-    ///
-    fn procedure_declaration_list_89(
+    fn procedure_declaration_list_list_108(
         &mut self,
         _procedure_declaration_0: &ParseTreeStackEntry,
         _semicolon_1: &ParseTreeStackEntry,
-        _procedure_declaration_list_2: &ParseTreeStackEntry,
+        _procedure_declaration_list_list_2: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 90:
+    /// Semantic action for production 109:
     ///
-    /// ProcedureDeclarationList: ;
+    /// ProcedureDeclarationListList: /* Vec<ProcedureDeclarationListList>::New */;
     ///
-    fn procedure_declaration_list_90(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn procedure_declaration_list_list_109(
+        &mut self,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 91:
+    /// Semantic action for production 110:
     ///
-    /// ConstDecls: ident AssignOp expression ";" ConstDecls;
+    /// ConstDecls: ConstDeclsList;
     ///
-    fn const_decls_91(
+    fn const_decls_110(
+        &mut self,
+        _const_decls_list_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 111:
+    ///
+    /// ConstDeclsList: Ident AssignOp Expression ";" ConstDeclsList;
+    ///
+    fn const_decls_list_111(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _assign_op_1: &ParseTreeStackEntry,
         _expression_2: &ParseTreeStackEntry,
         _semicolon_3: &ParseTreeStackEntry,
-        _const_decls_4: &ParseTreeStackEntry,
+        _const_decls_list_4: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 92:
+    /// Semantic action for production 112:
     ///
-    /// ConstDecls: ;
+    /// ConstDeclsList: /* Vec<ConstDeclsList>::New */;
     ///
-    fn const_decls_92(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn const_decls_list_112(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 93:
+    /// Semantic action for production 113:
     ///
-    /// TypeDecls: ident AssignOp type ";" TypeDecls;
+    /// TypeDecls: TypeDeclsList;
     ///
-    fn type_decls_93(
+    fn type_decls_113(
+        &mut self,
+        _type_decls_list_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 114:
+    ///
+    /// TypeDeclsList: Ident AssignOp Type ";" TypeDeclsList;
+    ///
+    fn type_decls_list_114(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _assign_op_1: &ParseTreeStackEntry,
         _type_2: &ParseTreeStackEntry,
         _semicolon_3: &ParseTreeStackEntry,
-        _type_decls_4: &ParseTreeStackEntry,
+        _type_decls_list_4: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 94:
+    /// Semantic action for production 115:
     ///
-    /// TypeDecls: ;
+    /// TypeDeclsList: /* Vec<TypeDeclsList>::New */;
     ///
-    fn type_decls_94(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn type_decls_list_115(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 95:
+    /// Semantic action for production 116:
     ///
-    /// VarDecls: IdentList ":" type ";" VarDecls;
+    /// VarDecls: VarDeclsList;
     ///
-    fn var_decls_95(
+    fn var_decls_116(
+        &mut self,
+        _var_decls_list_0: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 117:
+    ///
+    /// VarDeclsList: IdentList ":" Type ";" VarDeclsList;
+    ///
+    fn var_decls_list_117(
         &mut self,
         _ident_list_0: &ParseTreeStackEntry,
         _colon_1: &ParseTreeStackEntry,
         _type_2: &ParseTreeStackEntry,
         _semicolon_3: &ParseTreeStackEntry,
-        _var_decls_4: &ParseTreeStackEntry,
+        _var_decls_list_4: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 96:
+    /// Semantic action for production 118:
     ///
-    /// VarDecls: ;
+    /// VarDeclsList: /* Vec<VarDeclsList>::New */;
     ///
-    fn var_decls_96(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn var_decls_list_118(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 97:
+    /// Semantic action for production 119:
     ///
-    /// module: "MODULE" ident ";" declarations moduleSuffix;
+    /// module: "MODULE" Ident ";" declarations moduleSuffix;
     ///
-    fn module_97(
+    fn module_119(
         &mut self,
         _m_o_d_u_l_e_0: &ParseTreeStackEntry,
         _ident_1: &ParseTreeStackEntry,
@@ -1242,41 +2974,53 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 98:
+    /// Semantic action for production 120:
     ///
-    /// moduleSuffix: "BEGIN" StatementSequence "END" ident "\.";
+    /// moduleSuffix: moduleOpt "END" Ident "\.";
     ///
-    fn module_suffix_98(
+    fn module_suffix_120(
+        &mut self,
+        _module_opt_0: &ParseTreeStackEntry,
+        _e_n_d_1: &ParseTreeStackEntry,
+        _ident_2: &ParseTreeStackEntry,
+        _dot_3: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 121:
+    ///
+    /// moduleSuffix: /* Option<moduleOpt>::None */ "END" Ident "\.";
+    ///
+    fn module_suffix_121(
+        &mut self,
+        _e_n_d_1: &ParseTreeStackEntry,
+        _ident_2: &ParseTreeStackEntry,
+        _dot_3: &ParseTreeStackEntry,
+        _parse_tree: &Tree<ParseTreeType>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Semantic action for production 122:
+    ///
+    /// moduleOpt: "BEGIN" StatementSequence;
+    ///
+    fn module_opt_122(
         &mut self,
         _b_e_g_i_n_0: &ParseTreeStackEntry,
         _statement_sequence_1: &ParseTreeStackEntry,
-        _e_n_d_2: &ParseTreeStackEntry,
-        _ident_3: &ParseTreeStackEntry,
-        _dot_4: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
     }
 
-    /// Semantic action for production 99:
-    ///
-    /// moduleSuffix: "END" ident "\.";
-    ///
-    fn module_suffix_99(
-        &mut self,
-        _e_n_d_0: &ParseTreeStackEntry,
-        _ident_1: &ParseTreeStackEntry,
-        _dot_2: &ParseTreeStackEntry,
-        _parse_tree: &Tree<ParseTreeType>,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    /// Semantic action for production 100:
+    /// Semantic action for production 123:
     ///
     /// MulOperator: "\*|/|DIV|MOD|&";
     ///
-    fn mul_operator_100(
+    fn mul_operator_123(
         &mut self,
         _mul_operator_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1284,11 +3028,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 101:
+    /// Semantic action for production 124:
     ///
     /// AddOperator: "\+|-|OR";
     ///
-    fn add_operator_101(
+    fn add_operator_124(
         &mut self,
         _add_operator_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1296,11 +3040,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 102:
+    /// Semantic action for production 125:
     ///
     /// UnaryOp: "\+|-";
     ///
-    fn unary_op_102(
+    fn unary_op_125(
         &mut self,
         _unary_op_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1308,11 +3052,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 103:
+    /// Semantic action for production 126:
     ///
-    /// ident: "[a-zA-Z][a-zA-Z0-9]*";
+    /// Ident: "[a-zA-Z][a-zA-Z0-9]*";
     ///
-    fn ident_103(
+    fn ident_126(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1320,11 +3064,11 @@ pub trait Oberon0GrammarTrait {
         Ok(())
     }
 
-    /// Semantic action for production 104:
+    /// Semantic action for production 127:
     ///
-    /// integer: "[0-9]+";
+    /// Integer: "[0-9]+";
     ///
-    fn integer_104(
+    fn integer_127(
         &mut self,
         _integer_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1355,57 +3099,59 @@ impl UserActionsTrait for Oberon0Grammar {
         match prod_num {
             0 => self.selector_0(&children[0], parse_tree),
 
-            1 => self.selectorlist_1(&children[0], &children[1], &children[2], parse_tree),
+            1 => self.selector_list_1(&children[0], &children[1], parse_tree),
 
-            2 => self.selectorlist_2(
-                &children[0],
-                &children[1],
-                &children[2],
-                &children[3],
-                parse_tree,
-            ),
+            2 => self.selector_list_group_2(&children[0], &children[1], parse_tree),
 
-            3 => self.selectorlist_3(parse_tree),
+            3 => self.selector_list_group_3(&children[0], &children[1], &children[2], parse_tree),
 
-            4 => self.factor_4(&children[0], &children[1], parse_tree),
+            4 => self.selector_list_4(parse_tree),
 
-            5 => self.factor_5(&children[0], parse_tree),
+            5 => self.factor_5(&children[0], &children[1], parse_tree),
 
-            6 => self.factor_6(&children[0], &children[1], &children[2], parse_tree),
+            6 => self.factor_6(&children[0], parse_tree),
 
-            7 => self.factor_7(&children[0], &children[1], parse_tree),
+            7 => self.factor_7(&children[0], &children[1], &children[2], parse_tree),
 
             8 => self.factor_8(&children[0], &children[1], parse_tree),
 
-            9 => self.term_9(&children[0], &children[1], parse_tree),
+            9 => self.factor_9(&children[0], &children[1], parse_tree),
 
-            10 => self.mul_expression_10(&children[0], &children[1], &children[2], parse_tree),
+            10 => self.term_10(&children[0], &children[1], parse_tree),
 
-            11 => self.mul_expression_11(parse_tree),
+            11 => self.mul_expression_11(&children[0], parse_tree),
 
-            12 => self.simple_expression_12(&children[0], &children[1], parse_tree),
+            12 => self.mul_expression_list_12(&children[0], &children[1], &children[2], parse_tree),
 
-            13 => self.add_expression_13(&children[0], &children[1], &children[2], parse_tree),
+            13 => self.mul_expression_list_13(parse_tree),
 
-            14 => self.add_expression_14(parse_tree),
+            14 => self.simple_expression_14(&children[0], &children[1], parse_tree),
 
-            15 => self.assign_op_15(&children[0], parse_tree),
+            15 => self.add_expression_15(&children[0], parse_tree),
 
-            16 => self.relation_op_16(&children[0], parse_tree),
+            16 => self.add_expression_list_16(&children[0], &children[1], &children[2], parse_tree),
 
-            17 => self.relation_op_17(&children[0], parse_tree),
+            17 => self.add_expression_list_17(parse_tree),
 
-            18 => self.relational_ops_18(&children[0], parse_tree),
+            18 => self.assign_op_18(&children[0], parse_tree),
 
-            19 => self.assign_op_19(&children[0], parse_tree),
+            19 => self.relation_op_19(&children[0], parse_tree),
 
-            20 => self.expression_20(&children[0], &children[1], parse_tree),
+            20 => self.relation_op_20(&children[0], parse_tree),
 
-            21 => self.expression_suffix_21(&children[0], &children[1], parse_tree),
+            21 => self.relational_ops_21(&children[0], parse_tree),
 
-            22 => self.expression_suffix_22(parse_tree),
+            22 => self.assign_op_22(&children[0], parse_tree),
 
-            23 => self.assignment_23(
+            23 => self.expression_23(&children[0], &children[1], parse_tree),
+
+            24 => self.expression_suffix_24(&children[0], parse_tree),
+
+            25 => self.expression_suffix_25(parse_tree),
+
+            26 => self.expression_opt_26(&children[0], &children[1], parse_tree),
+
+            27 => self.assignment_27(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1413,54 +3159,40 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            24 => self.actual_parameters_24(&children[0], &children[1], parse_tree),
+            28 => self.actual_parameters_28(&children[0], &children[1], parse_tree),
 
-            25 => self.actual_parameters_suffix_25(&children[0], parse_tree),
+            29 => self.actual_parameters_suffix_29(&children[0], &children[1], parse_tree),
 
-            26 => self.actual_parameters_suffix_26(
+            30 => self.actual_parameters_suffix_30(&children[0], parse_tree),
+
+            31 => self.actual_parameters_opt_31(&children[0], &children[1], parse_tree),
+
+            32 => self.actual_parameters_opt_list_32(
                 &children[0],
                 &children[1],
                 &children[2],
                 parse_tree,
             ),
 
-            27 => self.expressionlistrest_27(&children[0], &children[1], &children[2], parse_tree),
+            33 => self.actual_parameters_opt_list_33(parse_tree),
 
-            28 => self.expressionlistrest_28(parse_tree),
+            34 => self.procedure_call_34(&children[0], &children[1], parse_tree),
 
-            29 => self.procedure_call_29(&children[0], &children[1], parse_tree),
+            35 => self.procedure_call_suffix_35(&children[0], parse_tree),
 
-            30 => self.procedure_call_suffix_30(&children[0], parse_tree),
+            36 => self.procedure_call_suffix_36(parse_tree),
 
-            31 => self.procedure_call_suffix_31(parse_tree),
+            37 => self.procedure_call_opt_37(&children[0], parse_tree),
 
-            32 => self.if_statement_32(&children[0], &children[1], parse_tree),
+            38 => self.if_statement_38(&children[0], &children[1], parse_tree),
 
-            33 => self.if_statement_suffix_33(&children[0], &children[1], &children[2], parse_tree),
+            39 => self.if_statement_suffix_39(&children[0], &children[1], parse_tree),
 
-            34 => self.if_statement_suffix_34(&children[0], parse_tree),
+            40 => self.if_statement_suffix_40(&children[0], parse_tree),
 
-            35 => self.if_prefix_35(
-                &children[0],
-                &children[1],
-                &children[2],
-                &children[3],
-                &children[4],
-                parse_tree,
-            ),
+            41 => self.if_statement_opt_41(&children[0], &children[1], parse_tree),
 
-            36 => self.elseiflist_36(
-                &children[0],
-                &children[1],
-                &children[2],
-                &children[3],
-                &children[4],
-                parse_tree,
-            ),
-
-            37 => self.elseiflist_37(parse_tree),
-
-            38 => self.while_statement_38(
+            42 => self.if_prefix_42(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1469,7 +3201,27 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            39 => self.repeat_statement_39(
+            43 => self.if_prefix_list_43(
+                &children[0],
+                &children[1],
+                &children[2],
+                &children[3],
+                &children[4],
+                parse_tree,
+            ),
+
+            44 => self.if_prefix_list_44(parse_tree),
+
+            45 => self.while_statement_45(
+                &children[0],
+                &children[1],
+                &children[2],
+                &children[3],
+                &children[4],
+                parse_tree,
+            ),
+
+            46 => self.repeat_statement_46(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1477,48 +3229,37 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            40 => self.statement_40(&children[0], parse_tree),
+            47 => self.statement_47(&children[0], parse_tree),
 
-            41 => self.statement_41(&children[0], parse_tree),
+            48 => self.statement_48(&children[0], parse_tree),
 
-            42 => self.statement_42(&children[0], parse_tree),
+            49 => self.statement_49(&children[0], parse_tree),
 
-            43 => self.statement_43(&children[0], parse_tree),
+            50 => self.statement_50(&children[0], parse_tree),
 
-            44 => self.statement_44(&children[0], parse_tree),
+            51 => self.statement_51(&children[0], parse_tree),
 
-            45 => self.statement_45(parse_tree),
+            52 => self.statement_sequence_52(&children[0], &children[1], parse_tree),
 
-            46 => self.statement_sequence_46(&children[0], &children[1], parse_tree),
+            53 => self.statement_sequence_53(&children[0], parse_tree),
 
-            47 => self.statement_sequence_rest_47(
-                &children[0],
-                &children[1],
-                &children[2],
-                parse_tree,
-            ),
+            54 => self.statement_sequence_opt_54(&children[0], parse_tree),
 
-            48 => self.statement_sequence_rest_48(parse_tree),
+            55 => self.statement_sequence_list_55(&children[0], &children[1], parse_tree),
 
-            49 => self.ident_list_49(&children[0], &children[1], parse_tree),
+            56 => self.statement_sequence_list_suffix_56(&children[0], &children[1], parse_tree),
 
-            50 => self.ident_list_rest_50(&children[0], &children[1], &children[2], parse_tree),
+            57 => self.statement_sequence_list_suffix_57(&children[0], parse_tree),
 
-            51 => self.ident_list_rest_51(parse_tree),
+            58 => self.statement_sequence_list_58(parse_tree),
 
-            52 => self.array_type_52(
-                &children[0],
-                &children[1],
-                &children[2],
-                &children[3],
-                parse_tree,
-            ),
+            59 => self.ident_list_59(&children[0], &children[1], parse_tree),
 
-            53 => self.field_list_53(&children[0], &children[1], &children[2], parse_tree),
+            60 => self.ident_list_list_60(&children[0], &children[1], &children[2], parse_tree),
 
-            54 => self.field_list_54(parse_tree),
+            61 => self.ident_list_list_61(parse_tree),
 
-            55 => self.record_type_55(
+            62 => self.array_type_62(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1526,17 +3267,31 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            56 => self.field_list_rest_56(&children[0], &children[1], &children[2], parse_tree),
+            63 => self.field_list_63(&children[0], &children[1], &children[2], parse_tree),
 
-            57 => self.field_list_rest_57(parse_tree),
+            64 => self.record_type_64(&children[0], &children[1], parse_tree),
 
-            58 => self.type_58(&children[0], parse_tree),
+            65 => self.record_type_suffix_65(&children[0], &children[1], &children[2], parse_tree),
 
-            59 => self.type_59(&children[0], parse_tree),
+            66 => self.record_type_suffix_66(&children[0], &children[1], parse_tree),
 
-            60 => self.type_60(&children[0], parse_tree),
+            67 => self.record_type_opt_67(&children[0], parse_tree),
 
-            61 => self.f_p_section_61(
+            68 => self.record_type_list_68(&children[0], &children[1], parse_tree),
+
+            69 => self.record_type_list_suffix_69(&children[0], &children[1], parse_tree),
+
+            70 => self.record_type_list_suffix_70(&children[0], parse_tree),
+
+            71 => self.record_type_list_71(parse_tree),
+
+            72 => self.type_72(&children[0], parse_tree),
+
+            73 => self.type_73(&children[0], parse_tree),
+
+            74 => self.type_74(&children[0], parse_tree),
+
+            75 => self.f_p_section_75(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1544,36 +3299,42 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            62 => self.f_p_section_62(&children[0], &children[1], &children[2], parse_tree),
+            76 => self.f_p_section_76(&children[0], &children[1], &children[2], parse_tree),
 
-            63 => self.formal_parameters_63(&children[0], &children[1], parse_tree),
+            77 => self.f_p_section_opt_77(&children[0], parse_tree),
 
-            64 => self.formal_parameters_suffix_64(&children[0], parse_tree),
+            78 => self.formal_parameters_78(&children[0], &children[1], parse_tree),
 
-            65 => self.formal_parameters_suffix_65(
+            79 => self.formal_parameters_suffix_79(&children[0], &children[1], parse_tree),
+
+            80 => self.formal_parameters_suffix_80(&children[0], parse_tree),
+
+            81 => self.formal_parameters_opt_81(&children[0], &children[1], parse_tree),
+
+            82 => self.formal_parameters_opt_list_82(
                 &children[0],
                 &children[1],
                 &children[2],
                 parse_tree,
             ),
 
-            66 => self.f_p_section_rest_66(&children[0], &children[1], &children[2], parse_tree),
+            83 => self.formal_parameters_opt_list_83(parse_tree),
 
-            67 => self.f_p_section_rest_67(parse_tree),
+            84 => self.procedure_heading_84(&children[0], &children[1], &children[2], parse_tree),
 
-            68 => self.procedure_heading_68(&children[0], &children[1], &children[2], parse_tree),
+            85 => self.procedure_heading_suffix_85(&children[0], parse_tree),
 
-            69 => self.procedure_heading_suffix_69(&children[0], parse_tree),
+            86 => self.procedure_heading_suffix_86(parse_tree),
 
-            70 => self.procedure_heading_suffix_70(parse_tree),
+            87 => self.procedure_heading_opt_87(&children[0], parse_tree),
 
-            71 => self.procedure_body_71(&children[0], &children[1], parse_tree),
+            88 => self.procedure_body_88(&children[0], &children[1], parse_tree),
 
-            72 => {
-                self.procedure_body_suffix1_72(&children[0], &children[1], &children[2], parse_tree)
+            89 => {
+                self.procedure_body_suffix1_89(&children[0], &children[1], &children[2], parse_tree)
             }
 
-            73 => self.procedure_body_suffix1_73(
+            90 => self.procedure_body_suffix1_90(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1581,9 +3342,9 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            74 => self.procedure_body_suffix1_74(&children[0], &children[1], parse_tree),
+            91 => self.procedure_body_suffix1_91(&children[0], &children[1], parse_tree),
 
-            75 => self.procedure_body_suffix_75(
+            92 => self.procedure_body_suffix_92(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1591,50 +3352,52 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            76 => self.procedure_body_suffix_76(&children[0], &children[1], parse_tree),
+            93 => self.procedure_body_suffix_93(&children[0], &children[1], parse_tree),
 
-            77 => {
-                self.procedure_declaration_77(&children[0], &children[1], &children[2], parse_tree)
+            94 => {
+                self.procedure_declaration_94(&children[0], &children[1], &children[2], parse_tree)
             }
 
-            78 => self.declarations_78(&children[0], &children[1], &children[2], parse_tree),
+            95 => self.declarations_95(&children[0], &children[1], &children[2], parse_tree),
 
-            79 => self.declarations_79(&children[0], &children[1], &children[2], parse_tree),
+            96 => self.declarations_96(&children[0], &children[1], &children[2], parse_tree),
 
-            80 => {
-                self.declarations_suffix2_80(&children[0], &children[1], &children[2], parse_tree)
+            97 => self.declarations_suffix2_97(&children[0], &children[1], parse_tree),
+
+            98 => self.declarations_suffix2_98(&children[0], parse_tree),
+
+            99 => self.declarations_99(&children[0], &children[1], &children[2], parse_tree),
+
+            100 => self.declarations_100(&children[0], parse_tree),
+
+            101 => {
+                self.declarations_suffix1_101(&children[0], &children[1], &children[2], parse_tree)
             }
 
-            81 => self.declarations_suffix2_81(&children[0], parse_tree),
+            102 => self.declarations_suffix1_102(&children[0], &children[1], parse_tree),
 
-            82 => self.declarations_82(&children[0], &children[1], &children[2], parse_tree),
+            103 => self.declarations_suffix1_103(&children[0], parse_tree),
 
-            83 => self.declarations_83(&children[0], parse_tree),
+            104 => self.declarations_suffix_104(&children[0], &children[1], parse_tree),
 
-            84 => {
-                self.declarations_suffix1_84(&children[0], &children[1], &children[2], parse_tree)
-            }
+            105 => self.declarations_suffix_105(&children[0], parse_tree),
 
-            85 => {
-                self.declarations_suffix1_85(&children[0], &children[1], &children[2], parse_tree)
-            }
+            106 => self.declarations_opt_106(&children[0], &children[1], parse_tree),
 
-            86 => self.declarations_suffix1_86(&children[0], parse_tree),
+            107 => self.procedure_declaration_list_107(&children[0], parse_tree),
 
-            87 => self.declarations_suffix_87(&children[0], &children[1], &children[2], parse_tree),
-
-            88 => self.declarations_suffix_88(&children[0], parse_tree),
-
-            89 => self.procedure_declaration_list_89(
+            108 => self.procedure_declaration_list_list_108(
                 &children[0],
                 &children[1],
                 &children[2],
                 parse_tree,
             ),
 
-            90 => self.procedure_declaration_list_90(parse_tree),
+            109 => self.procedure_declaration_list_list_109(parse_tree),
 
-            91 => self.const_decls_91(
+            110 => self.const_decls_110(&children[0], parse_tree),
+
+            111 => self.const_decls_list_111(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1643,9 +3406,11 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            92 => self.const_decls_92(parse_tree),
+            112 => self.const_decls_list_112(parse_tree),
 
-            93 => self.type_decls_93(
+            113 => self.type_decls_113(&children[0], parse_tree),
+
+            114 => self.type_decls_list_114(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1654,9 +3419,11 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            94 => self.type_decls_94(parse_tree),
+            115 => self.type_decls_list_115(parse_tree),
 
-            95 => self.var_decls_95(
+            116 => self.var_decls_116(&children[0], parse_tree),
+
+            117 => self.var_decls_list_117(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1665,9 +3432,9 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            96 => self.var_decls_96(parse_tree),
+            118 => self.var_decls_list_118(parse_tree),
 
-            97 => self.module_97(
+            119 => self.module_119(
                 &children[0],
                 &children[1],
                 &children[2],
@@ -1676,26 +3443,27 @@ impl UserActionsTrait for Oberon0Grammar {
                 parse_tree,
             ),
 
-            98 => self.module_suffix_98(
+            120 => self.module_suffix_120(
                 &children[0],
                 &children[1],
                 &children[2],
                 &children[3],
-                &children[4],
                 parse_tree,
             ),
 
-            99 => self.module_suffix_99(&children[0], &children[1], &children[2], parse_tree),
+            121 => self.module_suffix_121(&children[0], &children[1], &children[2], parse_tree),
 
-            100 => self.mul_operator_100(&children[0], parse_tree),
+            122 => self.module_opt_122(&children[0], &children[1], parse_tree),
 
-            101 => self.add_operator_101(&children[0], parse_tree),
+            123 => self.mul_operator_123(&children[0], parse_tree),
 
-            102 => self.unary_op_102(&children[0], parse_tree),
+            124 => self.add_operator_124(&children[0], parse_tree),
 
-            103 => self.ident_103(&children[0], parse_tree),
+            125 => self.unary_op_125(&children[0], parse_tree),
 
-            104 => self.integer_104(&children[0], parse_tree),
+            126 => self.ident_126(&children[0], parse_tree),
+
+            127 => self.integer_127(&children[0], parse_tree),
 
             _ => Err(miette!("Unhandled production number: {}", prod_num)),
         }

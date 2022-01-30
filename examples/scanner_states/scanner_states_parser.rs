@@ -78,13 +78,13 @@ const MAX_K: usize = 1;
 
 pub const NON_TERMINALS: &[&str; 10] = &[
     /*  0 */ "Content",
-    /*  1 */ "Escaped",
-    /*  2 */ "EscapedLineEnd",
-    /*  3 */ "Identifier",
-    /*  4 */ "NoneQuote",
-    /*  5 */ "Start",
-    /*  6 */ "StartList",
-    /*  7 */ "StringContent",
+    /*  1 */ "ContentList",
+    /*  2 */ "Escaped",
+    /*  3 */ "EscapedLineEnd",
+    /*  4 */ "Identifier",
+    /*  5 */ "NoneQuote",
+    /*  6 */ "Start",
+    /*  7 */ "StartList",
     /*  8 */ "StringDelimiter",
     /*  9 */ "StringElement",
 ];
@@ -96,47 +96,7 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 10] = &[
         transitions: &[DFATransition(0, 5, 1), DFATransition(0, 9, 2)],
         k: 1,
     },
-    /* 1 - "Escaped" */
-    LookaheadDFA {
-        states: &[Some(11)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 2 - "EscapedLineEnd" */
-    LookaheadDFA {
-        states: &[Some(12)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 3 - "Identifier" */
-    LookaheadDFA {
-        states: &[Some(10)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 4 - "NoneQuote" */
-    LookaheadDFA {
-        states: &[Some(13)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 5 - "Start" */
-    LookaheadDFA {
-        states: &[Some(0)],
-        transitions: &[],
-        k: 0,
-    },
-    /* 6 - "StartList" */
-    LookaheadDFA {
-        states: &[None, Some(1), Some(2)],
-        transitions: &[
-            DFATransition(0, 0, 2),
-            DFATransition(0, 5, 1),
-            DFATransition(0, 9, 1),
-        ],
-        k: 1,
-    },
-    /* 7 - "StringContent" */
+    /* 1 - "ContentList" */
     LookaheadDFA {
         states: &[None, Some(5), Some(6)],
         transitions: &[
@@ -144,6 +104,46 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 10] = &[
             DFATransition(0, 7, 1),
             DFATransition(0, 8, 1),
             DFATransition(0, 9, 2),
+        ],
+        k: 1,
+    },
+    /* 2 - "Escaped" */
+    LookaheadDFA {
+        states: &[Some(11)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 3 - "EscapedLineEnd" */
+    LookaheadDFA {
+        states: &[Some(12)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 4 - "Identifier" */
+    LookaheadDFA {
+        states: &[Some(10)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 5 - "NoneQuote" */
+    LookaheadDFA {
+        states: &[Some(13)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 6 - "Start" */
+    LookaheadDFA {
+        states: &[Some(0)],
+        transitions: &[],
+        k: 0,
+    },
+    /* 7 - "StartList" */
+    LookaheadDFA {
+        states: &[None, Some(1), Some(2)],
+        transitions: &[
+            DFATransition(0, 0, 2),
+            DFATransition(0, 5, 1),
+            DFATransition(0, 9, 1),
         ],
         k: 1,
     },
@@ -168,78 +168,78 @@ pub const LOOKAHEAD_AUTOMATA: &[LookaheadDFA; 10] = &[
 pub const PRODUCTIONS: &[Production; 15] = &[
     // 0 - Start: StartList;
     Production {
-        lhs: 5,
-        production: &[ParseType::N(6)],
+        lhs: 6,
+        production: &[ParseType::N(7)],
     },
     // 1 - StartList: Content StartList;
     Production {
-        lhs: 6,
-        production: &[ParseType::N(6), ParseType::N(0)],
+        lhs: 7,
+        production: &[ParseType::N(7), ParseType::N(0)],
     },
     // 2 - StartList: Vec<StartList>::New;
     Production {
-        lhs: 6,
+        lhs: 7,
         production: &[],
     },
     // 3 - Content: Identifier;
     Production {
         lhs: 0,
-        production: &[ParseType::N(3)],
+        production: &[ParseType::N(4)],
     },
-    // 4 - Content: StringDelimiter Push(1) StringContent StringDelimiter Pop;
+    // 4 - Content: StringDelimiter Push(1) ContentList StringDelimiter Pop;
     Production {
         lhs: 0,
         production: &[
             ParseType::Pop,
             ParseType::N(8),
-            ParseType::N(7),
+            ParseType::N(1),
             ParseType::Push(1),
             ParseType::N(8),
         ],
     },
-    // 5 - StringContent: StringElement StringContent;
+    // 5 - ContentList: StringElement ContentList;
     Production {
-        lhs: 7,
-        production: &[ParseType::N(7), ParseType::N(9)],
+        lhs: 1,
+        production: &[ParseType::N(1), ParseType::N(9)],
     },
-    // 6 - StringContent: ;
+    // 6 - ContentList: Vec<ContentList>::New;
     Production {
-        lhs: 7,
+        lhs: 1,
         production: &[],
     },
     // 7 - StringElement: Escaped;
     Production {
         lhs: 9,
-        production: &[ParseType::N(1)],
+        production: &[ParseType::N(2)],
     },
     // 8 - StringElement: EscapedLineEnd;
     Production {
         lhs: 9,
-        production: &[ParseType::N(2)],
+        production: &[ParseType::N(3)],
     },
     // 9 - StringElement: NoneQuote;
     Production {
         lhs: 9,
-        production: &[ParseType::N(4)],
+        production: &[ParseType::N(5)],
     },
     // 10 - Identifier: "[a-zA-Z_]\w*";
     Production {
-        lhs: 3,
+        lhs: 4,
         production: &[ParseType::T(5)],
     },
     // 11 - Escaped: "\u{5c}[\u{22}\u{5c}bfnt]";
     Production {
-        lhs: 1,
+        lhs: 2,
         production: &[ParseType::T(6)],
     },
     // 12 - EscapedLineEnd: "\u{5c}[\s^\n\r]*\r?\n";
     Production {
-        lhs: 2,
+        lhs: 3,
         production: &[ParseType::T(7)],
     },
     // 13 - NoneQuote: "[^\u{22}\u{5c}]+";
     Production {
-        lhs: 4,
+        lhs: 5,
         production: &[ParseType::T(8)],
     },
     // 14 - StringDelimiter: "\u{22}";
@@ -271,7 +271,7 @@ where
     T: AsRef<Path>,
 {
     let mut llk_parser = LLKParser::new(
-        5,
+        6,
         LOOKAHEAD_AUTOMATA,
         PRODUCTIONS,
         TERMINAL_NAMES,

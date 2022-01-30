@@ -4,97 +4,109 @@
 
 %%
 
-selector: selectorlist;
-selectorlist: "\." ident selectorlist;
-selectorlist: "\[" expression "]" selectorlist;
-selectorlist: ;
-factor: ident selector;
-factor: integer;
-factor: "\(" expression "\)";
-factor: "~" factor;
-factor: UnaryOp factor;
-term: factor MulExpression;
-MulExpression: MulOperator factor MulExpression;
-MulExpression: ;
-SimpleExpression: term AddExpression;
-AddExpression: AddOperator term AddExpression;
-AddExpression: ;
+Selector: { "\." Ident | "\[" Expression "]" };
+
+Factor
+    : Ident Selector
+    | Integer
+    | "\(" Expression "\)"
+    | "~" Factor
+    | UnaryOp Factor;
+
+Term: Factor MulExpression;
+
+MulExpression: { MulOperator Factor };
+
+SimpleExpression: Term AddExpression;
+
+AddExpression: { AddOperator Term };
+
 AssignOp: ":=";
-RelationOp: AssignOp;
-RelationOp: RelationalOps;
+
+RelationOp
+    : AssignOp
+    | RelationalOps;
+
 RelationalOps: ">=|<=|\#|<|>";
+
 AssignOp: "=";
-expression: SimpleExpression RelationOp SimpleExpression;
-expression: SimpleExpression;
-assignment: ident selector AssignOp expression;
-ActualParameters: "\(" "\)";
-ActualParameters: "\(" expression expressionlistrest "\)";
-expressionlistrest: "," expression expressionlistrest;
-expressionlistrest: ;
-ProcedureCall: ident ActualParameters;
-ProcedureCall: ident;
-IfStatement: IfPrefix "ELSE" StatementSequence "END";
-IfStatement: IfPrefix "END";
-IfPrefix: "IF" expression "THEN" StatementSequence elseiflist;
-elseiflist: "ELSIF" expression "THEN" StatementSequence elseiflist;
-elseiflist: ;
-WhileStatement: "WHILE" expression "DO" StatementSequence "END";
-RepeatStatement: "REPEAT" StatementSequence "UNTIL" expression;
-statement: assignment;
-statement: ProcedureCall;
-statement: IfStatement;
-statement: WhileStatement;
-statement: RepeatStatement;
-statement: ;
-StatementSequence: statement StatementSequenceRest;
-StatementSequenceRest: ";" statement StatementSequenceRest;
-StatementSequenceRest: ;
-IdentList: ident IdentListRest;
-IdentListRest: "," ident IdentListRest;
-IdentListRest: ;
-ArrayType: "ARRAY" expression "OF" type;
-FieldList: IdentList ":" type;
-FieldList: ;
-RecordType: "RECORD" FieldList FieldListRest "END";
-FieldListRest: ";" FieldList FieldListRest;
-FieldListRest: ;
-type: ident;
-type: ArrayType;
-type: RecordType;
-FPSection: "VAR" IdentList ":" type;
-FPSection: IdentList ":" type;
-FormalParameters: "\(" "\)";
-FormalParameters: "\(" FPSection FPSectionRest "\)";
-FPSectionRest: ";" FPSection FPSectionRest;
-FPSectionRest: ;
-ProcedureHeading: "PROCEDURE" ident FormalParameters;
-ProcedureHeading: "PROCEDURE" ident;
-ProcedureBody: declarations "BEGIN" StatementSequence "RETURN" expression "END" ident;
-ProcedureBody: declarations "RETURN" expression "END" ident;
-ProcedureBody: declarations "BEGIN" StatementSequence "END" ident;
-ProcedureBody: declarations "END" ident;
+
+Expression: SimpleExpression [ RelationOp SimpleExpression ];
+
+Assignment: Ident Selector AssignOp Expression;
+
+ActualParameters: "\(" [ Expression { "," Expression } ] "\)";
+
+ProcedureCall: Ident [ ActualParameters ];
+
+IfStatement: IfPrefix [ "ELSE" StatementSequence ] "END";
+
+IfPrefix: "IF" Expression "THEN" StatementSequence { "ELSIF" Expression "THEN" StatementSequence };
+
+WhileStatement: "WHILE" Expression "DO" StatementSequence "END";
+
+RepeatStatement: "REPEAT" StatementSequence "UNTIL" Expression;
+
+Statement
+    : Assignment
+    | ProcedureCall
+    | IfStatement
+    | WhileStatement
+    | RepeatStatement;
+
+StatementSequence: [ Statement ] { ";" [ Statement ] };
+
+IdentList: Ident { "," Ident };
+
+ArrayType: "ARRAY" Expression "OF" Type;
+
+FieldList: IdentList ":" Type;
+
+RecordType: "RECORD" [ FieldList ] { ";"  [ FieldList ] } "END";
+
+Type
+    : Ident
+    | ArrayType
+    | RecordType;
+
+FPSection: [ "VAR" ] IdentList ":" Type;
+
+FormalParameters: "\(" [ FPSection { ";" FPSection } ] "\)";
+
+ProcedureHeading: "PROCEDURE" Ident [ FormalParameters] ;
+
+ProcedureBody
+    : declarations "BEGIN" StatementSequence "RETURN" Expression "END" Ident
+    | declarations "RETURN" Expression "END" Ident
+    | declarations "BEGIN" StatementSequence "END" Ident
+    | declarations "END" Ident;
+
 ProcedureDeclaration: ProcedureHeading ";" ProcedureBody;
-declarations: "CONST" ConstDecls "TYPE" TypeDecls "VAR" VarDecls ProcedureDeclarationList;
-declarations: "CONST" ConstDecls "TYPE" TypeDecls ProcedureDeclarationList;
-declarations: "CONST" ConstDecls "VAR" VarDecls ProcedureDeclarationList;
-declarations: "CONST" ConstDecls ProcedureDeclarationList;
-declarations: "TYPE" TypeDecls "VAR" VarDecls ProcedureDeclarationList;
-declarations: "TYPE" TypeDecls ProcedureDeclarationList;
-declarations: "VAR" VarDecls ProcedureDeclarationList;
-declarations: ProcedureDeclarationList;
-ProcedureDeclarationList: ProcedureDeclaration ";" ProcedureDeclarationList;
-ProcedureDeclarationList: ;
-ConstDecls: ident AssignOp expression ";" ConstDecls;
-ConstDecls: ;
-TypeDecls: ident AssignOp type ";" TypeDecls;
-TypeDecls: ;
-VarDecls: IdentList ":" type ";" VarDecls;
-VarDecls: ;
-module: "MODULE" ident ";" declarations "BEGIN" StatementSequence "END" ident "\.";
-module: "MODULE" ident ";" declarations "END" ident "\.";
+
+declarations
+    : "CONST" ConstDecls "Type" TypeDecls [ "VAR" VarDecls ] ProcedureDeclarationList
+    | "CONST" ConstDecls [ "VAR" VarDecls ] ProcedureDeclarationList
+    | "Type" TypeDecls [ "VAR" VarDecls ] ProcedureDeclarationList
+    | "VAR" VarDecls ProcedureDeclarationList
+    | ProcedureDeclarationList;
+
+ProcedureDeclarationList: { ProcedureDeclaration ";" };
+
+ConstDecls: { Ident AssignOp Expression ";" };
+
+TypeDecls: { Ident AssignOp Type ";" };
+
+VarDecls: { IdentList ":" Type ";" };
+
+module: "MODULE" Ident ";" declarations [ "BEGIN" StatementSequence ] "END" Ident "\.";
+
 MulOperator: "\*|/|DIV|MOD|&";
+
 AddOperator: "\+|-|OR";
+
 UnaryOp: "\+|-";
-ident: "[a-zA-Z][a-zA-Z0-9]*";
-integer: "[0-9]+";
+
+Ident: "[a-zA-Z][a-zA-Z0-9]*";
+
+Integer: "[0-9]+";
 

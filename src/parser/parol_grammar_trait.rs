@@ -7,7 +7,560 @@
 use crate::parser::parol_grammar::ParolGrammar;
 use id_tree::Tree;
 use miette::{miette, Result};
+use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+
+//
+// Output Types of productions deduced from the structure of the transformed grammar
+//
+
+/// Type derived for production 0
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Parol0 {
+    prolog_0: Box<Prolog>,
+    grammar_definition_1: Box<GrammarDefinition>,
+}
+
+/// Type derived for production 1
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Prolog1 {
+    start_declaration_0: Box<StartDeclaration>,
+    prolog_list_1: Box<PrologList>,
+    prolog_list1_2: Box<PrologList1>,
+}
+
+/// Type derived for production 6
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StartDeclaration6 {
+    percent_start_0: OwnedToken, /* %start */
+    identifier_1: Box<Identifier>,
+}
+
+/// Type derived for production 7
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declaration7 {
+    percent_title_0: OwnedToken, /* %title */
+    string_1: Box<String>,
+}
+
+/// Type derived for production 8
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declaration8 {
+    percent_comment_0: OwnedToken, /* %comment */
+    string_1: Box<String>,
+}
+
+/// Type derived for production 9
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Declaration9 {
+    scanner_directives_0: Box<ScannerDirectives>,
+}
+
+/// Type derived for production 10
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerDirectives10 {
+    percent_line_underscore_comment_0: OwnedToken, /* %lineComment */
+    string_1: Box<String>,
+}
+
+/// Type derived for production 11
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerDirectives11 {
+    percent_block_underscore_comment_0: OwnedToken, /* %blockComment */
+    string_1: Box<String>,
+    string_2: Box<String>,
+}
+
+/// Type derived for production 12
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerDirectives12 {
+    percent_auto_underscore_newline_underscore_off_0: OwnedToken, /* %autoNewlineOff */
+}
+
+/// Type derived for production 13
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerDirectives13 {
+    percent_auto_underscore_ws_underscore_off_0: OwnedToken, /* %autoWsOff */
+}
+
+/// Type derived for production 14
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct GrammarDefinition14 {
+    percent_percent_0: OwnedToken, /* %% */
+    production_1: Box<Production>,
+    grammar_definition_list_2: Box<GrammarDefinitionList>,
+}
+
+/// Type derived for production 17
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Production17 {
+    identifier_0: Box<Identifier>,
+    colon_1: OwnedToken, /* : */
+    alternations_2: Box<Alternations>,
+    semicolon_3: OwnedToken, /* ; */
+}
+
+/// Type derived for production 18
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Alternations18 {
+    alternation_0: Box<Alternation>,
+    alternations_list_1: Box<AlternationsList>,
+}
+
+/// Type derived for production 21
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Alternation21 {
+    alternation_list_0: Box<AlternationList>,
+}
+
+/// Type derived for production 24
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor24 {
+    group_0: Box<Group>,
+}
+
+/// Type derived for production 25
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor25 {
+    repeat_0: Box<Repeat>,
+}
+
+/// Type derived for production 26
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor26 {
+    optional_0: Box<Optional>,
+}
+
+/// Type derived for production 27
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Factor27 {
+    symbol_0: Box<Symbol>,
+}
+
+/// Type derived for production 28
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Symbol28 {
+    identifier_0: Box<Identifier>,
+}
+
+/// Type derived for production 29
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Symbol29 {
+    simple_token_0: Box<SimpleToken>,
+}
+
+/// Type derived for production 30
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Symbol30 {
+    token_with_states_0: Box<TokenWithStates>,
+}
+
+/// Type derived for production 31
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Symbol31 {
+    scanner_switch_0: Box<ScannerSwitch>,
+}
+
+/// Type derived for production 32
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SimpleToken32 {
+    string_0: Box<String>,
+}
+
+/// Type derived for production 33
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct TokenWithStates33 {
+    l_t_0: OwnedToken, /* < */
+    state_list_1: Box<StateList>,
+    g_t_2: OwnedToken, /* > */
+    string_3: Box<String>,
+}
+
+/// Type derived for production 34
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Group34 {
+    l_paren_0: OwnedToken, /* \( */
+    alternations_1: Box<Alternations>,
+    r_paren_2: OwnedToken, /* \) */
+}
+
+/// Type derived for production 35
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Optional35 {
+    l_bracket_0: OwnedToken, /* \[ */
+    alternations_1: Box<Alternations>,
+    r_bracket_2: OwnedToken, /* \] */
+}
+
+/// Type derived for production 36
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Repeat36 {
+    l_brace_0: OwnedToken, /* \{ */
+    alternations_1: Box<Alternations>,
+    r_brace_2: OwnedToken, /* \} */
+}
+
+/// Type derived for production 37
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Identifier37 {
+    identifier_0: OwnedToken, /* [a-zA-Z][a-zA-Z0-9]* */
+}
+
+/// Type derived for production 38
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct String38 {
+    string_0: OwnedToken, /* \u{0022}([^\\]|\\.)*?\u{0022} */
+}
+
+/// Type derived for production 39
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerState39 {
+    percent_scanner_0: OwnedToken, /* %scanner */
+    identifier_1: Box<Identifier>,
+    l_brace_2: OwnedToken, /* \{ */
+    scanner_state_list_3: Box<ScannerStateList>,
+    r_brace_4: OwnedToken, /* \} */
+}
+
+/// Type derived for production 42
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StateList42 {
+    identifier_0: Box<Identifier>,
+    state_list_list_1: Box<StateListList>,
+}
+
+/// Type derived for production 45
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitch45 {
+    percent_sc_0: OwnedToken, /* %sc */
+    l_paren_1: OwnedToken,    /* \( */
+    scanner_switch_suffix_2: Box<ScannerSwitchSuffix>,
+}
+
+/// Type derived for production 46
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitchSuffix46 {
+    scanner_switch_opt_0: Box<ScannerSwitchOpt>,
+    r_paren_1: OwnedToken, /* \) */
+}
+
+/// Type derived for production 47
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitchSuffix47 {
+    r_paren_0: (),
+}
+
+/// Type derived for production 48
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitch48 {
+    percent_push_0: OwnedToken, /* %push */
+    l_paren_1: OwnedToken,      /* \( */
+    identifier_2: Box<Identifier>,
+    r_paren_3: OwnedToken, /* \) */
+}
+
+/// Type derived for production 49
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitch49 {
+    percent_pop_0: OwnedToken, /* %pop */
+    l_paren_1: OwnedToken,     /* \( */
+    r_paren_2: OwnedToken,     /* \) */
+}
+
+/// Type derived for production 50
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitchOpt50 {
+    identifier_0: Box<Identifier>,
+}
+
+//
+// Types of non-terminals deduced from the structure of the transformed grammar
+//
+
+/// Type derived for non-terminal Alternation
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Alternation {
+    alternation_list_0: Box<AlternationList>,
+}
+
+/// Type derived for non-terminal AlternationList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AlternationList {
+    vec: Vec<Factor>,
+}
+
+/// Type derived for non-terminal Alternations
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Alternations {
+    alternation_0: Box<Alternation>,
+    alternations_list_1: Box<AlternationsList>,
+}
+
+/// Type derived for non-terminal AlternationsList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct AlternationsList {
+    vec: Vec<(OwnedToken /* \| */, Alternation)>,
+}
+
+/// Type derived for non-terminal Declaration
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Declaration {
+    Declaration0(Box<Declaration7>),
+    Declaration1(Box<Declaration8>),
+    Declaration2(Box<Declaration9>),
+}
+
+/// Type derived for non-terminal Factor
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Factor {
+    Factor0(Box<Factor24>),
+    Factor1(Box<Factor25>),
+    Factor2(Box<Factor26>),
+    Factor3(Box<Factor27>),
+}
+
+/// Type derived for non-terminal GrammarDefinition
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct GrammarDefinition {
+    percent_percent_0: OwnedToken, /* %% */
+    production_1: Box<Production>,
+    grammar_definition_list_2: Box<GrammarDefinitionList>,
+}
+
+/// Type derived for non-terminal GrammarDefinitionList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct GrammarDefinitionList {
+    vec: Vec<Production>,
+}
+
+/// Type derived for non-terminal Group
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Group {
+    l_paren_0: OwnedToken, /* \( */
+    alternations_1: Box<Alternations>,
+    r_paren_2: OwnedToken, /* \) */
+}
+
+/// Type derived for non-terminal Identifier
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Identifier {
+    identifier_0: OwnedToken, /* [a-zA-Z][a-zA-Z0-9]* */
+}
+
+/// Type derived for non-terminal Optional
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Optional {
+    l_bracket_0: OwnedToken, /* \[ */
+    alternations_1: Box<Alternations>,
+    r_bracket_2: OwnedToken, /* \] */
+}
+
+/// Type derived for non-terminal Parol
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Parol {
+    prolog_0: Box<Prolog>,
+    grammar_definition_1: Box<GrammarDefinition>,
+}
+
+/// Type derived for non-terminal Production
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Production {
+    identifier_0: Box<Identifier>,
+    colon_1: OwnedToken, /* : */
+    alternations_2: Box<Alternations>,
+    semicolon_3: OwnedToken, /* ; */
+}
+
+/// Type derived for non-terminal Prolog
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Prolog {
+    start_declaration_0: Box<StartDeclaration>,
+    prolog_list_1: Box<PrologList>,
+    prolog_list1_2: Box<PrologList1>,
+}
+
+/// Type derived for non-terminal PrologList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct PrologList {
+    vec: Vec<Declaration>,
+}
+
+/// Type derived for non-terminal PrologList1
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct PrologList1 {
+    vec: Vec<ScannerState>,
+}
+
+/// Type derived for non-terminal Repeat
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Repeat {
+    l_brace_0: OwnedToken, /* \{ */
+    alternations_1: Box<Alternations>,
+    r_brace_2: OwnedToken, /* \} */
+}
+
+/// Type derived for non-terminal ScannerDirectives
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ScannerDirectives {
+    ScannerDirectives0(Box<ScannerDirectives10>),
+    ScannerDirectives1(Box<ScannerDirectives11>),
+    ScannerDirectives2(Box<ScannerDirectives12>),
+    ScannerDirectives3(Box<ScannerDirectives13>),
+}
+
+/// Type derived for non-terminal ScannerState
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerState {
+    percent_scanner_0: OwnedToken, /* %scanner */
+    identifier_1: Box<Identifier>,
+    l_brace_2: OwnedToken, /* \{ */
+    scanner_state_list_3: Box<ScannerStateList>,
+    r_brace_4: OwnedToken, /* \} */
+}
+
+/// Type derived for non-terminal ScannerStateList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerStateList {
+    vec: Vec<ScannerDirectives>,
+}
+
+/// Type derived for non-terminal ScannerSwitch
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ScannerSwitch {
+    ScannerSwitch0(Box<ScannerSwitch45>),
+    ScannerSwitch1(Box<ScannerSwitch48>),
+    ScannerSwitch2(Box<ScannerSwitch49>),
+}
+
+/// Type derived for non-terminal ScannerSwitchOpt
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ScannerSwitchOpt {
+    identifier_0: Box<Identifier>,
+}
+
+/// Type derived for non-terminal ScannerSwitchSuffix
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ScannerSwitchSuffix {
+    ScannerSwitchSuffix0(Box<ScannerSwitchSuffix46>),
+    ScannerSwitchSuffix1(Box<ScannerSwitchSuffix47>),
+}
+
+/// Type derived for non-terminal SimpleToken
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct SimpleToken {
+    string_0: Box<String>,
+}
+
+/// Type derived for non-terminal StartDeclaration
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StartDeclaration {
+    percent_start_0: OwnedToken, /* %start */
+    identifier_1: Box<Identifier>,
+}
+
+/// Type derived for non-terminal StateList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StateList {
+    identifier_0: Box<Identifier>,
+    state_list_list_1: Box<StateListList>,
+}
+
+/// Type derived for non-terminal StateListList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StateListList {
+    vec: Vec<(OwnedToken /* , */, Identifier)>,
+}
+
+/// Type derived for non-terminal String
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct String {
+    string_0: OwnedToken, /* \u{0022}([^\\]|\\.)*?\u{0022} */
+}
+
+/// Type derived for non-terminal Symbol
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Symbol {
+    Symbol0(Box<Symbol28>),
+    Symbol1(Box<Symbol29>),
+    Symbol2(Box<Symbol30>),
+    Symbol3(Box<Symbol31>),
+}
+
+/// Type derived for non-terminal TokenWithStates
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct TokenWithStates {
+    l_t_0: OwnedToken, /* < */
+    state_list_1: Box<StateList>,
+    g_t_2: OwnedToken, /* > */
+    string_3: Box<String>,
+}
 
 ///
 /// The `ParolGrammarTrait` trait is automatically generated for the

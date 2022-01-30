@@ -3,7 +3,7 @@ use crate::generators::case_helpers::to_upper_camel_case;
 use crate::generators::generate_terminal_name;
 use crate::generators::user_trait_generator::{generate_argument_names, get_argument_name};
 use crate::grammar::SemanticInfo;
-use crate::{Cfg, Pr, Symbol};
+use crate::{Cfg, Pr, Symbol, Terminal};
 use log::trace;
 use miette::{miette, Result};
 use std::collections::BTreeMap;
@@ -39,14 +39,17 @@ impl ASTType {
             Self::None => "*TypeError*".to_owned(),
             Self::Unit => "()".to_owned(),
             Self::Token(t) => format!("OwnedToken /* {} */", t),
-            Self::TypeRef(r) => to_upper_camel_case(r),
-            Self::Struct(n, _) => to_upper_camel_case(n),
-            Self::Enum(n, _) => to_upper_camel_case(n),
+            Self::TypeRef(r) => format!("Box<{}>", r),
+            Self::Struct(n, _) => n.to_string(),
+            Self::Enum(n, _) => n.to_string(),
             Self::Repeat(t) => {
                 let members = t
                     .iter()
                     .fold(Vec::<String>::new(), |mut acc, t| {
-                        acc.push(t.type_name());
+                        match t {
+                            ASTType::TypeRef(r) => acc.push(r.to_string()),
+                            _ => acc.push(t.type_name()),
+                        }
                         acc
                     })
                     .join(", ");
@@ -80,7 +83,7 @@ impl Display for ASTType {
             Self::None => write!(f, "-"),
             Self::Unit => write!(f, "()"),
             Self::Token(t) => write!(f, "OwnedToken /* {} */", t),
-            Self::TypeRef(r) => write!(f, "{}", r),
+            Self::TypeRef(r) => write!(f, "Box<{}>", r),
             Self::Struct(n, m) => write!(
                 f,
                 "struct {} {{ {} }}",
@@ -92,7 +95,7 @@ impl Display for ASTType {
             ),
             Self::Enum(n, t) => write!(
                 f,
-                "enum {} {{{}}}",
+                "enum {} {{ {} }}",
                 n,
                 t.iter()
                     .enumerate()
@@ -106,7 +109,10 @@ impl Display for ASTType {
                         f,
                         "Vec<{}>",
                         t.iter()
-                            .map(|t| format!("{}", t))
+                            .map(|t| match t {
+                                ASTType::TypeRef(r) => r.to_string(),
+                                _ => t.type_name(),
+                            })
                             .collect::<Vec<String>>()
                             .join(" ")
                     )
@@ -292,29 +298,59 @@ impl GrammarTypeSystem {
                     let rhs0 = p0.1.get_r();
                     let rhs1 = p1.1.get_r();
                     match (&rhs0[..], &rhs1[..]) {
+                        ([Symbol::Pseudo(SemanticInfo::CollectionStart(n))], _) => {
+                            acc = self
+                                .add_output_type(p0.0, ASTType::TypeRef(to_upper_camel_case(n)))
+                                .and_then(|_| self.add_semantic(p0.0, Semantic::StartCollection))
+                                .and_then(|_| {
+                                    self.add_output_type(
+                                        p1.0,
+                                        ASTType::TypeRef(to_upper_camel_case(n)),
+                                    )
+                                })
+                                .and_then(|_| self.add_semantic(p1.0, Semantic::AddToCollection));
+                        }
+                        (_, [Symbol::Pseudo(SemanticInfo::CollectionStart(n))]) => {
+                            acc = self
+                                .add_output_type(p1.0, ASTType::TypeRef(to_upper_camel_case(n)))
+                                .and_then(|_| self.add_semantic(p1.0, Semantic::StartCollection))
+                                .and_then(|_| {
+                                    self.add_output_type(
+                                        p0.0,
+                                        ASTType::TypeRef(to_upper_camel_case(n)),
+                                    )
+                                })
+                                .and_then(|_| self.add_semantic(p0.0, Semantic::AddToCollection));
+                        }
                         ([Symbol::Pseudo(SemanticInfo::OptionalNone(n))], _) => {
                             acc = self
                                 .add_input_type(
                                     p0.0,
-                                    ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                    ASTType::Option(vec![ASTType::TypeRef(to_upper_camel_case(n))]),
                                 )
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p0.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                        ASTType::Option(vec![ASTType::TypeRef(
+                                            to_upper_camel_case(n),
+                                        )]),
                                     )
                                 })
                                 .and_then(|_| self.add_semantic(p0.0, Semantic::OptionalNone))
                                 .and_then(|_| {
                                     self.add_input_type(
                                         p1.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                        ASTType::Option(vec![ASTType::TypeRef(
+                                            to_upper_camel_case(n),
+                                        )]),
                                     )
                                 })
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p1.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                        ASTType::Option(vec![ASTType::TypeRef(
+                                            to_upper_camel_case(n),
+                                        )]),
                                     )
                                 })
                                 .and_then(|_| self.add_semantic(p1.0, Semantic::OptionalSome));
@@ -323,46 +359,34 @@ impl GrammarTypeSystem {
                             acc = self
                                 .add_input_type(
                                     p1.0,
-                                    ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                    ASTType::Option(vec![ASTType::TypeRef(to_upper_camel_case(n))]),
                                 )
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p1.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                        ASTType::Option(vec![ASTType::TypeRef(
+                                            to_upper_camel_case(n),
+                                        )]),
                                     )
                                 })
                                 .and_then(|_| self.add_semantic(p0.0, Semantic::OptionalSome))
                                 .and_then(|_| {
                                     self.add_input_type(
                                         p0.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                        ASTType::Option(vec![ASTType::TypeRef(
+                                            to_upper_camel_case(n),
+                                        )]),
                                     )
                                 })
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p0.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(n.to_string())]),
+                                        ASTType::Option(vec![ASTType::TypeRef(
+                                            to_upper_camel_case(n),
+                                        )]),
                                     )
                                 })
                                 .and_then(|_| self.add_semantic(p1.0, Semantic::OptionalNone));
-                        }
-                        ([Symbol::Pseudo(SemanticInfo::CollectionStart(n))], _) => {
-                            acc = self
-                                .add_output_type(p0.0, ASTType::TypeRef(n.to_string()))
-                                .and_then(|_| self.add_semantic(p0.0, Semantic::StartCollection))
-                                .and_then(|_| {
-                                    self.add_output_type(p1.0, ASTType::TypeRef(n.to_string()))
-                                })
-                                .and_then(|_| self.add_semantic(p1.0, Semantic::AddToCollection));
-                        }
-                        (_, [Symbol::Pseudo(SemanticInfo::CollectionStart(n))]) => {
-                            acc = self
-                                .add_output_type(p1.0, ASTType::TypeRef(n.to_string()))
-                                .and_then(|_| self.add_semantic(p1.0, Semantic::StartCollection))
-                                .and_then(|_| {
-                                    self.add_output_type(p0.0, ASTType::TypeRef(n.to_string()))
-                                })
-                                .and_then(|_| self.add_semantic(p0.0, Semantic::AddToCollection));
                         }
                         _ => (),
                     }
@@ -423,7 +447,7 @@ impl GrammarTypeSystem {
                 .zip(types.drain(..))
                 .map(|(n, t)| (n.to_string(), t))
                 .collect::<Vec<(String, ASTType)>>();
-        ASTType::Struct(prod.get_n(), field_names)
+        ASTType::Struct(to_upper_camel_case(prod.get_n_str()), field_names)
     }
 
     fn deduce_in_type_of_production(&self, prod: &Pr) -> ASTType {
@@ -444,7 +468,7 @@ impl GrammarTypeSystem {
                     .position(|s| s.is_n() || s.is_t())
                     .unwrap();
                 ASTType::Struct(
-                    prod.get_n(),
+                    to_upper_camel_case(prod.get_n_str()),
                     vec![(
                         get_argument_name(
                             &prod.get_r()[idx],
@@ -476,8 +500,8 @@ impl GrammarTypeSystem {
 
     fn deduce_type_of_symbol(symbol: &Symbol) -> ASTType {
         match symbol {
-            Symbol::T(t) => ASTType::Token(t.to_string()),
-            Symbol::N(n) => ASTType::TypeRef(n.to_string()),
+            Symbol::T(Terminal::Trm(t, _)) => ASTType::Token(to_upper_camel_case(t)),
+            Symbol::N(n) => ASTType::TypeRef(to_upper_camel_case(n)),
             _ => {
                 trace!("Returning Unit for symbol {}", symbol);
                 ASTType::Unit
@@ -558,15 +582,15 @@ impl GrammarTypeSystem {
                                 self.add_non_terminal_type(
                                     n,
                                     ASTType::Enum(
-                                        n.to_owned(),
+                                        to_upper_camel_case(n),
                                         prods
                                             .iter()
                                             .map(|pr| {
-                                                ASTType::TypeRef(format!(
-                                                    "{}{}",
-                                                    pr.1.get_n_str(),
+                                                ASTType::TypeRef(to_upper_camel_case(&format!(
+                                                    "{}_{}",
+                                                    to_upper_camel_case(pr.1.get_n_str()),
                                                     pr.0
-                                                ))
+                                                )))
                                             })
                                             .collect::<Vec<ASTType>>(),
                                     ),
@@ -606,7 +630,7 @@ impl Display for GrammarTypeSystem {
         }
         writeln!(f)?;
         for (non_terminal, ast_type) in &self.non_terminal_types {
-            writeln!(f, "{} ->  {}", non_terminal, ast_type)?;
+            writeln!(f, "{}:  {}", non_terminal, ast_type)?;
         }
         Ok(())
     }

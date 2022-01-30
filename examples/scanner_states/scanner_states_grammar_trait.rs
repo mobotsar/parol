@@ -7,7 +7,168 @@
 use crate::scanner_states_grammar::ScannerStatesGrammar;
 use id_tree::Tree;
 use miette::{miette, Result};
+use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+
+//
+// Output Types of productions deduced from the structure of the transformed grammar
+//
+
+/// Type derived for production 0
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Start0 {
+    start_list_0: Box<StartList>,
+}
+
+/// Type derived for production 3
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Content3 {
+    identifier_0: Box<Identifier>,
+}
+
+/// Type derived for production 4
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Content4 {
+    string_delimiter_0: Box<StringDelimiter>,
+    content_list_2: Box<ContentList>,
+    string_delimiter_3: Box<StringDelimiter>,
+}
+
+/// Type derived for production 7
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StringElement7 {
+    escaped_0: Box<Escaped>,
+}
+
+/// Type derived for production 8
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StringElement8 {
+    escaped_line_end_0: Box<EscapedLineEnd>,
+}
+
+/// Type derived for production 9
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StringElement9 {
+    none_quote_0: Box<NoneQuote>,
+}
+
+/// Type derived for production 10
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Identifier10 {
+    identifier_0: OwnedToken, /* [a-zA-Z]\w* */
+}
+
+/// Type derived for production 11
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Escaped11 {
+    escaped_0: OwnedToken, /* \u{5c}[\u{22}\u{5c}bfnt] */
+}
+
+/// Type derived for production 12
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct EscapedLineEnd12 {
+    escaped_line_end_0: OwnedToken, /* \u{5c}[\s^\n\r]*\r?\n */
+}
+
+/// Type derived for production 13
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct NoneQuote13 {
+    none_quote_0: OwnedToken, /* [^\u{22}\u{5c}]+ */
+}
+
+/// Type derived for production 14
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StringDelimiter14 {
+    string_delimiter_0: OwnedToken, /* \u{22} */
+}
+
+//
+// Types of non-terminals deduced from the structure of the transformed grammar
+//
+
+/// Type derived for non-terminal Content
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum Content {
+    Content0(Box<Content3>),
+    Content1(Box<Content4>),
+}
+
+/// Type derived for non-terminal ContentList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct ContentList {
+    vec: Vec<StringElement>,
+}
+
+/// Type derived for non-terminal Escaped
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Escaped {
+    escaped_0: OwnedToken, /* \u{5c}[\u{22}\u{5c}bfnt] */
+}
+
+/// Type derived for non-terminal EscapedLineEnd
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct EscapedLineEnd {
+    escaped_line_end_0: OwnedToken, /* \u{5c}[\s^\n\r]*\r?\n */
+}
+
+/// Type derived for non-terminal Identifier
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Identifier {
+    identifier_0: OwnedToken, /* [a-zA-Z]\w* */
+}
+
+/// Type derived for non-terminal NoneQuote
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct NoneQuote {
+    none_quote_0: OwnedToken, /* [^\u{22}\u{5c}]+ */
+}
+
+/// Type derived for non-terminal Start
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct Start {
+    start_list_0: Box<StartList>,
+}
+
+/// Type derived for non-terminal StartList
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StartList {
+    vec: Vec<Content>,
+}
+
+/// Type derived for non-terminal StringDelimiter
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+struct StringDelimiter {
+    string_delimiter_0: OwnedToken, /* \u{22} */
+}
+
+/// Type derived for non-terminal StringElement
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum StringElement {
+    StringElement0(Box<StringElement7>),
+    StringElement1(Box<StringElement8>),
+    StringElement2(Box<StringElement9>),
+}
 
 ///
 /// The `ScannerStatesGrammarTrait` trait is automatically generated for the
@@ -67,12 +228,12 @@ pub trait ScannerStatesGrammarTrait {
 
     /// Semantic action for production 4:
     ///
-    /// Content: StringDelimiter %push(String) StringContent StringDelimiter %pop();
+    /// Content: StringDelimiter %push(String) ContentList StringDelimiter %pop();
     ///
     fn content_4(
         &mut self,
         _string_delimiter_0: &ParseTreeStackEntry,
-        _string_content_2: &ParseTreeStackEntry,
+        _content_list_2: &ParseTreeStackEntry,
         _string_delimiter_3: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
@@ -81,12 +242,12 @@ pub trait ScannerStatesGrammarTrait {
 
     /// Semantic action for production 5:
     ///
-    /// StringContent: StringElement StringContent;
+    /// ContentList: StringElement ContentList;
     ///
-    fn string_content_5(
+    fn content_list_5(
         &mut self,
         _string_element_0: &ParseTreeStackEntry,
-        _string_content_1: &ParseTreeStackEntry,
+        _content_list_1: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         Ok(())
@@ -94,9 +255,9 @@ pub trait ScannerStatesGrammarTrait {
 
     /// Semantic action for production 6:
     ///
-    /// StringContent: ;
+    /// ContentList: /* Vec<ContentList>::New */;
     ///
-    fn string_content_6(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
+    fn content_list_6(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         Ok(())
     }
 
@@ -227,9 +388,9 @@ impl UserActionsTrait for ScannerStatesGrammar {
 
             4 => self.content_4(&children[0], &children[1], &children[2], parse_tree),
 
-            5 => self.string_content_5(&children[0], &children[1], parse_tree),
+            5 => self.content_list_5(&children[0], &children[1], parse_tree),
 
-            6 => self.string_content_6(parse_tree),
+            6 => self.content_list_6(parse_tree),
 
             7 => self.string_element_7(&children[0], parse_tree),
 
