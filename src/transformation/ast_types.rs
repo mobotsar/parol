@@ -661,13 +661,55 @@ impl TryFrom<&Cfg> for GrammarTypeSystem {
 
 #[cfg(test)]
 mod tests {
-    use super::GrammarTypeSystem;
+    use super::{ASTType, GrammarTypeSystem};
     use crate::grammar::SemanticInfo;
     use crate::{Cfg, Pr, Symbol};
+    use log::trace;
+    use proptest::prelude::*;
     use std::convert::TryInto;
     use std::sync::Once;
 
     static INIT: Once = Once::new();
+
+    lazy_static! {
+        // S: "a" {"b-rpt"} "c" {"d-rpt"};
+
+        // /* 0 */ S: "a" SList "c" SList1;
+        // /* 1 */ SList1: "d-rpt" SList1;
+        // /* 2 */ SList1: /* Vec<SList1>::New */;
+        // /* 3 */ SList: "b-rpt" SList;
+        // /* 4 */ SList: /* Vec<SList>::New */;
+        static ref G1: Cfg = Cfg::with_start_symbol("S")
+            .add_pr(Pr::new("S", vec![t("a"), n("SList"), t("c"), n("SList1")]))
+            .add_pr(Pr::new("SList1", vec![t("d-rpt"), n("SList1")]))
+            .add_pr(Pr::new("SList1", vec![c("SList1")]))
+            .add_pr(Pr::new("SList", vec![t("b-rpt"), n("SList")]))
+            .add_pr(Pr::new("SList", vec![c("SList")]));
+        static ref TYPE_SYSTEM1: GrammarTypeSystem = (&*G1).try_into().unwrap();
+
+        // S: "a" ["b-opt"] "c" ["d-opt"];
+
+        // /* 0 */ S: "a" SSuffix2;
+        // /* 1 */ SSuffix2: /* Option<SOpt>::None */ "c" SSuffix1;
+        // /* 2 */ SSuffix2: SOpt "c" SSuffix;
+        // /* 3 */ SSuffix1: SOpt1;
+        // /* 4 */ SSuffix1: /* Option<SOpt2>::None */;
+        // /* 5 */ SSuffix: SOpt1;
+        // /* 6 */ SSuffix: /* Option<SOpt1>::None */;
+        // /* 7 */ SOpt1: "d-opt";
+        // /* 8 */ SOpt: "b-opt";
+        static ref G2: Cfg = Cfg::with_start_symbol("S")
+            .add_pr(Pr::new("S", vec![t("a"), n("SSuffix2")]))
+            .add_pr(Pr::new("SSuffix2", vec![o("SOpt"), t("c"), n("SSuffix1")]))
+            .add_pr(Pr::new("SSuffix2", vec![n("SOpt"), t("c"), n("SSuffix")]))
+            .add_pr(Pr::new("SSuffix1", vec![n("SOpt1")]))
+            .add_pr(Pr::new("SSuffix1", vec![o("SOpt2")]))
+            .add_pr(Pr::new("SSuffix", vec![n("SOpt1")]))
+            .add_pr(Pr::new("SSuffix", vec![o("SOpt1")]))
+            .add_pr(Pr::new("SOpt1", vec![t("d-opt")]))
+            .add_pr(Pr::new("SOpt", vec![t("b-opt")]));
+        static ref TYPE_SYSTEM2: GrammarTypeSystem = (&*G2).try_into().unwrap();
+    }
 
     fn setup() {
         INIT.call_once(env_logger::init);
@@ -689,57 +731,61 @@ mod tests {
         Symbol::Pseudo(SemanticInfo::OptionalNone(r.to_owned()))
     }
 
-    #[test]
-    fn type_creation_repeat_1() {
-        setup();
+    proptest! {
+        #[test]
+        fn type_creation_repeat_1(prod_num in 0usize..4) {
+            setup();
 
-        // S: "a" {"b-rpt"} "c" {"d-rpt"};
+            trace!("{}", *TYPE_SYSTEM1);
 
-        // /* 0 */ S: "a" SList "c" SList1;
-        // /* 1 */ SList1: "d-rpt" SList1;
-        // /* 2 */ SList1: /* Vec<SList1>::New */;
-        // /* 3 */ SList: "b-rpt" SList;
-        // /* 4 */ SList: /* Vec<SList>::New */;
+            assert_eq!(5, TYPE_SYSTEM1.in_types.len());
+            assert_eq!(5, TYPE_SYSTEM1.out_types.len());
+            assert_eq!(3, TYPE_SYSTEM1.non_terminal_types.len());
 
-        let g = Cfg::with_start_symbol("S")
-            .add_pr(Pr::new("S", vec![t("a"), n("SList"), t("c"), n("SList1")]))
-            .add_pr(Pr::new("SList1", vec![t("d-rpt"), n("SList1")]))
-            .add_pr(Pr::new("SList1", vec![c("SList1")]))
-            .add_pr(Pr::new("SList", vec![t("b-rpt"), n("SList")]))
-            .add_pr(Pr::new("SList", vec![c("SList")]));
-
-        let type_system: GrammarTypeSystem = (&g).try_into().unwrap();
-        println!("{}", type_system);
+            assert!(TYPE_SYSTEM1.non_terminal_types.contains_key(G1.pr[prod_num].get_n_str()));
+            match &TYPE_SYSTEM1.in_types[&prod_num] {
+                ASTType::Enum(n, m) => {
+                    assert_eq!(n, G1.pr[prod_num].get_n_str());
+                    assert_eq!(m.len(), (&G1).matching_productions(G1.pr[prod_num].get_n_str()).len())
+                }
+                _ => ()
+            }
+            match &TYPE_SYSTEM1.out_types[&prod_num] {
+                ASTType::Enum(n, m) => {
+                    assert_eq!(n, G1.pr[prod_num].get_n_str());
+                    assert_eq!(m.len(), (&G1).matching_productions(G1.pr[prod_num].get_n_str()).len())
+                }
+                _ => ()
+            }
+        }
     }
 
-    #[test]
-    fn type_creation_optional_1() {
-        setup();
+    proptest! {
+        #[test]
+        fn type_creation_optional_1(prod_num in 0usize..8) {
+            setup();
 
-        // S: "a" ["b-opt"] "c" ["d-opt"];
+            trace!("{}", *TYPE_SYSTEM2);
 
-        // /* 0 */ S: "a" SSuffix2;
-        // /* 1 */ SSuffix2: /* Option<SOpt>::None */ "c" SSuffix1;
-        // /* 2 */ SSuffix2: SOpt "c" SSuffix;
-        // /* 3 */ SSuffix1: SOpt1;
-        // /* 4 */ SSuffix1: /* Option<SOpt2>::None */;
-        // /* 5 */ SSuffix: SOpt1;
-        // /* 6 */ SSuffix: /* Option<SOpt1>::None */;
-        // /* 7 */ SOpt1: "d-opt";
-        // /* 8 */ SOpt: "b-opt";
+            assert_eq!(9, TYPE_SYSTEM2.in_types.len());
+            assert_eq!(9, TYPE_SYSTEM2.out_types.len());
+            assert_eq!(6, TYPE_SYSTEM2.non_terminal_types.len());
 
-        let g = Cfg::with_start_symbol("S")
-            .add_pr(Pr::new("S", vec![t("a"), n("SSuffix2")]))
-            .add_pr(Pr::new("SSuffix2", vec![o("SOpt"), t("c"), n("SSuffix1")]))
-            .add_pr(Pr::new("SSuffix2", vec![n("SOpt"), t("c"), n("SSuffix")]))
-            .add_pr(Pr::new("SSuffix1", vec![n("SOpt1")]))
-            .add_pr(Pr::new("SSuffix1", vec![o("SOpt2")]))
-            .add_pr(Pr::new("SSuffix", vec![n("SOpt1")]))
-            .add_pr(Pr::new("SSuffix", vec![o("SOpt1")]))
-            .add_pr(Pr::new("SOpt1", vec![t("d-opt")]))
-            .add_pr(Pr::new("SOpt", vec![t("b-opt")]));
-
-        let type_system: GrammarTypeSystem = (&g).try_into().unwrap();
-        println!("{}", type_system);
+            assert!(TYPE_SYSTEM2.non_terminal_types.contains_key(G2.pr[prod_num].get_n_str()));
+            match &TYPE_SYSTEM2.in_types[&prod_num] {
+                ASTType::Enum(n, m) => {
+                    assert_eq!(n, G2.pr[prod_num].get_n_str());
+                    assert_eq!(m.len(), (&G2).matching_productions(G2.pr[prod_num].get_n_str()).len())
+                }
+                _ => ()
+            }
+            match &TYPE_SYSTEM2.out_types[&prod_num] {
+                ASTType::Enum(n, m) => {
+                    assert_eq!(n, G2.pr[prod_num].get_n_str());
+                    assert_eq!(m.len(), (&G2).matching_productions(G2.pr[prod_num].get_n_str()).len())
+                }
+                _ => ()
+            }
+        }
     }
 }
