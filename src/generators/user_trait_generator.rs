@@ -26,6 +26,7 @@ struct UserTraitFunctionData {
 #[template = "templates/user_trait_template.rs"]
 struct UserTraitData<'a> {
     user_type_name: &'a str,
+    auto_generate: bool,
     production_output_types: StrVec,
     non_terminal_types: StrVec,
     ast_type_decl: String,
@@ -258,6 +259,7 @@ fn format_type(
 pub fn generate_user_trait_source(
     user_type_name: &str,
     user_trait_module_name: &str,
+    auto_generate: bool,
     grammar_config: &GrammarConfig,
 ) -> Result<String> {
     let terminals = grammar_config
@@ -283,9 +285,13 @@ pub fn generate_user_trait_source(
             .join(", ")
     };
 
-    let type_system: GrammarTypeSystem = (&grammar_config.cfg).try_into()?;
+    let type_system: GrammarTypeSystem = if auto_generate {
+        (&grammar_config.cfg).try_into()?
+    } else {
+        GrammarTypeSystem::default()
+    };
 
-    let production_output_types =
+    let production_output_types = if auto_generate {
         type_system
             .out_types
             .iter()
@@ -299,9 +305,12 @@ pub fn generate_user_trait_source(
                 .into_iter()
                 .for_each(|s| acc.push(s));
                 acc
-            });
+            })
+    } else {
+        StrVec::new(0)
+    };
 
-    let non_terminal_types =
+    let non_terminal_types = if auto_generate {
         type_system
             .non_terminal_types
             .iter()
@@ -310,23 +319,30 @@ pub fn generate_user_trait_source(
                     .into_iter()
                     .for_each(|s| acc.push(s));
                 acc
-            });
+            })
+    } else {
+        StrVec::new(0)
+    };
 
-    let ast_type_decl = format!(
-        "{}",
-        NonTerminalTypeEnum {
-            comment: "Derived from production output types".to_owned(),
-            non_terminal: "ASTType".to_owned(),
-            members: type_system.non_terminal_types.iter().fold(
-                StrVec::new(4),
-                |mut acc, (n, _)| {
-                    let nt = to_upper_camel_case(n);
-                    acc.push(format!("{}({}),", nt, nt));
-                    acc
-                }
-            ),
-        }
-    );
+    let ast_type_decl = if auto_generate {
+        format!(
+            "{}",
+            NonTerminalTypeEnum {
+                comment: "Derived from production output types".to_owned(),
+                non_terminal: "ASTType".to_owned(),
+                members: type_system.non_terminal_types.iter().fold(
+                    StrVec::new(4),
+                    |mut acc, (n, _)| {
+                        let nt = to_upper_camel_case(n);
+                        acc.push(format!("{}({}),", nt, nt));
+                        acc
+                    }
+                ),
+            }
+        )
+    } else {
+        String::default()
+    };
 
     let trait_functions = grammar_config.cfg.pr.iter().enumerate().fold(
         StrVec::new(0).first_line_no_indent(),
@@ -365,6 +381,7 @@ pub fn generate_user_trait_source(
 
     let user_trait_data = UserTraitData {
         user_type_name,
+        auto_generate,
         production_output_types,
         non_terminal_types,
         ast_type_decl,

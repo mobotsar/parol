@@ -5,11 +5,12 @@
 // ---------------------------------------------------------
 
 use id_tree::Tree;
-use parol_runtime::lexer::OwnedToken;
+{{#auto_generate?}}use parol_runtime::lexer::OwnedToken;{{/auto_generate}}
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
 use miette::{miette, Result};
 use crate::{{user_trait_module_name}}::{{user_type_name}};
 
+{{#auto_generate?}}
 //
 // Output Types of productions deduced from the structure of the transformed grammar
 //
@@ -28,7 +29,7 @@ use crate::{{user_trait_module_name}}::{{user_type_name}};
 //
 
 {{{ast_type_decl}}}
-
+{{/auto_generate}}
 ///
 /// The `{{{user_type_name}}}Trait` trait is automatically generated for the
 /// given grammar.
