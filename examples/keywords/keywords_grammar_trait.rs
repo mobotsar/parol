@@ -160,6 +160,26 @@ struct Var {
     var_0: OwnedToken, /* (?i)\bVar\b */
 }
 
+//
+// AST type of the transformed grammar
+//
+
+/// Derived from production output types
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ASTType {
+    Begin(Begin),
+    Block(Block),
+    BlockList(BlockList),
+    Declaration(Declaration),
+    End(End),
+    Grammar(Grammar),
+    GrammarList(GrammarList),
+    Identifier(Identifier),
+    Items(Items),
+    Var(Var),
+}
+
 ///
 /// The `KeywordsGrammarTrait` trait is automatically generated for the
 /// given grammar.

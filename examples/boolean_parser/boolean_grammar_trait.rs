@@ -450,6 +450,42 @@ struct XorOp {
     xor_op_0: OwnedToken, /* (?i)XOR */
 }
 
+//
+// AST type of the transformed grammar
+//
+
+/// Derived from production output types
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ASTType {
+    AndOp(AndOp),
+    BinaryOperator(BinaryOperator),
+    Boolean(Boolean),
+    Expression(Expression),
+    Expressions(Expressions),
+    ExpressionsList(ExpressionsList),
+    ExpressionsOpt(ExpressionsOpt),
+    ExpressionsSuffix(ExpressionsSuffix),
+    Factor(Factor),
+    False(False),
+    LeftParenthesis(LeftParenthesis),
+    NandOp(NandOp),
+    NorOp(NorOp),
+    Not(Not),
+    OrOp(OrOp),
+    Parenthesized(Parenthesized),
+    RightParenthesis(RightParenthesis),
+    Semicolon(Semicolon),
+    TailExpression(TailExpression),
+    TailExpressionList(TailExpressionList),
+    Term(Term),
+    TermOpt(TermOpt),
+    True(True),
+    UnaryOperator(UnaryOperator),
+    XnorOp(XnorOp),
+    XorOp(XorOp),
+}
+
 ///
 /// The `BooleanGrammarTrait` trait is automatically generated for the
 /// given grammar.

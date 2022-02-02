@@ -22,6 +22,13 @@ use crate::{{user_trait_module_name}}::{{user_type_name}};
 
 {{{non_terminal_types}}}
 
+
+//
+// AST type of the transformed grammar
+//
+
+{{{ast_type_decl}}}
+
 ///
 /// The `{{{user_type_name}}}Trait` trait is automatically generated for the
 /// given grammar.

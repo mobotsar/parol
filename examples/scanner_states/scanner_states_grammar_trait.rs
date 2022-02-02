@@ -170,6 +170,26 @@ enum StringElement {
     StringElement2(Box<StringElement9>),
 }
 
+//
+// AST type of the transformed grammar
+//
+
+/// Derived from production output types
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ASTType {
+    Content(Content),
+    ContentList(ContentList),
+    Escaped(Escaped),
+    EscapedLineEnd(EscapedLineEnd),
+    Identifier(Identifier),
+    NoneQuote(NoneQuote),
+    Start(Start),
+    StartList(StartList),
+    StringDelimiter(StringDelimiter),
+    StringElement(StringElement),
+}
+
 ///
 /// The `ScannerStatesGrammarTrait` trait is automatically generated for the
 /// given grammar.

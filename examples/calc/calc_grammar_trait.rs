@@ -1103,6 +1103,81 @@ struct SummLst1Itm1 {
     summ_item_0: Box<SummItem>,
 }
 
+//
+// AST type of the transformed grammar
+//
+
+/// Derived from production output types
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ASTType {
+    AddOp(AddOp),
+    AssignItem(AssignItem),
+    AssignOp(AssignOp),
+    Assignment(Assignment),
+    AssignmentLst1(AssignmentLst1),
+    AssignmentLst1Itm1(AssignmentLst1Itm1),
+    BitwiseAnd(BitwiseAnd),
+    BitwiseAndItem(BitwiseAndItem),
+    BitwiseAndLst1(BitwiseAndLst1),
+    BitwiseAndLst1Itm1(BitwiseAndLst1Itm1),
+    BitwiseAndOp(BitwiseAndOp),
+    BitwiseOr(BitwiseOr),
+    BitwiseOrItem(BitwiseOrItem),
+    BitwiseOrLst1(BitwiseOrLst1),
+    BitwiseOrLst1Itm1(BitwiseOrLst1Itm1),
+    BitwiseOrOp(BitwiseOrOp),
+    BitwiseShift(BitwiseShift),
+    BitwiseShiftItem(BitwiseShiftItem),
+    BitwiseShiftLst1(BitwiseShiftLst1),
+    BitwiseShiftLst1Itm1(BitwiseShiftLst1Itm1),
+    BitwiseShiftOp(BitwiseShiftOp),
+    Calc(Calc),
+    CalcLst1(CalcLst1),
+    CalcLst1Itm1(CalcLst1Itm1),
+    Equality(Equality),
+    EqualityItem(EqualityItem),
+    EqualityLst1(EqualityLst1),
+    EqualityLst1Itm1(EqualityLst1Itm1),
+    EqualityOp(EqualityOp),
+    Factor(Factor),
+    Id(Id),
+    Idref(Idref),
+    Instruction(Instruction),
+    LogicalAnd(LogicalAnd),
+    LogicalAndItem(LogicalAndItem),
+    LogicalAndLst1(LogicalAndLst1),
+    LogicalAndLst1Itm1(LogicalAndLst1Itm1),
+    LogicalAndOp(LogicalAndOp),
+    LogicalOr(LogicalOr),
+    LogicalOrItem(LogicalOrItem),
+    LogicalOrLst1(LogicalOrLst1),
+    LogicalOrLst1Itm1(LogicalOrLst1Itm1),
+    LogicalOrOp(LogicalOrOp),
+    Minus(Minus),
+    Mult(Mult),
+    MultItem(MultItem),
+    MultLst1(MultLst1),
+    MultLst1Itm1(MultLst1Itm1),
+    MultOp(MultOp),
+    Negate(Negate),
+    Number(Number),
+    Plus(Plus),
+    PowOp(PowOp),
+    Power(Power),
+    PowerLst1(PowerLst1),
+    PowerLst1Itm1(PowerLst1Itm1),
+    Relational(Relational),
+    RelationalItem(RelationalItem),
+    RelationalLst1(RelationalLst1),
+    RelationalLst1Itm1(RelationalLst1Itm1),
+    RelationalOp(RelationalOp),
+    Summ(Summ),
+    SummItem(SummItem),
+    SummLst1(SummLst1),
+    SummLst1Itm1(SummLst1Itm1),
+}
+
 ///
 /// The `CalcGrammarTrait` trait is automatically generated for the
 /// given grammar.

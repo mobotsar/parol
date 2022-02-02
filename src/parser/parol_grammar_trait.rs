@@ -562,6 +562,46 @@ struct TokenWithStates {
     string_3: Box<String>,
 }
 
+//
+// AST type of the transformed grammar
+//
+
+/// Derived from production output types
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ASTType {
+    Alternation(Alternation),
+    AlternationList(AlternationList),
+    Alternations(Alternations),
+    AlternationsList(AlternationsList),
+    Declaration(Declaration),
+    Factor(Factor),
+    GrammarDefinition(GrammarDefinition),
+    GrammarDefinitionList(GrammarDefinitionList),
+    Group(Group),
+    Identifier(Identifier),
+    Optional(Optional),
+    Parol(Parol),
+    Production(Production),
+    Prolog(Prolog),
+    PrologList(PrologList),
+    PrologList1(PrologList1),
+    Repeat(Repeat),
+    ScannerDirectives(ScannerDirectives),
+    ScannerState(ScannerState),
+    ScannerStateList(ScannerStateList),
+    ScannerSwitch(ScannerSwitch),
+    ScannerSwitchOpt(ScannerSwitchOpt),
+    ScannerSwitchSuffix(ScannerSwitchSuffix),
+    SimpleToken(SimpleToken),
+    StartDeclaration(StartDeclaration),
+    StateList(StateList),
+    StateListList(StateListList),
+    String(String),
+    Symbol(Symbol),
+    TokenWithStates(TokenWithStates),
+}
+
 ///
 /// The `ParolGrammarTrait` trait is automatically generated for the
 /// given grammar.

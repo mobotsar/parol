@@ -28,6 +28,7 @@ struct UserTraitData<'a> {
     user_type_name: &'a str,
     production_output_types: StrVec,
     non_terminal_types: StrVec,
+    ast_type_decl: String,
     trait_functions: StrVec,
     trait_caller: StrVec,
     user_trait_module_name: &'a str,
@@ -152,12 +153,12 @@ fn format_type(
 ) -> Option<String> {
     let (comment, non_terminal) = if let Some(prod_num) = prod_num {
         (
-            format!("{} {}", comment, prod_num),
+            format!("Type derived for {} {}", comment, prod_num),
             to_upper_camel_case(&format!("{}_{}", non_terminal, prod_num)),
         )
     } else {
         (
-            format!("{} {}", comment, non_terminal),
+            format!("Type derived for {} {}", comment, non_terminal),
             to_upper_camel_case(non_terminal),
         )
     };
@@ -311,6 +312,22 @@ pub fn generate_user_trait_source(
                 acc
             });
 
+    let ast_type_decl = format!(
+        "{}",
+        NonTerminalTypeEnum {
+            comment: "Derived from production output types".to_owned(),
+            non_terminal: "ASTType".to_owned(),
+            members: type_system.non_terminal_types.iter().fold(
+                StrVec::new(4),
+                |mut acc, (n, _)| {
+                    let nt = to_upper_camel_case(n);
+                    acc.push(format!("{}({}),", nt, nt));
+                    acc
+                }
+            ),
+        }
+    );
+
     let trait_functions = grammar_config.cfg.pr.iter().enumerate().fold(
         StrVec::new(0).first_line_no_indent(),
         |mut acc, (i, p)| {
@@ -350,6 +367,7 @@ pub fn generate_user_trait_source(
         user_type_name,
         production_output_types,
         non_terminal_types,
+        ast_type_decl,
         trait_functions,
         trait_caller,
         user_trait_module_name,

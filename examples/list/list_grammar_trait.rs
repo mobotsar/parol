@@ -145,6 +145,23 @@ struct Num {
     num_0: OwnedToken, /* 0|[1-9][0-9]* */
 }
 
+//
+// AST type of the transformed grammar
+//
+
+/// Derived from production output types
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+enum ASTType {
+    List(List),
+    ListOpt(ListOpt),
+    ListOptOpt(ListOptOpt),
+    ListOptSuffix(ListOptSuffix),
+    ListRest(ListRest),
+    ListRestOpt(ListRestOpt),
+    Num(Num),
+}
+
 ///
 /// The `ListGrammarTrait` trait is automatically generated for the
 /// given grammar.
