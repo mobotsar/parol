@@ -144,6 +144,109 @@ fn generate_caller_argument_list(pr: &Pr) -> String {
     arguments.join(", ")
 }
 
+fn format_type(
+    ast_type: &ASTType,
+    non_terminal: &str,
+    prod_num: Option<usize>,
+    comment: &str,
+) -> Option<String> {
+    let (comment, non_terminal) = if let Some(prod_num) = prod_num {
+        (
+            format!("{} {}", comment, prod_num),
+            to_upper_camel_case(&format!("{}_{}", non_terminal, prod_num)),
+        )
+    } else {
+        (
+            format!("{} {}", comment, non_terminal),
+            to_upper_camel_case(non_terminal),
+        )
+    };
+
+    match ast_type {
+        ASTType::Struct(_n, m) => {
+            let struct_data = NonTerminalTypeStruct {
+                comment,
+                non_terminal,
+                members: m.iter().fold(StrVec::new(4), |mut acc, (n, t)| {
+                    acc.push(format!("{}: {},", n, t));
+                    acc
+                }),
+            };
+            Some(format!("{}", struct_data))
+        }
+        ASTType::Enum(n, m) => {
+            let struct_data = NonTerminalTypeEnum {
+                comment,
+                non_terminal,
+                members: m
+                    .iter()
+                    .enumerate()
+                    .fold(StrVec::new(4), |mut acc, (i, t)| {
+                        acc.push(to_upper_camel_case(&format!(
+                            "{}_{}({}),",
+                            n,
+                            i,
+                            t.type_name()
+                        )));
+                        acc
+                    }),
+            };
+            Some(format!("{}", struct_data))
+        }
+        ASTType::Repeat(m) => {
+            let members = m.iter().fold(String::new(), |mut acc, t| {
+                acc.push_str(&format!(
+                    "{},",
+                    match t {
+                        ASTType::TypeRef(r) => r.to_string(),
+                        _ => t.type_name(),
+                    }
+                ));
+                acc
+            });
+
+            let members = if m.len() == 1 {
+                members
+            } else {
+                format!("({})", members)
+            };
+            let struct_data = NonTerminalTypeVec {
+                comment,
+                non_terminal,
+                members,
+            };
+            Some(format!("{}", struct_data))
+        }
+        ASTType::Option(m) => {
+            let members = m.iter().fold(String::new(), |mut acc, t| {
+                acc.push_str(&format!("{},", t.type_name()));
+                acc
+            });
+
+            let members = if m.len() == 1 {
+                members
+            } else {
+                format!("({})", members)
+            };
+            let struct_data = NonTerminalTypeOpt {
+                comment,
+                non_terminal,
+                members,
+            };
+            Some(format!("{}", struct_data))
+        }
+        ASTType::Unit => {
+            let struct_data = NonTerminalTypeStruct {
+                comment,
+                non_terminal,
+                members: StrVec::new(0),
+            };
+            Some(format!("{}", struct_data))
+        }
+        _ => None,
+    }
+}
+
 // ---------------------------------------------------
 // Part of the Public API
 // *Changes will affect crate's version according to semver*
@@ -186,109 +289,14 @@ pub fn generate_user_trait_source(
             .out_types
             .iter()
             .fold(StrVec::new(0), |mut acc, (s, t)| {
-                match t {
-                    ASTType::Struct(_n, m) => {
-                        let struct_data = NonTerminalTypeStruct {
-                            comment: format!("production {}", s),
-                            non_terminal: to_upper_camel_case(&format!(
-                                "{}_{}",
-                                grammar_config.cfg.pr[*s].get_n_str(),
-                                s
-                            )),
-                            members: m.iter().fold(StrVec::new(4), |mut acc, (n, t)| {
-                                acc.push(format!("{}: {},", n, t));
-                                acc
-                            }),
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Enum(n, m) => {
-                        let struct_data = NonTerminalTypeEnum {
-                            comment: format!("production {}", s),
-                            non_terminal: to_upper_camel_case(&format!(
-                                "{}_{}",
-                                grammar_config.cfg.pr[*s].get_n_str(),
-                                s
-                            )),
-                            members: m.iter().enumerate().fold(
-                                StrVec::new(4),
-                                |mut acc, (i, t)| {
-                                    acc.push(to_upper_camel_case(&format!(
-                                        "{}_{}({}),",
-                                        n,
-                                        i,
-                                        t.type_name()
-                                    )));
-                                    acc
-                                },
-                            ),
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Repeat(m) => {
-                        let members = m.iter().fold(String::new(), |mut acc, t| {
-                            acc.push_str(&format!(
-                                "{},",
-                                match t {
-                                    ASTType::TypeRef(r) => r.to_string(),
-                                    _ => t.type_name(),
-                                }
-                            ));
-                            acc
-                        });
-
-                        let members = if m.len() == 1 {
-                            members
-                        } else {
-                            format!("({})", members)
-                        };
-                        let struct_data = NonTerminalTypeVec {
-                            comment: format!("production {}", s),
-                            non_terminal: to_upper_camel_case(&format!(
-                                "{}_{}",
-                                grammar_config.cfg.pr[*s].get_n_str(),
-                                s
-                            )),
-                            members,
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Option(m) => {
-                        let members = m.iter().fold(String::new(), |mut acc, t| {
-                            acc.push_str(&format!("{},", t.type_name()));
-                            acc
-                        });
-
-                        let members = if m.len() == 1 {
-                            members
-                        } else {
-                            format!("({})", members)
-                        };
-                        let struct_data = NonTerminalTypeOpt {
-                            comment: format!("production {}", s),
-                            non_terminal: to_upper_camel_case(&format!(
-                                "{}_{}",
-                                grammar_config.cfg.pr[*s].get_n_str(),
-                                s
-                            )),
-                            members,
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Unit => {
-                        let struct_data = NonTerminalTypeStruct {
-                            comment: format!("production {}", s),
-                            non_terminal: to_upper_camel_case(&format!(
-                                "{}_{}",
-                                grammar_config.cfg.pr[*s].get_n_str(),
-                                s
-                            )),
-                            members: StrVec::new(0),
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    _ => (),
-                }
+                format_type(
+                    t,
+                    grammar_config.cfg.pr[*s].get_n_str(),
+                    Some(*s),
+                    "production",
+                )
+                .into_iter()
+                .for_each(|s| acc.push(s));
                 acc
             });
 
@@ -297,77 +305,9 @@ pub fn generate_user_trait_source(
             .non_terminal_types
             .iter()
             .fold(StrVec::new(0), |mut acc, (s, t)| {
-                match t {
-                    ASTType::Struct(_n, m) => {
-                        let struct_data = NonTerminalTypeStruct {
-                            comment: format!("non-terminal {}", s),
-                            non_terminal: to_upper_camel_case(s),
-                            members: m.iter().fold(StrVec::new(4), |mut acc, (n, t)| {
-                                acc.push(format!("{}: {},", n, t));
-                                acc
-                            }),
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Enum(n, m) => {
-                        let struct_data = NonTerminalTypeEnum {
-                            comment: format!("non-terminal {}", s),
-                            non_terminal: to_upper_camel_case(s),
-                            members: m.iter().enumerate().fold(
-                                StrVec::new(4),
-                                |mut acc, (i, t)| {
-                                    let variant_name = to_upper_camel_case(&format!("{}_{}", n, i));
-                                    acc.push(format!("{}({}),", variant_name, t.type_name()));
-                                    acc
-                                },
-                            ),
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Repeat(m) => {
-                        let members = m.iter().fold(String::new(), |mut acc, t| {
-                            acc.push_str(&format!(
-                                "{},",
-                                match t {
-                                    ASTType::TypeRef(r) => r.to_string(),
-                                    _ => t.type_name(),
-                                }
-                            ));
-                            acc
-                        });
-
-                        let members = if m.len() == 1 {
-                            members
-                        } else {
-                            format!("({})", members)
-                        };
-                        let struct_data = NonTerminalTypeVec {
-                            comment: format!("non-terminal {}", s),
-                            non_terminal: to_upper_camel_case(s),
-                            members,
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    ASTType::Option(m) => {
-                        let members = m.iter().fold(String::new(), |mut acc, t| {
-                            acc.push_str(&format!("{},", t.type_name()));
-                            acc
-                        });
-
-                        let members = if m.len() == 1 {
-                            members
-                        } else {
-                            format!("({})", members)
-                        };
-                        let struct_data = NonTerminalTypeOpt {
-                            comment: format!("non-terminal {}", s),
-                            non_terminal: to_upper_camel_case(s),
-                            members,
-                        };
-                        acc.push(format!("{}", struct_data));
-                    }
-                    _ => (),
-                }
+                format_type(t, s, None, "non-terminal")
+                    .into_iter()
+                    .for_each(|s| acc.push(s));
                 acc
             });
 
@@ -414,6 +354,6 @@ pub fn generate_user_trait_source(
         trait_caller,
         user_trait_module_name,
     };
-    //Ok(formatted_or_unchanged(format!("{}", user_trait_data)))
+
     Ok(format!("{}", user_trait_data))
 }
