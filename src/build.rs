@@ -167,6 +167,8 @@ pub struct Builder {
     auto_generate: bool,
     /// Internal debugging for CLI.
     debug_verbose: bool,
+    /// Used for auto generation of user's grammar semantic action trait
+    parol_grammar: ParolGrammar,
 }
 impl Builder {
     /// Create a new builder fr use in a Cargo build script (`build.rs`).
@@ -238,6 +240,7 @@ impl Builder {
             auto_generate: false,
             // By default, we require that output files != /dev/null
             output_sanity_checks: true,
+            parol_grammar: ParolGrammar::new(),
         }
     }
     /// By default, we require that the generated parser and action files are not discarded.
@@ -304,7 +307,7 @@ impl Builder {
     /// Set the name of the user module that implements the language processing
     ///
     /// This is the module that contains the [Self::user_type_name]
-    pub fn user_trait_module_name(&mut self, name: &str) -> &mut Self {
+    pub fn module_name(&mut self, name: &str) -> &mut Self {
         self.module_name = name.into();
         self
     }
@@ -431,6 +434,7 @@ impl GrammarGenerator<'_> {
                 "Failed parsing grammar file {}",
                 self.grammar_file.display()
             ))?;
+        self.builder.parol_grammar = parol_grammar.clone();
         self.listener
             .on_initial_grammar_parse(&syntax_tree, &parol_grammar)?;
         self.grammar_config = Some(GrammarConfig::try_from(parol_grammar)?);
@@ -519,6 +523,9 @@ impl GrammarGenerator<'_> {
         let parser_source = crate::generate_parser_source(
             grammar_config,
             &lexer_source,
+            self.builder.auto_generate,
+            &self.builder.user_type_name,
+            &self.builder.module_name,
             self.lookahead_dfa_s.as_ref().unwrap(),
         )
         .wrap_err("Failed to generate parser source!")?;
@@ -536,13 +543,17 @@ impl GrammarGenerator<'_> {
             &self.builder.user_type_name,
             &self.builder.module_name,
             self.builder.auto_generate,
+            &self.builder.parol_grammar,
             grammar_config,
         )
         .wrap_err("Failed to generate user trait source!")?;
         if let Some(ref user_trait_file_out) = self.builder.actions_output_file {
             fs::write(user_trait_file_out, user_trait_source)
                 .into_diagnostic()
-                .wrap_err("Error writing generated user trait source!")?;
+                .wrap_err(format!(
+                    "Error writing generated user trait source {}!",
+                    user_trait_file_out.display()
+                ))?;
             crate::try_format(user_trait_file_out);
         } else if self.builder.debug_verbose {
             println!("\nSource for semantic actions:\n{}", user_trait_source);

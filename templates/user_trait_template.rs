@@ -8,9 +8,19 @@ use id_tree::Tree;
 {{#auto_generate?}}use parol_runtime::lexer::OwnedToken;{{/auto_generate}}
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
 use miette::{miette, Result};
-use crate::{{user_trait_module_name}}::{{user_type_name}};
+#[allow(unused_imports)]
+use crate::{{module_name}}::{{user_type_name}};
+{{#auto_generate?}}use std::path::PathBuf;{{/auto_generate}}
 
 {{#auto_generate?}}
+/// Semantic actions trait generated for the user grammar
+/// All functions have default implementations.
+pub trait {{user_type_name}}Trait {
+    fn init(&mut self, _file_name: &std::path::Path) {}
+
+    {{{user_trait_functions}}}
+}
+
 //
 // Output Types of productions deduced from the structure of the transformed grammar
 //
@@ -29,7 +39,34 @@ use crate::{{user_trait_module_name}}::{{user_type_name}};
 //
 
 {{{ast_type_decl}}}
+
+/// Auto-implemented adapter grammar
+#[allow(dead_code)]
+pub struct {{{user_type_name}}}Auto<'a> {
+    // Mutable reference of the actual user grammar to be able to call the semantic actions on it
+    user_grammar: &'a mut dyn {{user_type_name}}Trait,
+    // Stack to construct the AST on it
+    item_stack: Vec<ASTType>,
+    // Path of the input file. Used for diagnostics.
+    file_name: PathBuf,
+}
 {{/auto_generate}}
+
+{{#auto_generate?}}
+///
+/// The `{{{user_type_name}}}Auto` impl is automatically generated for the
+/// given grammar.
+///
+impl<'a> {{{user_type_name}}}Auto<'a> {
+    pub fn new(user_grammar: &'a mut dyn {{user_type_name}}Trait) -> Self {
+        Self {
+            user_grammar,
+            item_stack: Vec::new(),
+            file_name: PathBuf::default(),
+        }
+    }
+{{/auto_generate}}
+{{^auto_generate?}}
 ///
 /// The `{{{user_type_name}}}Trait` trait is automatically generated for the
 /// given grammar.
@@ -41,18 +78,22 @@ pub trait {{{user_type_name}}}Trait {
     ///
     fn init(&mut self, _file_name: &std::path::Path) {
     }
+{{/auto_generate}}
 
     {{{trait_functions}}}
 }
 
-impl UserActionsTrait for {{{user_type_name}}} {
+impl UserActionsTrait for {{{user_type_name}}}{{#auto_generate?}}Auto<'_>{{/auto_generate}} {
     ///
     /// Initialize the user with additional information.
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, file_name: &std::path::Path) {
-        {{{user_type_name}}}Trait::init(self, file_name);
+    fn init(&mut self, {{^auto_generate?}}_{{/auto_generate}}file_name: &std::path::Path) {
+{{#auto_generate?}}
+        self.file_name = file_name.to_owned();
+        self.user_grammar.init(file_name);
+{{/auto_generate}}
     }
 
     ///

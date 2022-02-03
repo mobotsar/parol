@@ -49,7 +49,7 @@ fn main() -> Result<()> {
 
     builder.max_lookahead(config.lookahead)?;
     if let Some(module) = &config.module {
-        builder.user_trait_module_name(module);
+        builder.module_name(module);
     }
     if let Some(user_type) = &config.user_type {
         builder.user_type_name(user_type);

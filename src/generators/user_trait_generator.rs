@@ -1,7 +1,8 @@
 use crate::generators::case_helpers::{to_lower_snake_case, to_upper_camel_case};
 use crate::generators::{generate_terminal_name, GrammarConfig};
+use crate::parser::{ParolGrammarItem, Production};
 use crate::transformation::ast_types::{ASTType, GrammarTypeSystem};
-use crate::{Pr, StrVec, Symbol, Terminal};
+use crate::{ParolGrammar, Pr, StrVec, Symbol, Terminal};
 use miette::Result;
 use std::convert::TryInto;
 
@@ -25,14 +26,15 @@ struct UserTraitFunctionData {
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/user_trait_template.rs"]
 struct UserTraitData<'a> {
-    user_type_name: &'a str,
+    user_type_name: String,
     auto_generate: bool,
     production_output_types: StrVec,
     non_terminal_types: StrVec,
     ast_type_decl: String,
     trait_functions: StrVec,
     trait_caller: StrVec,
-    user_trait_module_name: &'a str,
+    module_name: &'a str,
+    user_trait_functions: StrVec,
 }
 
 #[derive(BartDisplay, Debug, Default)]
@@ -132,6 +134,10 @@ fn generate_argument_list(pr: &Pr, terminals: &[&str], terminal_names: &[String]
         .collect::<Vec<String>>();
     arguments.push("_parse_tree: &Tree<ParseTreeType>".to_string());
     arguments.join(", ")
+}
+
+fn generate_argument_list_for_user_action(non_terminal: &str) -> String {
+    format!("_arg: {}", to_upper_camel_case(non_terminal))
 }
 
 fn generate_caller_argument_list(pr: &Pr) -> String {
@@ -258,10 +264,12 @@ fn format_type(
 ///
 pub fn generate_user_trait_source(
     user_type_name: &str,
-    user_trait_module_name: &str,
+    module_name: &str,
     auto_generate: bool,
+    parol_grammar: &ParolGrammar,
     grammar_config: &GrammarConfig,
 ) -> Result<String> {
+    let user_type_name = to_upper_camel_case(user_type_name);
     let terminals = grammar_config
         .cfg
         .get_ordered_terminals()
@@ -361,6 +369,34 @@ pub fn generate_user_trait_source(
         },
     );
 
+    let user_trait_functions = if auto_generate {
+        parol_grammar
+            .item_stack
+            .iter()
+            .fold(
+                (StrVec::new(0).first_line_no_indent(), 0),
+                |(mut acc, mut i), p| {
+                    if let ParolGrammarItem::Prod(Production { lhs, rhs }) = p {
+                        let fn_name = to_lower_snake_case(&lhs);
+                        let prod_string = format!("{}: {};", fn_name, rhs);
+                        let fn_arguments = generate_argument_list_for_user_action(&fn_name);
+                        let user_trait_function_data = UserTraitFunctionData {
+                            fn_name,
+                            prod_num: i,
+                            fn_arguments,
+                            prod_string,
+                        };
+                        acc.push(format!("{}", user_trait_function_data));
+                        i += 1;
+                    }
+                    (acc, i)
+                },
+            )
+            .0
+    } else {
+        StrVec::default()
+    };
+
     let trait_caller =
         grammar_config
             .cfg
@@ -387,7 +423,8 @@ pub fn generate_user_trait_source(
         ast_type_decl,
         trait_functions,
         trait_caller,
-        user_trait_module_name,
+        module_name,
+        user_trait_functions,
     };
 
     Ok(format!("{}", user_trait_data))

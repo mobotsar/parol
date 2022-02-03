@@ -127,6 +127,9 @@ struct ParserData<'a> {
     productions: String,
     max_k: usize,
     scanner_builds: StrVec,
+    auto_generate: bool,
+    user_type_name: &'a str,
+    module_name: &'a str,
 }
 
 // ---------------------------------------------------
@@ -139,6 +142,9 @@ struct ParserData<'a> {
 pub fn generate_parser_source(
     grammar_config: &GrammarConfig,
     lexer_source: &str,
+    auto_generate: bool,
+    user_type_name: &str,
+    module_name: &str,
     la_dfa: &BTreeMap<String, LookaheadDFA>,
 ) -> Result<String> {
     let terminals = grammar_config
@@ -196,6 +202,9 @@ pub fn generate_parser_source(
         productions,
         max_k,
         scanner_builds,
+        auto_generate,
+        user_type_name,
+        module_name,
     };
 
     Ok(format!("{}", parser_data))

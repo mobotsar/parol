@@ -1,5 +1,5 @@
 /// {{comment}}
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
-struct {{non_terminal}} {
+pub struct {{non_terminal}} {
 {{{members}}}}

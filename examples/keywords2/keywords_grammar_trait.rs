@@ -4,181 +4,12 @@
 // lost after next build.
 // ---------------------------------------------------------
 
-use crate::keywords_grammar::KeywordsGrammar;
 use id_tree::Tree;
+
+#[allow(unused_imports)]
+use crate::keywords_grammar::KeywordsGrammar;
 use miette::{miette, Result};
-use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
-
-//
-// Output Types of productions deduced from the structure of the transformed grammar
-//
-
-/// Type derived for production 0
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Grammar0 {
-    grammar_list_0: Box<GrammarList>,
-}
-
-/// Type derived for production 3
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Items3 {
-    declaration_0: Box<Declaration>,
-}
-
-/// Type derived for production 4
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Items4 {
-    block_0: Box<Block>,
-}
-
-/// Type derived for production 5
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Declaration5 {
-    var_0: Box<Var>,
-    identifier_2: Box<Identifier>,
-    semicolon_4: OwnedToken, /* ; */
-}
-
-/// Type derived for production 6
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Block6 {
-    begin_0: Box<Begin>,
-    block_list_1: Box<BlockList>,
-    end_2: Box<End>,
-}
-
-/// Type derived for production 9
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Identifier9 {
-    identifier_0: OwnedToken, /* [a-zA-Z][a-zA-Z0-9]* */
-}
-
-/// Type derived for production 10
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Begin10 {
-    begin_0: OwnedToken, /* (?i)\bBegin\b */
-}
-
-/// Type derived for production 11
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct End11 {
-    end_0: OwnedToken, /* (?i)\bEnd\b */
-}
-
-/// Type derived for production 12
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Var12 {
-    var_0: OwnedToken, /* (?i)\bVar\b */
-}
-
-//
-// Types of non-terminals deduced from the structure of the transformed grammar
-//
-
-/// Type derived for non-terminal Begin
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Begin {
-    begin_0: OwnedToken, /* (?i)\bBegin\b */
-}
-
-/// Type derived for non-terminal Block
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Block {
-    begin_0: Box<Begin>,
-    block_list_1: Box<BlockList>,
-    end_2: Box<End>,
-}
-
-/// Type derived for non-terminal BlockList
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct BlockList {
-    vec: Vec<Items>,
-}
-
-/// Type derived for non-terminal Declaration
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Declaration {
-    var_0: Box<Var>,
-    identifier_2: Box<Identifier>,
-    semicolon_4: OwnedToken, /* ; */
-}
-
-/// Type derived for non-terminal End
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct End {
-    end_0: OwnedToken, /* (?i)\bEnd\b */
-}
-
-/// Type derived for non-terminal Grammar
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Grammar {
-    grammar_list_0: Box<GrammarList>,
-}
-
-/// Type derived for non-terminal GrammarList
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct GrammarList {
-    vec: Vec<Items>,
-}
-
-/// Type derived for non-terminal Identifier
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Identifier {
-    identifier_0: OwnedToken, /* [a-zA-Z][a-zA-Z0-9]* */
-}
-
-/// Type derived for non-terminal Items
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-enum Items {
-    Items0(Box<Items3>),
-    Items1(Box<Items4>),
-}
-
-/// Type derived for non-terminal Var
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Var {
-    var_0: OwnedToken, /* (?i)\bVar\b */
-}
-
-//
-// AST type of the transformed grammar
-//
-
-/// Derived from production output types
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-enum ASTType {
-    Begin(Begin),
-    Block(Block),
-    BlockList(BlockList),
-    Declaration(Declaration),
-    End(End),
-    Grammar(Grammar),
-    GrammarList(GrammarList),
-    Identifier(Identifier),
-    Items(Items),
-    Var(Var),
-}
 
 ///
 /// The `KeywordsGrammarTrait` trait is automatically generated for the
@@ -352,9 +183,7 @@ impl UserActionsTrait for KeywordsGrammar {
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, file_name: &std::path::Path) {
-        KeywordsGrammarTrait::init(self, file_name);
-    }
+    fn init(&mut self, _file_name: &std::path::Path) {}
 
     ///
     /// This function is implemented automatically for the user's item KeywordsGrammar.

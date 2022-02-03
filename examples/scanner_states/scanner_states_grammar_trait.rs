@@ -4,191 +4,12 @@
 // lost after next build.
 // ---------------------------------------------------------
 
-use crate::scanner_states_grammar::ScannerStatesGrammar;
 use id_tree::Tree;
+
+#[allow(unused_imports)]
+use crate::scanner_states_grammar::ScannerStatesGrammar;
 use miette::{miette, Result};
-use parol_runtime::lexer::OwnedToken;
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
-
-//
-// Output Types of productions deduced from the structure of the transformed grammar
-//
-
-/// Type derived for production 0
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Start0 {
-    start_list_0: Box<StartList>,
-}
-
-/// Type derived for production 3
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Content3 {
-    identifier_0: Box<Identifier>,
-}
-
-/// Type derived for production 4
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Content4 {
-    string_delimiter_0: Box<StringDelimiter>,
-    content_list_2: Box<ContentList>,
-    string_delimiter_3: Box<StringDelimiter>,
-}
-
-/// Type derived for production 7
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct StringElement7 {
-    escaped_0: Box<Escaped>,
-}
-
-/// Type derived for production 8
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct StringElement8 {
-    escaped_line_end_0: Box<EscapedLineEnd>,
-}
-
-/// Type derived for production 9
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct StringElement9 {
-    none_quote_0: Box<NoneQuote>,
-}
-
-/// Type derived for production 10
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Identifier10 {
-    identifier_0: OwnedToken, /* [a-zA-Z]\w* */
-}
-
-/// Type derived for production 11
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Escaped11 {
-    escaped_0: OwnedToken, /* \u{5c}[\u{22}\u{5c}bfnt] */
-}
-
-/// Type derived for production 12
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct EscapedLineEnd12 {
-    escaped_line_end_0: OwnedToken, /* \u{5c}[\s^\n\r]*\r?\n */
-}
-
-/// Type derived for production 13
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct NoneQuote13 {
-    none_quote_0: OwnedToken, /* [^\u{22}\u{5c}]+ */
-}
-
-/// Type derived for production 14
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct StringDelimiter14 {
-    string_delimiter_0: OwnedToken, /* \u{22} */
-}
-
-//
-// Types of non-terminals deduced from the structure of the transformed grammar
-//
-
-/// Type derived for non-terminal Content
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-enum Content {
-    Content0(Box<Content3>),
-    Content1(Box<Content4>),
-}
-
-/// Type derived for non-terminal ContentList
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct ContentList {
-    vec: Vec<StringElement>,
-}
-
-/// Type derived for non-terminal Escaped
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Escaped {
-    escaped_0: OwnedToken, /* \u{5c}[\u{22}\u{5c}bfnt] */
-}
-
-/// Type derived for non-terminal EscapedLineEnd
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct EscapedLineEnd {
-    escaped_line_end_0: OwnedToken, /* \u{5c}[\s^\n\r]*\r?\n */
-}
-
-/// Type derived for non-terminal Identifier
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Identifier {
-    identifier_0: OwnedToken, /* [a-zA-Z]\w* */
-}
-
-/// Type derived for non-terminal NoneQuote
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct NoneQuote {
-    none_quote_0: OwnedToken, /* [^\u{22}\u{5c}]+ */
-}
-
-/// Type derived for non-terminal Start
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct Start {
-    start_list_0: Box<StartList>,
-}
-
-/// Type derived for non-terminal StartList
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct StartList {
-    vec: Vec<Content>,
-}
-
-/// Type derived for non-terminal StringDelimiter
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct StringDelimiter {
-    string_delimiter_0: OwnedToken, /* \u{22} */
-}
-
-/// Type derived for non-terminal StringElement
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-enum StringElement {
-    StringElement0(Box<StringElement7>),
-    StringElement1(Box<StringElement8>),
-    StringElement2(Box<StringElement9>),
-}
-
-//
-// AST type of the transformed grammar
-//
-
-/// Derived from production output types
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-enum ASTType {
-    Content(Content),
-    ContentList(ContentList),
-    Escaped(Escaped),
-    EscapedLineEnd(EscapedLineEnd),
-    Identifier(Identifier),
-    NoneQuote(NoneQuote),
-    Start(Start),
-    StartList(StartList),
-    StringDelimiter(StringDelimiter),
-    StringElement(StringElement),
-}
 
 ///
 /// The `ScannerStatesGrammarTrait` trait is automatically generated for the
@@ -384,9 +205,7 @@ impl UserActionsTrait for ScannerStatesGrammar {
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, file_name: &std::path::Path) {
-        ScannerStatesGrammarTrait::init(self, file_name);
-    }
+    fn init(&mut self, _file_name: &std::path::Path) {}
 
     ///
     /// This function is implemented automatically for the user's item ScannerStatesGrammar.
