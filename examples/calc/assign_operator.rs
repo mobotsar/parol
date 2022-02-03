@@ -3,7 +3,7 @@ use std::result::Result;
 
 #[derive(Debug, Clone)]
 pub enum AssignOperator {
-    Plain,
+    Assign,
     Plus,
     Minus,
     Mul,
@@ -19,7 +19,7 @@ pub enum AssignOperator {
 impl Display for AssignOperator {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            Self::Plain => write!(f, "="),
+            Self::Assign => write!(f, "="),
             Self::Plus => write!(f, "+="),
             Self::Minus => write!(f, "-="),
             Self::Mul => write!(f, "*="),
@@ -37,7 +37,7 @@ impl Display for AssignOperator {
 impl From<&str> for AssignOperator {
     fn from(s: &str) -> Self {
         match s {
-            "=" => Self::Plain,
+            "=" => Self::Assign,
             "+=" => Self::Plus,
             "-=" => Self::Minus,
             "*=" => Self::Mul,

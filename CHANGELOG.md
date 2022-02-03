@@ -17,7 +17,7 @@ But we try to mark incompatible changes with a new minor version.
 
 * Implementing auto generation for expanded grammar
 
-## v0.5.8-pre - unreleased yet
+## v0.5.8 - 2022-02-03
 
 * Included PR #13: *Clap 3.0 (derive + builder styles)*. ***Thanks a lot to oaleaf.***
   This closes Issue #10

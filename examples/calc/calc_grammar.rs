@@ -148,7 +148,7 @@ impl CalcGrammar {
     ) -> Result<()> {
         trace!("apply_assign_item: {}: {} {} {}", context, lhs, op, rhs);
         match op {
-            AssignOperator::Plain => *lhs = rhs,
+            AssignOperator::Assign => *lhs = rhs,
             AssignOperator::Plus => *lhs += rhs,
             AssignOperator::Minus => *lhs -= rhs,
             AssignOperator::Mul => *lhs *= rhs,
