@@ -63,6 +63,30 @@ impl Display for Factor {
     }
 }
 
+impl Factor {
+    /// Generate parol's syntax
+    pub fn to_par(&self) -> String {
+        match self {
+            Self::Group(g) => format!("({})", g.to_par()),
+            Self::Repeat(r) => format!("{{{}}}", r.to_par()),
+            Self::Optional(o) => format!("[{}]", o.to_par()),
+            Self::Terminal(t, s) => format!(
+                "<{}>\"{}\"",
+                s.iter()
+                    .map(|s| format!("{}", s))
+                    .collect::<Vec<String>>()
+                    .join(", "),
+                t
+            ),
+            Self::NonTerminal(n) => format!("{}", n),
+            Self::ScannerSwitch(n) => format!("%sc({})", n),
+            Self::ScannerSwitchPush(n) => format!("%push({})", n),
+            Self::ScannerSwitchPop => format!("%pop()"),
+            Self::Pseudo(p) => format!("/* {} */", p),
+        }
+    }
+}
+
 ///
 /// An Alternation is a sequence of factors.
 /// Valid operation on Alternation is "|".
@@ -96,6 +120,15 @@ impl Alternation {
     pub(crate) fn push(&mut self, fac: Factor) {
         self.0.push(fac)
     }
+
+    /// Generate parol's syntax
+    pub fn to_par(&self) -> String {
+        self.0
+            .iter()
+            .map(|f| f.to_par())
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
 }
 
 ///
@@ -111,6 +144,15 @@ impl Alternations {
 
     pub(crate) fn insert(&mut self, alt: Alternation) {
         self.0.insert(0, alt)
+    }
+
+    /// Generate parol's syntax
+    pub fn to_par(&self) -> String {
+        self.0
+            .iter()
+            .map(|a| a.to_par())
+            .collect::<Vec<String>>()
+            .join(" | ")
     }
 }
 
@@ -183,6 +225,23 @@ impl Display for ParolGrammarItem {
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
+        }
+    }
+}
+
+impl ParolGrammarItem {
+    /// Generate parol's syntax
+    pub fn to_par(&self) -> String {
+        match self {
+            Self::Prod(Production { lhs, rhs }) => format!("{}: {};", lhs, rhs.to_par()),
+            Self::Alts(alts) => alts.to_par(),
+            Self::Alt(alt) => alt.to_par(),
+            Self::Fac(fac) => fac.to_par(),
+            Self::StateList(sl) => sl
+                .iter()
+                .map(|e| format!("<{}>", e))
+                .collect::<Vec<String>>()
+                .join(", "),
         }
     }
 }

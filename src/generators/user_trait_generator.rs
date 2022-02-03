@@ -16,11 +16,14 @@ struct UserTraitCallerFunctionData {
 
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/user_trait_function_template.rs"]
-struct UserTraitFunctionData {
-    fn_name: String,
+struct UserTraitFunctionData<'a> {
+    fn_name: &'a str,
     prod_num: usize,
     fn_arguments: String,
     prod_string: String,
+    // Inner means the expanded version of the grammar.
+    // If set to false the actual user grammar is meant.
+    inner: bool,
 }
 
 #[derive(BartDisplay, Debug, Default)]
@@ -359,10 +362,11 @@ pub fn generate_user_trait_source(
             let prod_string = p.format(&scanner_state_resolver);
             let fn_arguments = generate_argument_list(p, &terminals, &terminal_names);
             let user_trait_function_data = UserTraitFunctionData {
-                fn_name,
+                fn_name: &fn_name,
                 prod_num: i,
                 fn_arguments,
                 prod_string,
+                inner: true,
             };
             acc.push(format!("{}", user_trait_function_data));
             acc
@@ -376,15 +380,16 @@ pub fn generate_user_trait_source(
             .fold(
                 (StrVec::new(0).first_line_no_indent(), 0),
                 |(mut acc, mut i), p| {
-                    if let ParolGrammarItem::Prod(Production { lhs, rhs }) = p {
+                    if let ParolGrammarItem::Prod(Production { lhs, rhs: _ }) = p {
                         let fn_name = to_lower_snake_case(&lhs);
-                        let prod_string = format!("{}: {};", fn_name, rhs);
+                        let prod_string = format!("{}", p.to_par());
                         let fn_arguments = generate_argument_list_for_user_action(&fn_name);
                         let user_trait_function_data = UserTraitFunctionData {
-                            fn_name,
+                            fn_name: &fn_name,
                             prod_num: i,
                             fn_arguments,
                             prod_string,
+                            inner: false,
                         };
                         acc.push(format!("{}", user_trait_function_data));
                         i += 1;
