@@ -1,7 +1,5 @@
 use crate::analysis::lookahead_dfa::ProductionIndex;
-use crate::generators::case_helpers::to_upper_camel_case;
-use crate::generators::generate_terminal_name;
-use crate::generators::user_trait_generator::{generate_argument_names, get_argument_name};
+use crate::generators::{generate_terminal_name, NamingHelper as NmHlp};
 use crate::grammar::SemanticInfo;
 use crate::{Cfg, Pr, Symbol, Terminal};
 use log::trace;
@@ -300,24 +298,30 @@ impl GrammarTypeSystem {
                     match (&rhs0[..], &rhs1[..]) {
                         ([Symbol::Pseudo(SemanticInfo::CollectionStart(n))], _) => {
                             acc = self
-                                .add_output_type(p0.0, ASTType::TypeRef(to_upper_camel_case(n)))
+                                .add_output_type(
+                                    p0.0,
+                                    ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
+                                )
                                 .and_then(|_| self.add_semantic(p0.0, Semantic::StartCollection))
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p1.0,
-                                        ASTType::TypeRef(to_upper_camel_case(n)),
+                                        ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
                                     )
                                 })
                                 .and_then(|_| self.add_semantic(p1.0, Semantic::AddToCollection));
                         }
                         (_, [Symbol::Pseudo(SemanticInfo::CollectionStart(n))]) => {
                             acc = self
-                                .add_output_type(p1.0, ASTType::TypeRef(to_upper_camel_case(n)))
+                                .add_output_type(
+                                    p1.0,
+                                    ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
+                                )
                                 .and_then(|_| self.add_semantic(p1.0, Semantic::StartCollection))
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p0.0,
-                                        ASTType::TypeRef(to_upper_camel_case(n)),
+                                        ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
                                     )
                                 })
                                 .and_then(|_| self.add_semantic(p0.0, Semantic::AddToCollection));
@@ -326,13 +330,15 @@ impl GrammarTypeSystem {
                             acc = self
                                 .add_input_type(
                                     p0.0,
-                                    ASTType::Option(vec![ASTType::TypeRef(to_upper_camel_case(n))]),
+                                    ASTType::Option(vec![ASTType::TypeRef(
+                                        NmHlp::to_upper_camel_case(n),
+                                    )]),
                                 )
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p0.0,
                                         ASTType::Option(vec![ASTType::TypeRef(
-                                            to_upper_camel_case(n),
+                                            NmHlp::to_upper_camel_case(n),
                                         )]),
                                     )
                                 })
@@ -341,7 +347,7 @@ impl GrammarTypeSystem {
                                     self.add_input_type(
                                         p1.0,
                                         ASTType::Option(vec![ASTType::TypeRef(
-                                            to_upper_camel_case(n),
+                                            NmHlp::to_upper_camel_case(n),
                                         )]),
                                     )
                                 })
@@ -349,7 +355,7 @@ impl GrammarTypeSystem {
                                     self.add_output_type(
                                         p1.0,
                                         ASTType::Option(vec![ASTType::TypeRef(
-                                            to_upper_camel_case(n),
+                                            NmHlp::to_upper_camel_case(n),
                                         )]),
                                     )
                                 })
@@ -359,13 +365,15 @@ impl GrammarTypeSystem {
                             acc = self
                                 .add_input_type(
                                     p1.0,
-                                    ASTType::Option(vec![ASTType::TypeRef(to_upper_camel_case(n))]),
+                                    ASTType::Option(vec![ASTType::TypeRef(
+                                        NmHlp::to_upper_camel_case(n),
+                                    )]),
                                 )
                                 .and_then(|_| {
                                     self.add_output_type(
                                         p1.0,
                                         ASTType::Option(vec![ASTType::TypeRef(
-                                            to_upper_camel_case(n),
+                                            NmHlp::to_upper_camel_case(n),
                                         )]),
                                     )
                                 })
@@ -374,7 +382,7 @@ impl GrammarTypeSystem {
                                     self.add_input_type(
                                         p0.0,
                                         ASTType::Option(vec![ASTType::TypeRef(
-                                            to_upper_camel_case(n),
+                                            NmHlp::to_upper_camel_case(n),
                                         )]),
                                     )
                                 })
@@ -382,7 +390,7 @@ impl GrammarTypeSystem {
                                     self.add_output_type(
                                         p0.0,
                                         ASTType::Option(vec![ASTType::TypeRef(
-                                            to_upper_camel_case(n),
+                                            NmHlp::to_upper_camel_case(n),
                                         )]),
                                     )
                                 })
@@ -442,12 +450,12 @@ impl GrammarTypeSystem {
                     acc
                 });
         let field_names =
-            generate_argument_names(prod.get_r(), &self.terminals, &self.terminal_names)
+            NmHlp::generate_member_names(prod.get_r(), &self.terminals, &self.terminal_names)
                 .iter()
                 .zip(types.drain(..))
                 .map(|(n, t)| (n.to_string(), t))
                 .collect::<Vec<(String, ASTType)>>();
-        ASTType::Struct(to_upper_camel_case(prod.get_n_str()), field_names)
+        ASTType::Struct(NmHlp::to_upper_camel_case(prod.get_n_str()), field_names)
     }
 
     fn deduce_in_type_of_production(&self, prod: &Pr) -> ASTType {
@@ -468,9 +476,9 @@ impl GrammarTypeSystem {
                     .position(|s| s.is_n() || s.is_t())
                     .unwrap();
                 ASTType::Struct(
-                    to_upper_camel_case(prod.get_n_str()),
+                    NmHlp::to_upper_camel_case(prod.get_n_str()),
                     vec![(
-                        get_argument_name(
+                        NmHlp::generate_member_name(
                             &prod.get_r()[idx],
                             0,
                             &self.terminals,
@@ -500,8 +508,8 @@ impl GrammarTypeSystem {
 
     fn deduce_type_of_symbol(symbol: &Symbol) -> ASTType {
         match symbol {
-            Symbol::T(Terminal::Trm(t, _)) => ASTType::Token(to_upper_camel_case(t)),
-            Symbol::N(n) => ASTType::TypeRef(to_upper_camel_case(n)),
+            Symbol::T(Terminal::Trm(t, _)) => ASTType::Token(NmHlp::to_upper_camel_case(t)),
+            Symbol::N(n) => ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
             _ => {
                 trace!("Returning Unit for symbol {}", symbol);
                 ASTType::Unit
@@ -582,15 +590,19 @@ impl GrammarTypeSystem {
                                 self.add_non_terminal_type(
                                     n,
                                     ASTType::Enum(
-                                        to_upper_camel_case(n),
+                                        NmHlp::to_upper_camel_case(n),
                                         prods
                                             .iter()
                                             .map(|pr| {
-                                                ASTType::TypeRef(to_upper_camel_case(&format!(
-                                                    "{}_{}",
-                                                    to_upper_camel_case(pr.1.get_n_str()),
-                                                    pr.0
-                                                )))
+                                                ASTType::TypeRef(NmHlp::to_upper_camel_case(
+                                                    &format!(
+                                                        "{}_{}",
+                                                        NmHlp::to_upper_camel_case(
+                                                            pr.1.get_n_str()
+                                                        ),
+                                                        pr.0
+                                                    ),
+                                                ))
                                             })
                                             .collect::<Vec<ASTType>>(),
                                     ),

@@ -120,6 +120,7 @@ use miette::{Context, IntoDiagnostic};
 use parol_runtime::parser::ParseTreeType;
 
 use crate::analysis::LookaheadDFA;
+use crate::generators::UserTraitGenerator;
 use crate::{GrammarConfig, ParolGrammar, MAX_K};
 
 /// The default maximum lookahead
@@ -539,14 +540,17 @@ impl GrammarGenerator<'_> {
             println!("\nParser source:\n{}", parser_source);
         }
 
-        let user_trait_source = crate::generate_user_trait_source(
+        let user_trait_generator = UserTraitGenerator::new(
             &self.builder.user_type_name,
             &self.builder.module_name,
             self.builder.auto_generate,
             &self.builder.parol_grammar,
             grammar_config,
-        )
-        .wrap_err("Failed to generate user trait source!")?;
+        );
+
+        let user_trait_source = user_trait_generator
+            .generate_user_trait_source()
+            .wrap_err("Failed to generate user trait source!")?;
         if let Some(ref user_trait_file_out) = self.builder.actions_output_file {
             fs::write(user_trait_file_out, user_trait_source)
                 .into_diagnostic()

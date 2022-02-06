@@ -78,10 +78,10 @@ impl Factor {
                     .join(", "),
                 t
             ),
-            Self::NonTerminal(n) => format!("{}", n),
+            Self::NonTerminal(n) => n.to_string(),
             Self::ScannerSwitch(n) => format!("%sc({})", n),
             Self::ScannerSwitchPush(n) => format!("%push({})", n),
-            Self::ScannerSwitchPop => format!("%pop()"),
+            Self::ScannerSwitchPop => "%pop()".to_string(),
             Self::Pseudo(p) => format!("/* {} */", p),
         }
     }

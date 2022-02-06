@@ -10,6 +10,7 @@ use id_tree::Tree;
 use crate::oberon_0_grammar::Oberon0Grammar;
 use miette::{miette, Result};
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+use std::path::Path;
 
 ///
 /// The `Oberon0GrammarTrait` trait is automatically generated for the
@@ -20,7 +21,7 @@ pub trait Oberon0GrammarTrait {
     ///
     /// Implement this method if you need the provided information
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     /// Semantic action for production 0:
     ///
@@ -911,7 +912,7 @@ pub trait Oberon0GrammarTrait {
     ///
     /// Type: Ident;
     ///
-    fn type_72(
+    fn r#type_72(
         &mut self,
         _ident_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -923,7 +924,7 @@ pub trait Oberon0GrammarTrait {
     ///
     /// Type: ArrayType;
     ///
-    fn type_73(
+    fn r#type_73(
         &mut self,
         _array_type_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -935,7 +936,7 @@ pub trait Oberon0GrammarTrait {
     ///
     /// Type: RecordType;
     ///
-    fn type_74(
+    fn r#type_74(
         &mut self,
         _record_type_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -1626,7 +1627,7 @@ impl UserActionsTrait for Oberon0Grammar {
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     ///
     /// This function is implemented automatically for the user's item Oberon0Grammar.
@@ -1826,11 +1827,11 @@ impl UserActionsTrait for Oberon0Grammar {
 
             71 => self.record_type_list_71(parse_tree),
 
-            72 => self.type_72(&children[0], parse_tree),
+            72 => self.r#type_72(&children[0], parse_tree),
 
-            73 => self.type_73(&children[0], parse_tree),
+            73 => self.r#type_73(&children[0], parse_tree),
 
-            74 => self.type_74(&children[0], parse_tree),
+            74 => self.r#type_74(&children[0], parse_tree),
 
             75 => self.f_p_section_75(
                 &children[0],

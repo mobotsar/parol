@@ -10,6 +10,7 @@ use id_tree::Tree;
 use crate::boolean_grammar::BooleanGrammar;
 use miette::{miette, Result};
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+use std::path::Path;
 
 ///
 /// The `BooleanGrammarTrait` trait is automatically generated for the
@@ -20,7 +21,7 @@ pub trait BooleanGrammarTrait {
     ///
     /// Implement this method if you need the provided information
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     /// Semantic action for production 0:
     ///
@@ -358,7 +359,7 @@ pub trait BooleanGrammarTrait {
     ///
     /// True: "(?i)TRUE";
     ///
-    fn true_28(
+    fn r#true_28(
         &mut self,
         _true_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -370,7 +371,7 @@ pub trait BooleanGrammarTrait {
     ///
     /// False: "(?i)FALSE";
     ///
-    fn false_29(
+    fn r#false_29(
         &mut self,
         _false_0: &ParseTreeStackEntry,
         _parse_tree: &Tree<ParseTreeType>,
@@ -471,7 +472,7 @@ impl UserActionsTrait for BooleanGrammar {
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     ///
     /// This function is implemented automatically for the user's item BooleanGrammar.
@@ -539,9 +540,9 @@ impl UserActionsTrait for BooleanGrammar {
 
             27 => self.xnor_op_27(&children[0], parse_tree),
 
-            28 => self.true_28(&children[0], parse_tree),
+            28 => self.r#true_28(&children[0], parse_tree),
 
-            29 => self.false_29(&children[0], parse_tree),
+            29 => self.r#false_29(&children[0], parse_tree),
 
             30 => self.not_30(&children[0], parse_tree),
 

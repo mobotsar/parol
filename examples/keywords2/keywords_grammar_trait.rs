@@ -10,6 +10,7 @@ use id_tree::Tree;
 use crate::keywords_grammar::KeywordsGrammar;
 use miette::{miette, Result};
 use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait};
+use std::path::Path;
 
 ///
 /// The `KeywordsGrammarTrait` trait is automatically generated for the
@@ -20,7 +21,7 @@ pub trait KeywordsGrammarTrait {
     ///
     /// Implement this method if you need the provided information
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     /// Semantic action for production 0:
     ///
@@ -183,7 +184,7 @@ impl UserActionsTrait for KeywordsGrammar {
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     ///
     /// This function is implemented automatically for the user's item KeywordsGrammar.

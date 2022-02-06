@@ -10,7 +10,7 @@ use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait
 use miette::{miette, Result};
 #[allow(unused_imports)]
 use crate::{{module_name}}::{{user_type_name}};
-{{#auto_generate?}}use std::path::{Path, PathBuf};{{/auto_generate}}
+{{#auto_generate?}}use std::path::{Path, PathBuf};{{/auto_generate}}{{^auto_generate?}}use std::path::Path;{{/auto_generate}}
 
 {{#auto_generate?}}
 /// Semantic actions trait generated for the user grammar

@@ -1,5 +1,6 @@
-/// Module with functions to convert between different identifier formats
-pub mod case_helpers;
+/// Module with functions to generate variable names and type names
+pub mod naming_helper;
+pub use naming_helper::NamingHelper;
 
 /// Module with type GrammarConfig
 pub mod grammar_config;
@@ -27,11 +28,17 @@ pub use parser_generator::generate_parser_source;
 
 /// Module with the user-trait generator
 pub mod user_trait_generator;
-pub use user_trait_generator::generate_user_trait_source;
+pub use user_trait_generator::UserTraitGenerator;
 
 /// Module with the code formatting function
 pub mod rust_code_formatter;
 pub use rust_code_formatter::try_format;
+
+mod template_data;
+use template_data::{
+    NonTerminalTypeEnum, NonTerminalTypeOpt, NonTerminalTypeStruct, NonTerminalTypeVec,
+    UserTraitCallerFunctionData, UserTraitData, UserTraitFunctionData,
+};
 
 /// Module with the terminal name generator
 pub mod terminal_name_generator;
