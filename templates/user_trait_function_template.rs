@@ -3,5 +3,5 @@
     /// {{{prod_string}}}
     /// 
     fn {{fn_name}}{{#inner?}}_{{prod_num}}{{/inner}}(&mut self, {{{fn_arguments}}}) -> Result<()> {
-        Ok(())
+        {{code}}Ok(())
     }

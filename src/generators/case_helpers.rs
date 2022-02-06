@@ -1,5 +1,39 @@
+const KEYWORDS: &[&str; 52] = &[
+    "abstract", "as", "async", "await", "become", "box", "break", "const", "continue", "crate",
+    "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in",
+    "let", "loop", "macro", "match", "mod", "move", "mut", "override", "priv", "pub", "ref",
+    "return", "Self", "self", "static", "struct", "super", "trait", "true", "try", "type",
+    "typeof", "union", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+];
+
+/// Checks whether the given name is a reserved Rust keyword
+/// ```
+/// use parol::generators::case_helpers::is_rust_keyword;
+/// assert!(!is_rust_keyword("Type"));
+/// assert!(is_rust_keyword("type"));
+/// ```
+pub fn is_rust_keyword(name: &str) -> bool {
+    KEYWORDS.iter().find(|kw| *kw == &name).is_some()
+}
+
+/// If the given name is a reserved Rust keyword it is converted into a raw identifier
+/// ```
+/// use parol::generators::case_helpers::escape_rust_keyword;
+/// assert_eq!("Type".to_string(), escape_rust_keyword("Type".to_string()));
+/// assert_eq!("r#type".to_string(), escape_rust_keyword("type".to_string()));
+/// ```
+pub fn escape_rust_keyword(name: String) -> String {
+    if is_rust_keyword(&name) {
+        format!("r#{}", name)
+    } else {
+        name
+    }
+}
+
 ///
 /// Produces a lower snake camel case version of the given name.
+/// Since these names are supposed to be used as identifiers a clash with rust keywords is detected
+/// and prevented.
 ///
 /// ```
 /// use parol::generators::case_helpers::to_lower_snake_case;

@@ -10,13 +10,13 @@ use parol_runtime::parser::{ParseTreeStackEntry, ParseTreeType, UserActionsTrait
 use miette::{miette, Result};
 #[allow(unused_imports)]
 use crate::{{module_name}}::{{user_type_name}};
-{{#auto_generate?}}use std::path::PathBuf;{{/auto_generate}}
+{{#auto_generate?}}use std::path::{Path, PathBuf};{{/auto_generate}}
 
 {{#auto_generate?}}
 /// Semantic actions trait generated for the user grammar
 /// All functions have default implementations.
 pub trait {{user_type_name}}Trait {
-    fn init(&mut self, _file_name: &std::path::Path) {}
+    fn init(&mut self, _file_name: &Path) {}
 
     {{{user_trait_functions}}}
 }
@@ -76,7 +76,7 @@ pub trait {{{user_type_name}}}Trait {
     ///
     /// Implement this method if you need the provided information
     ///
-    fn init(&mut self, _file_name: &std::path::Path) {
+    fn init(&mut self, _file_name: &Path) {
     }
 {{/auto_generate}}
 
@@ -89,7 +89,7 @@ impl UserActionsTrait for {{{user_type_name}}}{{#auto_generate?}}Auto<'_>{{/auto
     /// This function is called by the parser before parsing starts.
     /// Is is used to transport necessary data from parser to user.
     ///
-    fn init(&mut self, {{^auto_generate?}}_{{/auto_generate}}file_name: &std::path::Path) {
+    fn init(&mut self, {{^auto_generate?}}_{{/auto_generate}}file_name: &Path) {
 {{#auto_generate?}}
         self.file_name = file_name.to_owned();
         self.user_grammar.init(file_name);

@@ -1,9 +1,12 @@
-use crate::generators::case_helpers::{to_lower_snake_case, to_upper_camel_case};
+use crate::generators::case_helpers::{
+    escape_rust_keyword, to_lower_snake_case, to_upper_camel_case,
+};
 use crate::generators::{generate_terminal_name, GrammarConfig};
 use crate::parser::{ParolGrammarItem, Production};
 use crate::transformation::ast_types::{ASTType, GrammarTypeSystem};
 use crate::{ParolGrammar, Pr, StrVec, Symbol, Terminal};
 use miette::Result;
+use std::collections::HashSet;
 use std::convert::TryInto;
 
 #[derive(BartDisplay, Debug, Default)]
@@ -21,6 +24,7 @@ struct UserTraitFunctionData<'a> {
     prod_num: usize,
     fn_arguments: String,
     prod_string: String,
+    code: StrVec,
     // Inner means the expanded version of the grammar.
     // If set to false the actual user grammar is meant.
     inner: bool,
@@ -115,6 +119,8 @@ pub(crate) fn generate_argument_names(
 
 fn generate_argument_list(pr: &Pr, terminals: &[&str], terminal_names: &[String]) -> String {
     let get_terminal_index = |tr: &str| terminals.iter().position(|t| *t == tr).unwrap();
+    // We reference the parse_tree argument only if a token is in the argument list
+    let mut parse_tree_argument_used = false;
     let mut arguments = pr
         .get_r()
         .iter()
@@ -122,12 +128,13 @@ fn generate_argument_list(pr: &Pr, terminals: &[&str], terminal_names: &[String]
         .filter(|(_, s)| !s.is_switch() && !s.is_pseudo())
         .map(|(i, a)| match a {
             Symbol::N(n) => {
-                format!("_{}_{}: &ParseTreeStackEntry", to_lower_snake_case(n), i)
+                format!("{}_{}: &ParseTreeStackEntry", to_lower_snake_case(n), i)
             }
             Symbol::T(Terminal::Trm(t, _)) => {
+                parse_tree_argument_used = true;
                 let terminal_name = &terminal_names[get_terminal_index(t)];
                 format!(
-                    "_{}_{}: &ParseTreeStackEntry",
+                    "{}_{}: &ParseTreeStackEntry",
                     to_lower_snake_case(terminal_name),
                     i
                 )
@@ -135,13 +142,18 @@ fn generate_argument_list(pr: &Pr, terminals: &[&str], terminal_names: &[String]
             _ => panic!("Invalid symbol type in production!"),
         })
         .collect::<Vec<String>>();
-    arguments.push("_parse_tree: &Tree<ParseTreeType>".to_string());
+    arguments.push(format!(
+        "{}parse_tree: &Tree<ParseTreeType>",
+        if parse_tree_argument_used { "" } else { "_" }
+    ));
     arguments.join(", ")
 }
 
 fn generate_argument_list_for_user_action(non_terminal: &str) -> String {
     format!("_arg: {}", to_upper_camel_case(non_terminal))
 }
+
+fn generate_token_assignments(_str_vec: &mut StrVec, _pr: &Pr) {}
 
 fn generate_caller_argument_list(pr: &Pr) -> String {
     let mut arguments = pr
@@ -358,14 +370,17 @@ pub fn generate_user_trait_source(
     let trait_functions = grammar_config.cfg.pr.iter().enumerate().fold(
         StrVec::new(0).first_line_no_indent(),
         |mut acc, (i, p)| {
-            let fn_name = to_lower_snake_case(p.get_n_str());
+            let fn_name = escape_rust_keyword(to_lower_snake_case(p.get_n_str()));
             let prod_string = p.format(&scanner_state_resolver);
             let fn_arguments = generate_argument_list(p, &terminals, &terminal_names);
+            let mut code = StrVec::new(8);
+            generate_token_assignments(&mut code, p);
             let user_trait_function_data = UserTraitFunctionData {
                 fn_name: &fn_name,
                 prod_num: i,
                 fn_arguments,
                 prod_string,
+                code,
                 inner: true,
             };
             acc.push(format!("{}", user_trait_function_data));
@@ -374,6 +389,7 @@ pub fn generate_user_trait_source(
     );
 
     let user_trait_functions = if auto_generate {
+        let mut processed_non_terminals: HashSet<String> = HashSet::new();
         parol_grammar
             .item_stack
             .iter()
@@ -381,17 +397,22 @@ pub fn generate_user_trait_source(
                 (StrVec::new(0).first_line_no_indent(), 0),
                 |(mut acc, mut i), p| {
                     if let ParolGrammarItem::Prod(Production { lhs, rhs: _ }) = p {
-                        let fn_name = to_lower_snake_case(&lhs);
-                        let prod_string = format!("{}", p.to_par());
-                        let fn_arguments = generate_argument_list_for_user_action(&fn_name);
-                        let user_trait_function_data = UserTraitFunctionData {
-                            fn_name: &fn_name,
-                            prod_num: i,
-                            fn_arguments,
-                            prod_string,
-                            inner: false,
-                        };
-                        acc.push(format!("{}", user_trait_function_data));
+                        if !processed_non_terminals.contains(lhs) {
+                            let fn_name = escape_rust_keyword(to_lower_snake_case(&lhs));
+                            let prod_string = format!("{}", p.to_par());
+                            let fn_arguments = generate_argument_list_for_user_action(&lhs);
+                            let code = StrVec::default();
+                            let user_trait_function_data = UserTraitFunctionData {
+                                fn_name: &fn_name,
+                                prod_num: i,
+                                fn_arguments,
+                                prod_string,
+                                code,
+                                inner: false,
+                            };
+                            acc.push(format!("{}", user_trait_function_data));
+                            processed_non_terminals.insert(lhs.to_string());
+                        }
                         i += 1;
                     }
                     (acc, i)
@@ -409,7 +430,7 @@ pub fn generate_user_trait_source(
             .iter()
             .enumerate()
             .fold(StrVec::new(12), |mut acc, (i, p)| {
-                let fn_name = to_lower_snake_case(p.get_n_str());
+                let fn_name = escape_rust_keyword(to_lower_snake_case(p.get_n_str()));
                 let fn_arguments = generate_caller_argument_list(p);
                 let user_trait_function_data = UserTraitCallerFunctionData {
                     fn_name,
