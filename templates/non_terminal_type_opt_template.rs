@@ -2,4 +2,4 @@
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct {{non_terminal}} {
-    opt: Option<{{{type_ref}}}>}
+    opt: Option<Box<{{{type_ref}}}>>}

@@ -368,6 +368,13 @@ impl GrammarTypeSystem {
 
     fn struct_data_of_production(&self, prod: &Pr) -> Result<ASTType> {
         let mut arguments = self.build_argument_list(prod)?;
+        match prod.2 {
+            Some(ProductionAttribute::AddToCollection) => {
+                let _ = arguments.pop();
+            }
+            Some(ProductionAttribute::CollectionStart) => return Ok(ASTType::Repeat(prod.get_n())),
+            _ => (),
+        }
         Ok(ASTType::Struct(
             NmHlp::to_upper_camel_case(prod.get_n_str()),
             arguments
@@ -437,9 +444,7 @@ impl GrammarTypeSystem {
                     // Test for option first:
                     //      Does there exist an action with one argument that has
                     //      SymbolAttribute::OptionalSome set?
-                    Some(ASTType::Option(NmHlp::to_upper_camel_case(
-                        &self.actions[actions[option_index]].non_terminal,
-                    )))
+                    Some(self.actions[actions[option_index]].args[0].arg_type.clone())
                 } else if let Some(vec_index) = actions.iter().position(|a| {
                     // Test for collection next:
                     //      Does there exist an action with no arguments and the
