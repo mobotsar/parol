@@ -1,42 +1,10 @@
+use super::{Decorate, SymbolAttribute};
 use crate::analysis::k_tuple::TerminalMappings;
 use crate::parser::parol_grammar::Factor;
 use crate::parser::to_grammar_config::try_from_factor;
 use parol_runtime::parser::ScannerIndex;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Error, Formatter};
-
-// ---------------------------------------------------
-// Part of the Public API
-// *Changes will affect crate's version according to semver*
-// ---------------------------------------------------
-///
-/// A factor only introduced during grammar transformation
-/// For auto-generation we need some information of types which normally get lost during
-/// grammar transformation. This SemanticInfo is used to convey the information across multiple
-/// transformation steps.
-///
-#[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
-pub enum SemanticInfo {
-    /// An Start-Of-Repetition with a type reference (production name)
-    CollectionStart(String),
-    /// An Push-To-Repetition with a type reference (production name)
-    // CollectionPush(String),
-    /// An Optional::Some case with a type reference (production name)
-    // OptionalSome(String),
-    /// An Optional::None case with a type reference (production name)
-    OptionalNone(String),
-}
-
-impl Display for SemanticInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
-        match self {
-            Self::CollectionStart(r) => write!(f, "Vec<{}>::New", r),
-            // Self::CollectionPush(r) => write!(f, "Vec<{}>::Push", r),
-            // Self::OptionalSome(o) => write!(f, "Option<{}>::Some", o),
-            Self::OptionalNone(o) => write!(f, "Option<{}>::None", o),
-        }
-    }
-}
 
 // ---------------------------------------------------
 // Part of the Public API
@@ -169,7 +137,7 @@ pub enum Symbol {
     ///
     /// Non-terminal symbol, Meta symbol of the grammar.
     ///
-    N(String),
+    N(String, Option<SymbolAttribute>),
 
     ///
     /// Terminal symbol of the grammar.
@@ -196,7 +164,7 @@ pub enum Symbol {
     ///
     /// Used to preserve type information
     ///
-    Pseudo(SemanticInfo),
+    Pseudo(SymbolAttribute),
 }
 
 impl Symbol {
@@ -206,7 +174,14 @@ impl Symbol {
     }
     /// Creates a non-terminal symbol
     pub fn n(n: &str) -> Self {
-        Self::N(n.to_owned())
+        Self::N(n.to_owned(), None)
+    }
+    /// Sets an attribute on a non-terminal symbol
+    pub fn with_attribute(mut self, attribute: SymbolAttribute) -> Self {
+        if let Self::N(_, a) = &mut self {
+            *a = Some(attribute)
+        }
+        self
     }
     /// Creates a end-of-input terminal symbol
     pub fn e() -> Self {
@@ -222,7 +197,7 @@ impl Symbol {
     }
     /// Checks if self is a non-terminal
     pub fn is_n(&self) -> bool {
-        matches!(self, Self::N(_))
+        matches!(self, Self::N(_, _))
     }
     /// Checks if self is a end-of-input terminal
     pub fn is_end(&self) -> bool {
@@ -254,7 +229,7 @@ impl Symbol {
     }
     /// Returns a non-terminal if available
     pub fn get_n(&self) -> Option<String> {
-        if let Self::N(n) = &self {
+        if let Self::N(n, _) = &self {
             Some(n.clone())
         } else {
             None
@@ -262,10 +237,18 @@ impl Symbol {
     }
     /// Returns a non-terminal reference if available
     pub fn get_n_ref(&self) -> Option<&String> {
-        if let Self::N(n) = &self {
+        if let Self::N(n, _) = &self {
             Some(n)
         } else {
             None
+        }
+    }
+
+    /// Get the symbol attribute or a default value
+    pub fn attribute(&self) -> SymbolAttribute {
+        match self {
+            Symbol::N(_, Some(a)) => a.clone(),
+            _ => SymbolAttribute::None,
         }
     }
 
@@ -275,7 +258,7 @@ impl Symbol {
         R: Fn(&[usize]) -> String,
     {
         match self {
-            Self::N(n) => n.to_string(),
+            Self::N(n, a) => a.as_ref().map_or(n.to_string(), |a| a.decorate(n)),
             Self::T(t) => t.format(scanner_state_resolver),
             Self::S(s) => {
                 if *s == 0 {
@@ -294,12 +277,12 @@ impl Symbol {
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            Self::N(n) => write!(f, "{}", n),
+            Self::N(n, a) => write!(f, "{}", a.as_ref().map_or(n.to_string(), |a| a.decorate(n))),
             Self::T(t) => write!(f, "{}", t),
             Self::S(s) => write!(f, "S({})", s),
             Self::Push(s) => write!(f, "Push({})", s),
             Self::Pop => write!(f, "Pop"),
-            Self::Pseudo(p) => write!(f, "{}", p),
+            Self::Pseudo(a) => write!(f, "{}", a),
         }
     }
 }

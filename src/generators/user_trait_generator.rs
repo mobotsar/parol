@@ -3,10 +3,10 @@ use super::{
     UserTraitCallerFunctionData, UserTraitData, UserTraitFunctionData,
 };
 use crate::generators::naming_helper::NamingHelper as NmHlp;
-use crate::generators::{generate_terminal_name, GrammarConfig};
+use crate::generators::GrammarConfig;
 use crate::parser::{ParolGrammarItem, Production};
-use crate::transformation::ast_types::{ASTType, GrammarTypeSystem};
-use crate::{ParolGrammar, Pr, StrVec, Symbol, Terminal};
+use crate::transformation::ast_types::{ASTType, Action, GrammarTypeSystem};
+use crate::{ParolGrammar, Pr, StrVec};
 use miette::Result;
 use std::collections::HashSet;
 use std::convert::TryInto;
@@ -18,8 +18,6 @@ pub struct UserTraitGenerator<'a> {
     auto_generate: bool,
     parol_grammar: &'a ParolGrammar,
     grammar_config: &'a GrammarConfig,
-    terminals: Vec<&'a str>,
-    terminal_names: Vec<String>,
 }
 
 impl<'a> UserTraitGenerator<'a> {
@@ -32,71 +30,35 @@ impl<'a> UserTraitGenerator<'a> {
         grammar_config: &'a GrammarConfig,
     ) -> Self {
         let user_type_name = NmHlp::to_upper_camel_case(user_type_name);
-        let terminals = grammar_config
-            .cfg
-            .get_ordered_terminals()
-            .iter()
-            .map(|(t, _)| *t)
-            .collect::<Vec<&str>>();
-        let terminal_names = terminals.iter().fold(Vec::new(), |mut acc, e| {
-            let n = generate_terminal_name(e, usize::MAX, &grammar_config.cfg);
-            acc.push(n);
-            acc
-        });
-
         Self {
             user_type_name,
             module_name,
             auto_generate,
             parol_grammar,
             grammar_config,
-            terminals,
-            terminal_names,
         }
     }
 
-    fn get_terminal_index(&self, tr: &str) -> usize {
-        self.terminals.iter().position(|t| *t == tr).unwrap()
-    }
-
-    fn generate_inner_action_args(&self, pr: &Pr) -> String {
+    fn generate_inner_action_args(&self, action: &Action) -> String {
         // We reference the parse_tree argument only if a token is in the argument list
-        let unused_indicator = if self.auto_generate { "" } else { "_" };
         let mut parse_tree_argument_used = false;
-        let mut arguments = pr
-            .get_r()
+        let mut arguments = action
+            .args
             .iter()
-            .enumerate()
-            .filter(|(_, s)| !s.is_switch() && !s.is_pseudo())
-            .map(|(i, a)| match a {
-                Symbol::N(n) => {
-                    format!(
-                        "{}{}_{}: &ParseTreeStackEntry",
-                        unused_indicator,
-                        NmHlp::to_lower_snake_case(n),
-                        i
-                    )
-                }
-                Symbol::T(Terminal::Trm(t, _)) => {
+            .map(|a| {
+                if matches!(a.arg_type, ASTType::Token(_)) {
                     parse_tree_argument_used = true;
-                    let terminal_name = &self.terminal_names[self.get_terminal_index(t)];
-                    format!(
-                        "{}{}_{}: &ParseTreeStackEntry",
-                        unused_indicator,
-                        NmHlp::to_lower_snake_case(terminal_name),
-                        i
-                    )
                 }
-                _ => panic!("Invalid symbol type in production!"),
+                format!(
+                    "{}{}: &ParseTreeStackEntry",
+                    NmHlp::item_unused_indicator(self.auto_generate && a.used),
+                    a.name,
+                )
             })
             .collect::<Vec<String>>();
         arguments.push(format!(
             "{}parse_tree: &Tree<ParseTreeType>",
-            if self.auto_generate && parse_tree_argument_used {
-                ""
-            } else {
-                "_"
-            }
+            NmHlp::item_unused_indicator(self.auto_generate && parse_tree_argument_used)
         ));
         arguments.join(", ")
     }
@@ -105,7 +67,7 @@ impl<'a> UserTraitGenerator<'a> {
         format!("_arg: {}", NmHlp::to_upper_camel_case(non_terminal))
     }
 
-    fn generate_token_assignments(_str_vec: &mut StrVec, _pr: &Pr) {}
+    fn generate_token_assignments(_str_vec: &mut StrVec, _action: &Action) {}
 
     fn generate_caller_argument_list(pr: &Pr) -> String {
         let mut arguments = pr
@@ -168,45 +130,19 @@ impl<'a> UserTraitGenerator<'a> {
                 };
                 Some(format!("{}", struct_data))
             }
-            ASTType::Repeat(m) => {
-                let members = m.iter().fold(String::new(), |mut acc, t| {
-                    acc.push_str(&format!(
-                        "{},",
-                        match t {
-                            ASTType::TypeRef(r) => r.to_string(),
-                            _ => t.type_name(),
-                        }
-                    ));
-                    acc
-                });
-
-                let members = if m.len() == 1 {
-                    members
-                } else {
-                    format!("({})", members)
-                };
+            ASTType::Repeat(r) => {
                 let struct_data = NonTerminalTypeVec {
                     comment,
                     non_terminal,
-                    members,
+                    type_ref: r.clone(),
                 };
                 Some(format!("{}", struct_data))
             }
-            ASTType::Option(m) => {
-                let members = m.iter().fold(String::new(), |mut acc, t| {
-                    acc.push_str(&format!("{},", t.type_name()));
-                    acc
-                });
-
-                let members = if m.len() == 1 {
-                    members
-                } else {
-                    format!("({})", members)
-                };
+            ASTType::Option(o) => {
                 let struct_data = NonTerminalTypeOpt {
                     comment,
                     non_terminal,
-                    members,
+                    type_ref: o.clone(),
                 };
                 Some(format!("{}", struct_data))
             }
@@ -249,17 +185,12 @@ impl<'a> UserTraitGenerator<'a> {
 
         let production_output_types = if self.auto_generate {
             type_system
-                .out_types
+                .actions
                 .iter()
-                .fold(StrVec::new(0), |mut acc, (s, t)| {
-                    Self::format_type(
-                        t,
-                        self.grammar_config.cfg.pr[*s].get_n_str(),
-                        Some(*s),
-                        "production",
-                    )
-                    .into_iter()
-                    .for_each(|s| acc.push(s));
+                .fold(StrVec::new(0), |mut acc, a| {
+                    Self::format_type(&a.out_type, &a.non_terminal, Some(a.prod_num), "production")
+                        .into_iter()
+                        .for_each(|s| acc.push(s));
                     acc
                 })
         } else {
@@ -300,26 +231,29 @@ impl<'a> UserTraitGenerator<'a> {
             String::default()
         };
 
-        let trait_functions = self.grammar_config.cfg.pr.iter().enumerate().fold(
-            StrVec::new(0).first_line_no_indent(),
-            |mut acc, (i, p)| {
-                let fn_name = NmHlp::escape_rust_keyword(NmHlp::to_lower_snake_case(p.get_n_str()));
-                let prod_string = p.format(&scanner_state_resolver);
-                let fn_arguments = self.generate_inner_action_args(p);
-                let mut code = StrVec::new(8);
-                Self::generate_token_assignments(&mut code, p);
-                let user_trait_function_data = UserTraitFunctionData {
-                    fn_name: &fn_name,
-                    prod_num: i,
-                    fn_arguments,
-                    prod_string,
-                    code,
-                    inner: true,
-                };
-                acc.push(format!("{}", user_trait_function_data));
-                acc
-            },
-        );
+        let trait_functions =
+            type_system
+                .actions
+                .iter()
+                .fold(StrVec::new(0).first_line_no_indent(), |mut acc, a| {
+                    let prod_num = a.prod_num;
+                    let p = &self.grammar_config.cfg.pr[prod_num];
+                    let fn_name = NmHlp::to_lower_snake_case(&a.non_terminal);
+                    let prod_string = p.format(&scanner_state_resolver);
+                    let fn_arguments = self.generate_inner_action_args(a);
+                    let mut code = StrVec::new(8);
+                    Self::generate_token_assignments(&mut code, a);
+                    let user_trait_function_data = UserTraitFunctionData {
+                        fn_name: &fn_name,
+                        prod_num,
+                        fn_arguments,
+                        prod_string,
+                        code,
+                        inner: true,
+                    };
+                    acc.push(format!("{}", user_trait_function_data));
+                    acc
+                });
 
         let user_trait_functions = if self.auto_generate {
             let mut processed_non_terminals: HashSet<String> = HashSet::new();
@@ -360,7 +294,7 @@ impl<'a> UserTraitGenerator<'a> {
         let trait_caller = self.grammar_config.cfg.pr.iter().enumerate().fold(
             StrVec::new(12),
             |mut acc, (i, p)| {
-                let fn_name = NmHlp::escape_rust_keyword(NmHlp::to_lower_snake_case(p.get_n_str()));
+                let fn_name = NmHlp::to_lower_snake_case(p.get_n_str());
                 let fn_arguments = Self::generate_caller_argument_list(p);
                 let user_trait_function_data = UserTraitCallerFunctionData {
                     fn_name,

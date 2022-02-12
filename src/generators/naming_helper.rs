@@ -38,6 +38,15 @@ impl NamingHelper {
         }
     }
 
+    /// Returns an underscore string if the item is not used.
+    pub fn item_unused_indicator(used: bool) -> &'static str {
+        if used {
+            ""
+        } else {
+            "_"
+        }
+    }
+
     ///
     /// Produces a lower snake camel case version of the given name.
     /// Since these names are supposed to be used as identifiers a clash with rust keywords is detected
@@ -50,10 +59,11 @@ impl NamingHelper {
     /// assert_eq!("_prolog_0_1_3", NmHlp::to_lower_snake_case("_prolog_0_1__3"));
     /// assert_eq!("_", NmHlp::to_lower_snake_case("_____"));
     /// assert_eq!("calc_lst1_1", NmHlp::to_lower_snake_case("calc_lst1_1"));
+    /// assert_eq!("r#type", NmHlp::to_lower_snake_case("type"));
     /// ```
     pub fn to_lower_snake_case(name: &str) -> String {
         let mut last_char = '.';
-        name.chars().fold(String::new(), |mut acc, c| {
+        Self::escape_rust_keyword(name.chars().fold(String::new(), |mut acc, c| {
             if acc.is_empty() {
                 acc.push(c.to_lowercase().next().unwrap())
             } else if c == '_' {
@@ -72,7 +82,7 @@ impl NamingHelper {
             }
             last_char = c;
             acc
-        })
+        }))
     }
 
     ///
@@ -114,7 +124,7 @@ impl NamingHelper {
         })
     }
 
-    /// Generates a member name from a symbol which stemming from a production's right-hand side
+    /// Generates a member name from a symbol that stems from a production's right-hand side
     pub fn generate_member_name(
         s: &Symbol,
         arg_index: usize,
@@ -123,7 +133,7 @@ impl NamingHelper {
     ) -> String {
         let get_terminal_index = |tr: &str| terminals.iter().position(|t| *t == tr).unwrap();
         match s {
-            Symbol::N(n) => {
+            Symbol::N(n, _) => {
                 format!("{}_{}", Self::to_lower_snake_case(n), arg_index)
             }
             Symbol::T(Terminal::Trm(t, _)) => {

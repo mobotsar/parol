@@ -1,3 +1,4 @@
+use super::{Decorate, ProductionAttribute};
 use crate::{Symbol, Terminal};
 use std::fmt::{Debug, Display, Error, Formatter};
 use std::hash::Hash;
@@ -21,7 +22,7 @@ pub type Rhs = Vec<Symbol>;
 /// Production type
 ///
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
-pub struct Pr(pub Symbol, pub Rhs);
+pub struct Pr(pub Symbol, pub Rhs, pub Option<ProductionAttribute>);
 
 impl Display for Pr {
     ///
@@ -62,7 +63,7 @@ impl Display for Pr {
 
 impl Default for Pr {
     fn default() -> Self {
-        Self(Symbol::N("".to_owned()), Rhs::default())
+        Self(Symbol::n(""), Rhs::default(), None)
     }
 }
 
@@ -72,8 +73,13 @@ impl Pr {
         if !r.iter().all(Self::is_allowed_symbol) {
             panic!("Unexpected symbol kind!");
         }
-        Self(Symbol::N(n.to_owned()), r)
+        Self(Symbol::n(n), r, None)
     }
+
+    // pub(crate) fn with_attribute(mut self, attribute: ProductionAttribute) -> Self {
+    //     self.2 = Some(attribute);
+    //     self
+    // }
 
     /// Returns a clone of the non-terminal
     pub fn get_n(&self) -> String {
@@ -97,7 +103,7 @@ impl Pr {
 
     /// Sets the non-terminal
     pub fn set_n(&mut self, n: String) {
-        self.0 = Symbol::N(n);
+        self.0 = Symbol::N(n, None);
     }
 
     /// Checks if [Rhs] is empty
@@ -110,17 +116,6 @@ impl Pr {
         self.1.len()
     }
 
-    /// Returns the length of [Rhs] while counting only parser relevant symbols
-    pub fn efficient_len(&self) -> usize {
-        self.1.iter().fold(0, |count, s| {
-            if s.is_t() || s.is_n() {
-                count + 1
-            } else {
-                count
-            }
-        })
-    }
-
     fn is_allowed_symbol(s: &Symbol) -> bool {
         !(matches!(s, Symbol::T(Terminal::Eps)))
     }
@@ -130,20 +125,31 @@ impl Pr {
     where
         R: Fn(&[usize]) -> String,
     {
-        format!(
-            "{}: {};",
-            self.0,
-            self.1
-                .iter()
-                .fold(Vec::new(), |mut acc, s| {
-                    acc.push(s.format(scanner_state_resolver));
-                    acc
-                })
-                .join(" ")
+        self.2.as_ref().map_or(
+            format!(
+                "{}: {};",
+                self.0,
+                self.1
+                    .iter()
+                    .fold(Vec::new(), |mut acc, s| {
+                        acc.push(s.format(scanner_state_resolver));
+                        acc
+                    })
+                    .join(" ")
+            ),
+            |a| a.decorate(self),
         )
     }
 }
 
+///
+/// Special index implementation for Pr.
+///
+/// Please be aware that this handles the left-hand side non-terminal a index 0 and starts
+/// on the right-hand side with index 1!
+///
+/// Use this with care!
+///
 impl Index<usize> for Pr {
     type Output = Symbol;
 

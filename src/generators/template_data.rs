@@ -56,7 +56,7 @@ pub(crate) struct NonTerminalTypeEnum {
 pub(crate) struct NonTerminalTypeVec {
     pub comment: String,
     pub non_terminal: String,
-    pub members: String,
+    pub type_ref: String,
 }
 
 #[derive(BartDisplay, Debug, Default)]
@@ -64,5 +64,5 @@ pub(crate) struct NonTerminalTypeVec {
 pub(crate) struct NonTerminalTypeOpt {
     pub comment: String,
     pub non_terminal: String,
-    pub members: String,
+    pub type_ref: String,
 }

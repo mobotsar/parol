@@ -1,6 +1,6 @@
 use super::parol_grammar_trait::ParolGrammarTrait;
 use super::ParolParserError;
-use crate::grammar::SemanticInfo;
+use crate::grammar::{Decorate, ProductionAttribute, SymbolAttribute};
 use id_tree::Tree;
 use log::trace;
 use miette::{miette, IntoDiagnostic, Result};
@@ -28,7 +28,7 @@ pub enum Factor {
     /// A terminal string with associated scanner states
     Terminal(String, Vec<usize>),
     /// A non-terminal
-    NonTerminal(String),
+    NonTerminal(String, Option<SymbolAttribute>),
     /// A scanner switch instruction
     ScannerSwitch(usize),
     /// A scanner switch & push instruction
@@ -36,7 +36,7 @@ pub enum Factor {
     /// A scanner switch + pop instruction
     ScannerSwitchPop,
     /// Used to preserve type information
-    Pseudo(SemanticInfo),
+    Pseudo(SymbolAttribute),
 }
 
 impl Display for Factor {
@@ -54,7 +54,11 @@ impl Display for Factor {
                     .join(", "),
                 t
             ),
-            Self::NonTerminal(n) => write!(f, "N({})", n),
+            Self::NonTerminal(n, a) => write!(
+                f,
+                "N({})",
+                a.as_ref().map_or(n.to_string(), |a| a.decorate(n))
+            ),
             Self::ScannerSwitch(n) => write!(f, "S({})", n),
             Self::ScannerSwitchPush(n) => write!(f, "Push({})", n),
             Self::ScannerSwitchPop => write!(f, "Pop"),
@@ -78,7 +82,7 @@ impl Factor {
                     .join(", "),
                 t
             ),
-            Self::NonTerminal(n) => n.to_string(),
+            Self::NonTerminal(n, a) => a.as_ref().map_or(n.to_string(), |a| a.decorate(n)),
             Self::ScannerSwitch(n) => format!("%sc({})", n),
             Self::ScannerSwitchPush(n) => format!("%push({})", n),
             Self::ScannerSwitchPop => "%pop()".to_string(),
@@ -91,26 +95,34 @@ impl Factor {
 /// An Alternation is a sequence of factors.
 /// Valid operation on Alternation is "|".
 ///
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct Alternation(pub Vec<Factor>);
+#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Alternation(pub Vec<Factor>, pub Option<ProductionAttribute>);
 
 impl Display for Alternation {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
         write!(
             f,
-            "Alt({})",
+            "Alt({}",
             self.0
                 .iter()
                 .map(|f| format!("{}", f))
                 .collect::<Vec<String>>()
-                .join(", ")
-        )
+                .join(", "),
+        )?;
+        self.1
+            .as_ref()
+            .map_or(write!(f, ")"), |a| write!(f, ": {})", a))
     }
 }
 
 impl Alternation {
-    pub(crate) fn new() -> Self {
-        Self(Vec::new())
+    pub(crate) fn new(factors: Vec<Factor>) -> Self {
+        Self(factors, None)
+    }
+
+    pub(crate) fn with_attribute(mut self, attribute: ProductionAttribute) -> Self {
+        self.1 = Some(attribute);
+        self
     }
 
     pub(crate) fn insert(&mut self, fac: Factor) {
@@ -360,7 +372,7 @@ impl ParolGrammar {
         match (&l, &s) {
             (
                 Some(ParolGrammarItem::StateList(l)),
-                Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))),
+                Some(ParolGrammarItem::Fac(Factor::NonTerminal(s, _))),
             ) => {
                 if let Some(scanner_state) = self
                     .scanner_configurations
@@ -474,7 +486,7 @@ impl ParolGrammarTrait for ParolGrammar {
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "start_declaration_6";
-        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))) = self.pop(context) {
+        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s, _))) = self.pop(context) {
             self.start_symbol = s;
             Ok(())
         } else {
@@ -623,7 +635,7 @@ impl ParolGrammarTrait for ParolGrammar {
     ) -> Result<()> {
         let context = "production_17";
         if let Some(ParolGrammarItem::Alts(rhs)) = self.pop(context) {
-            if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(lhs))) = self.pop(context) {
+            if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(lhs, _))) = self.pop(context) {
                 self.push(ParolGrammarItem::Prod(Production::new(lhs, rhs)), context);
                 Ok(())
             } else {
@@ -727,7 +739,7 @@ impl ParolGrammarTrait for ParolGrammar {
     ///
     fn alternation_list_23(&mut self, _parse_tree: &Tree<ParseTreeType>) -> Result<()> {
         let context = "alternation_list_23";
-        self.push(ParolGrammarItem::Alt(Alternation::new()), context);
+        self.push(ParolGrammarItem::Alt(Alternation::default()), context);
         Ok(())
     }
 
@@ -860,7 +872,7 @@ impl ParolGrammarTrait for ParolGrammar {
         let parse_tree_item = identifier_0.get_parse_tree_type(parse_tree);
         if let ParseTreeType::T(t) = parse_tree_item {
             self.push(
-                ParolGrammarItem::Fac(Factor::NonTerminal(t.symbol.to_owned())),
+                ParolGrammarItem::Fac(Factor::NonTerminal(t.symbol.to_owned(), None)),
                 context,
             );
             Ok(())
@@ -913,7 +925,7 @@ impl ParolGrammarTrait for ParolGrammar {
     ) -> Result<()> {
         let context = "scanner_state_39";
         trace!("{}", self.trace_item_stack(context));
-        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(n))) = self.pop(context) {
+        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(n, _))) = self.pop(context) {
             trace!("{}", self);
             self.current_scanner.name = n;
             self.scanner_configurations
@@ -984,7 +996,7 @@ impl ParolGrammarTrait for ParolGrammar {
     ) -> Result<()> {
         let context = "scanner_switch_45";
         trace!("{}", self.trace_item_stack(context));
-        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))) = self.pop(context) {
+        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s, _))) = self.pop(context) {
             if let Some(scanner_state) = self
                 .scanner_configurations
                 .iter()
@@ -1018,7 +1030,7 @@ impl ParolGrammarTrait for ParolGrammar {
     ) -> Result<()> {
         let context = "scanner_switch_suffix_47";
         self.push(
-            ParolGrammarItem::Fac(Factor::NonTerminal("INITIAL".to_string())),
+            ParolGrammarItem::Fac(Factor::NonTerminal("INITIAL".to_string(), None)),
             context,
         );
         Ok(())
@@ -1037,7 +1049,7 @@ impl ParolGrammarTrait for ParolGrammar {
         _parse_tree: &Tree<ParseTreeType>,
     ) -> Result<()> {
         let context = "scanner_switch_48";
-        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s))) = self.pop(context) {
+        if let Some(ParolGrammarItem::Fac(Factor::NonTerminal(s, _))) = self.pop(context) {
             if let Some(scanner_state) = self
                 .scanner_configurations
                 .iter()

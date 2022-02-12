@@ -115,6 +115,21 @@ impl GrammarConfig {
         terminals.push("ERROR_TOKEN".to_owned());
         terminals
     }
+
+    /// Generates a function that can be uses as scanner_state_resolver argument on Pr::format
+    pub fn get_scanner_state_resolver(&self) -> Box<dyn Fn(&[usize]) -> String> {
+        let scanner_names = self
+            .scanner_configurations
+            .iter()
+            .map(|s| s.scanner_name.clone())
+            .collect::<Vec<String>>();
+        Box::new(move |s: &[usize]| {
+            s.iter()
+                .map(|s| scanner_names[*s].clone())
+                .collect::<Vec<String>>()
+                .join(", ")
+        })
+    }
 }
 
 impl Default for GrammarConfig {

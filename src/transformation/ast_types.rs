@@ -1,6 +1,6 @@
 use crate::analysis::lookahead_dfa::ProductionIndex;
 use crate::generators::{generate_terminal_name, NamingHelper as NmHlp};
-use crate::grammar::SemanticInfo;
+use crate::grammar::{ProductionAttribute, SymbolAttribute};
 use crate::{Cfg, Pr, Symbol, Terminal};
 use log::trace;
 use miette::{miette, Result};
@@ -11,7 +11,7 @@ use std::fmt::{Debug, Display, Error, Formatter};
 ///
 /// Type information used for auto-generation
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ASTType {
     /// Not specified
     None,
@@ -25,10 +25,10 @@ pub enum ASTType {
     Struct(String, Vec<(String, ASTType)>),
     /// Will be generated as enum with given name
     Enum(String, Vec<ASTType>),
-    /// Will be generated as Vec<T>
-    Repeat(Vec<ASTType>),
-    /// Will be generated as Option<T>
-    Option(Vec<ASTType>),
+    /// Will be generated as Vec<T> where T is the type, similar to TypeRef
+    Repeat(String),
+    /// Will be generated as Option<Box<T>> where T is the type, similar to TypeRef
+    Option(String),
 }
 
 impl ASTType {
@@ -40,37 +40,8 @@ impl ASTType {
             Self::TypeRef(r) => format!("Box<{}>", r),
             Self::Struct(n, _) => n.to_string(),
             Self::Enum(n, _) => n.to_string(),
-            Self::Repeat(t) => {
-                let members = t
-                    .iter()
-                    .fold(Vec::<String>::new(), |mut acc, t| {
-                        match t {
-                            ASTType::TypeRef(r) => acc.push(r.to_string()),
-                            _ => acc.push(t.type_name()),
-                        }
-                        acc
-                    })
-                    .join(", ");
-                if t.len() <= 1 {
-                    format!("Vec<{}>", members,)
-                } else {
-                    format!("Vec<({})>", members)
-                }
-            }
-            Self::Option(t) => {
-                let members = t
-                    .iter()
-                    .fold(Vec::<String>::new(), |mut acc, t| {
-                        acc.push(t.type_name());
-                        acc
-                    })
-                    .join(", ");
-                if t.len() <= 1 {
-                    format!("Option<{}>", members,)
-                } else {
-                    format!("Option<({})>", members)
-                }
-            }
+            Self::Repeat(r) => format!("Vec<{}>", r),
+            Self::Option(o) => format!("Option<Box<{}>>", o),
         }
     }
 }
@@ -101,72 +72,180 @@ impl Display for ASTType {
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
-            Self::Repeat(t) => {
-                if t.len() <= 1 {
-                    write!(
-                        f,
-                        "Vec<{}>",
-                        t.iter()
-                            .map(|t| match t {
-                                ASTType::TypeRef(r) => r.to_string(),
-                                _ => t.type_name(),
-                            })
-                            .collect::<Vec<String>>()
-                            .join(" ")
-                    )
-                } else {
-                    write!(
-                        f,
-                        "Vec<({})>",
-                        t.iter()
-                            .map(|t| format!("{}", t))
-                            .collect::<Vec<String>>()
-                            .join(" ")
-                    )
-                }
-            }
-            Self::Option(t) => write!(
-                f,
-                "Option<{}>",
-                t.iter()
-                    .map(|t| format!("{}", t))
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
+            Self::Repeat(r) => write!(f, "Vec<{}>", r),
+            Self::Option(o) => write!(f, "Option<Box<{}>>", o),
         }
     }
 }
 
-///
-/// Predefined actions that can be generated automatically
-///
-#[derive(Debug, Clone)]
-pub enum Semantic {
-    /// Standard semantic
-    None,
-    /// Used for productions marked with a SemanticInfo::CollectionStart
-    StartCollection,
-    /// Add to a collection
-    AddToCollection,
-    /// An End-Of-Repetition where the collection has to be reversed
-    /// The vector contains the names of the items that are collections
-    ReverseCollection(Vec<String>),
-    /// An Optional::Some case
-    OptionalSome,
-    /// An Optional::None case
-    OptionalNone,
+impl Default for ASTType {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
-impl Display for Semantic {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
-        match self {
-            Self::None => write!(f, "-"),
-            Self::StartCollection => write!(f, "Vec::New"),
-            Self::AddToCollection => write!(f, "Vec::Push"),
-            Self::ReverseCollection(v) => write!(f, "Vec::Rev({})", v.join(", ")),
-            Self::OptionalSome => write!(f, "Option::Some"),
-            Self::OptionalNone => write!(f, "Option::None"),
+///
+/// An argument of a semantic action
+///
+#[derive(Debug, Default)]
+pub struct Argument {
+    /// Argument's name
+    pub(crate) name: String,
+    /// Argument's type
+    pub(crate) arg_type: ASTType,
+    /// Argument index or position
+    pub(crate) index: Option<usize>,
+    /// Indicates if the argument is used
+    pub(crate) used: bool,
+    /// Semantic information
+    pub(crate) sem: SymbolAttribute,
+}
+
+impl Argument {
+    /// Creates a new item
+    pub fn new(name: &str, arg_type: ASTType) -> Self {
+        Argument {
+            name: NmHlp::to_lower_snake_case(name),
+            arg_type,
+            ..Default::default()
         }
+    }
+
+    /// Set argument index
+    pub fn with_index(mut self, index: usize) -> Self {
+        self.index = Some(index);
+        self
+    }
+
+    /// Set argument's used state
+    pub fn with_used(mut self, used: bool) -> Self {
+        self.used = used;
+        self
+    }
+
+    /// Set symbol attribute on this argument
+    pub fn with_semantic(mut self, sem: SymbolAttribute) -> Self {
+        self.sem = sem;
+        self
+    }
+}
+
+impl Display for Argument {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        let arg_index = if let Some(index) = self.index {
+            format!("_{}", index)
+        } else {
+            String::default()
+        };
+
+        write!(
+            f,
+            "{}{}{}: {}",
+            NmHlp::item_unused_indicator(self.used),
+            self.name,
+            arg_index,
+            self.arg_type.type_name()
+        )
+    }
+}
+
+///
+/// A semantic action
+///
+/// For each production there exists an associated semantic action.
+/// Any action has a kind of `input` information which can be deduced from the production's
+/// right-hand side and resemble the action's argument list.
+/// These arguments are feed at prase time by the parser automatically.
+/// But in practice not all arguments provided by the parser are actually used because actions have
+/// tow possible ways to obtain their input value:
+///
+/// * First the corresponding values can be obtained from the actions's parameter list
+/// * Second the values can be popped from the AST stack
+///
+/// The first way would actually be used for simple tokens.
+/// The second way is applicable if there are already more complex items on the AST stack which
+/// is the case for any non-terminals.
+///
+///
+#[derive(Debug, Default)]
+pub struct Action {
+    /// Associated non-terminal
+    pub(crate) non_terminal: String,
+
+    /// Production number
+    /// The production index is identical for associated actions and productions, i.e. you can use
+    /// this index in Cfg.pr and in GrammarTypeSystem.actions to obtain a matching pair of
+    /// production and action.
+    pub(crate) prod_num: ProductionIndex,
+
+    /// The function name
+    pub(crate) fn_name: String,
+
+    /// The argument list as they are provided by the parser
+    pub(crate) args: Vec<Argument>,
+
+    /// The output type, i.e. the return type of the action which corresponds to the constructed
+    /// new value pushed on the AST stack.
+    /// If there exists an associated semantic action of the user's `input` grammar this type is
+    /// used to call it with.
+    pub(crate) out_type: ASTType,
+
+    /// Semantic specification
+    pub(crate) sem: ProductionAttribute,
+}
+
+impl Action {
+    /// Create a new item
+    pub fn new(non_terminal: &str, prod_num: ProductionIndex) -> Self {
+        Action {
+            non_terminal: non_terminal.to_string(),
+            prod_num,
+            ..Default::default()
+        }
+    }
+
+    /// Set the function name
+    pub fn with_name(mut self, fn_name: String) -> Self {
+        self.fn_name = fn_name;
+        self
+    }
+
+    /// Set the function's arguments
+    pub fn with_args(mut self, args: Vec<Argument>) -> Self {
+        self.args = args;
+        self
+    }
+
+    /// Set the function's output type
+    pub fn with_type(mut self, out_type: ASTType) -> Self {
+        self.out_type = out_type;
+        self
+    }
+
+    /// Set the function's semantic from a ProductionAttribute
+    pub fn with_semantic(mut self, sem: &Option<ProductionAttribute>) -> Self {
+        self.sem = match sem {
+            Some(a) => a.clone(),
+            None => ProductionAttribute::None,
+        };
+        self
+    }
+}
+
+impl Display for Action {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        write!(
+            f,
+            "/* {} */ (({}) -> {})  {{ {} }}",
+            self.prod_num,
+            self.args
+                .iter()
+                .map(|a| a.arg_type.type_name())
+                .collect::<Vec<String>>()
+                .join(", "),
+            self.out_type,
+            self.sem,
+        )
     }
 }
 
@@ -175,94 +254,98 @@ impl Display for Semantic {
 ///
 #[derive(Debug, Default)]
 pub struct GrammarTypeSystem {
-    ///
-    /// For each production there exists an `input` type.
-    /// This type is the input related side of the semantic action associated with that
-    /// productions.
-    /// This type(s) correspond(s) to the parameters and is(are) feed at call time in two possible
-    /// ways
-    /// * First the corresponding values can be obtained from the actions's parameter list
-    /// * Second the values can be popped from the AST stack
-    ///
-    /// The first way would actually be used for simple tokens.
-    /// The second way is applicable if there are already more complex items on the AST stack which
-    /// is the case for any non-terminals.
-    ///
-    pub in_types: BTreeMap<ProductionIndex, ASTType>,
-
-    ///
-    /// For each used `input` type there exists one `output` types.
-    /// These `output` types are usually created as compounds of the `input` types.
-    ///
-    /// These types correspond to the constructed new values pushed on the AST stack.
-    /// If there exists an associated semantic action of the user's `input` grammar this type is
-    /// used to call it with.
-    ///
-    pub out_types: BTreeMap<ProductionIndex, ASTType>,
+    /// All semantic actions, indices correspond to production indices in Cfg
+    pub actions: Vec<Action>,
 
     /// Calculated type of non-terminals
     pub non_terminal_types: BTreeMap<String, ASTType>,
 
-    /// Information to fill the semantic gap in special cases
-    pub semantics: BTreeMap<ProductionIndex, Semantic>,
-
+    /// Helper
     terminals: Vec<String>,
-
     terminal_names: Vec<String>,
 }
 
 impl GrammarTypeSystem {
     /// Create a new item
-    pub fn new() -> Self {
-        Self::default()
+    /// Initializes the helper data `terminals` and `terminal_names`.
+    pub fn new(cfg: &Cfg) -> Self {
+        let mut me = Self::default();
+        me.terminals = cfg
+            .get_ordered_terminals()
+            .iter()
+            .map(|(t, _)| t.to_string())
+            .collect::<Vec<String>>();
+
+        me.terminal_names = me.terminals.iter().fold(Vec::new(), |mut acc, e| {
+            let n = generate_terminal_name(e, None, cfg);
+            acc.push(n);
+            acc
+        });
+        me
     }
 
-    /// Add an input type
-    fn add_input_type(&mut self, prod_num: ProductionIndex, in_type: ASTType) -> Result<()> {
-        self.in_types.insert(prod_num, in_type).map_or_else(
-            || {
-                trace!("Setting input type for production {}", prod_num);
-                Ok(())
+    /// Creates the list of actions from the Cfg.
+    fn deduce_actions(&mut self, cfg: &Cfg) -> Result<()> {
+        self.actions = Vec::with_capacity(cfg.pr.len());
+        for (i, pr) in cfg.pr.iter().enumerate() {
+            self.actions.push(
+                Action::new(pr.get_n_str(), i)
+                    .with_name(NmHlp::to_lower_snake_case(&format!(
+                        "{}_{}",
+                        pr.get_n_str(),
+                        i
+                    )))
+                    .with_args(self.build_argument_list(pr)?)
+                    .with_type(self.deduce_action_type_from_production(pr)?)
+                    .with_semantic(&pr.2),
+            );
+        }
+        Ok(())
+    }
+
+    fn build_argument_list(&self, prod: &Pr) -> Result<Vec<Argument>> {
+        let mut types = prod.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
+            Ok(Vec::new()),
+            |acc, s| {
+                acc.and_then(|mut acc| {
+                    Self::deduce_type_of_symbol(s).map(|t| {
+                        acc.push((t, s.attribute()));
+                        acc
+                    })
+                })
             },
-            |_| {
-                Err(miette!(
-                    "Input type for production {} already specified",
-                    prod_num
-                ))
-            },
+        )?;
+
+        Ok(
+            NmHlp::generate_member_names(prod.get_r(), &self.terminals, &self.terminal_names)
+                .iter()
+                .enumerate()
+                .zip(types.drain(..))
+                .map(|((i, n), (t, a))| {
+                    // Tokens are taken from the parameter list per definition.
+                    let used = matches!(t, ASTType::Token(_));
+                    Argument::new(n, t)
+                        .with_used(used)
+                        .with_index(i)
+                        .with_semantic(a)
+                })
+                .collect::<Vec<Argument>>(),
         )
     }
 
-    /// Add an output type
-    fn add_output_type(&mut self, prod_num: ProductionIndex, out_type: ASTType) -> Result<()> {
-        self.out_types.insert(prod_num, out_type).map_or_else(
-            || {
-                trace!("Setting output type for production {}", prod_num);
-                Ok(())
-            },
-            |_| {
-                Err(miette!(
-                    "Output type for production {} already specified",
-                    prod_num
-                ))
-            },
-        )
-    }
-
-    /// Add a semantic
-    fn add_semantic(&mut self, prod_num: ProductionIndex, sem: Semantic) -> Result<()> {
-        self.semantics.insert(prod_num, sem).map_or_else(
-            || {
-                trace!("Setting semantic for production {}", prod_num);
-                Ok(())
-            },
-            |_| {
-                Err(miette!(
-                    "Semantic for production {} already specified",
-                    prod_num
-                ))
-            },
-        )
+    ///
+    /// Returns a vector of action indices matching the given non-terminal n
+    ///
+    pub fn matching_actions(&self, n: &str) -> Vec<usize> {
+        self.actions
+            .iter()
+            .enumerate()
+            .fold(Vec::new(), |mut acc, (i, a)| {
+                if a.non_terminal == n {
+                    acc.push(i);
+                }
+                acc
+            })
     }
 
     /// Add non-terminal type
@@ -283,362 +366,120 @@ impl GrammarTypeSystem {
             )
     }
 
-    fn add_pairwise_types(&mut self, cfg: &Cfg) -> Result<()> {
-        cfg.get_non_terminal_set()
-            .iter()
-            .map(|nt| cfg.matching_productions(nt))
-            .filter(|p| p.len() == 2)
-            .fold(Ok(()), |mut acc, p| {
-                if acc.is_ok() {
-                    let p0 = &p[0];
-                    let p1 = &p[1];
+    fn struct_data_of_production(&self, prod: &Pr) -> Result<ASTType> {
+        let mut arguments = self.build_argument_list(prod)?;
+        Ok(ASTType::Struct(
+            NmHlp::to_upper_camel_case(prod.get_n_str()),
+            arguments
+                .drain(..)
+                .map(|arg| (arg.name, arg.arg_type))
+                .collect::<Vec<(String, ASTType)>>(),
+        ))
+    }
 
-                    let rhs0 = p0.1.get_r();
-                    let rhs1 = p1.1.get_r();
-                    match (&rhs0[..], &rhs1[..]) {
-                        ([Symbol::Pseudo(SemanticInfo::CollectionStart(n))], _) => {
-                            acc = self
-                                .add_output_type(
-                                    p0.0,
-                                    ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
-                                )
-                                .and_then(|_| self.add_semantic(p0.0, Semantic::StartCollection))
-                                .and_then(|_| {
-                                    self.add_output_type(
-                                        p1.0,
-                                        ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
-                                    )
-                                })
-                                .and_then(|_| self.add_semantic(p1.0, Semantic::AddToCollection));
-                        }
-                        (_, [Symbol::Pseudo(SemanticInfo::CollectionStart(n))]) => {
-                            acc = self
-                                .add_output_type(
-                                    p1.0,
-                                    ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
-                                )
-                                .and_then(|_| self.add_semantic(p1.0, Semantic::StartCollection))
-                                .and_then(|_| {
-                                    self.add_output_type(
-                                        p0.0,
-                                        ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
-                                    )
-                                })
-                                .and_then(|_| self.add_semantic(p0.0, Semantic::AddToCollection));
-                        }
-                        ([Symbol::Pseudo(SemanticInfo::OptionalNone(n))], _) => {
-                            acc = self
-                                .add_input_type(
-                                    p0.0,
-                                    ASTType::Option(vec![ASTType::TypeRef(
-                                        NmHlp::to_upper_camel_case(n),
-                                    )]),
-                                )
-                                .and_then(|_| {
-                                    self.add_output_type(
-                                        p0.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(
-                                            NmHlp::to_upper_camel_case(n),
-                                        )]),
-                                    )
-                                })
-                                .and_then(|_| self.add_semantic(p0.0, Semantic::OptionalNone))
-                                .and_then(|_| {
-                                    self.add_input_type(
-                                        p1.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(
-                                            NmHlp::to_upper_camel_case(n),
-                                        )]),
-                                    )
-                                })
-                                .and_then(|_| {
-                                    self.add_output_type(
-                                        p1.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(
-                                            NmHlp::to_upper_camel_case(n),
-                                        )]),
-                                    )
-                                })
-                                .and_then(|_| self.add_semantic(p1.0, Semantic::OptionalSome));
-                        }
-                        (_, [Symbol::Pseudo(SemanticInfo::OptionalNone(n))]) => {
-                            acc = self
-                                .add_input_type(
-                                    p1.0,
-                                    ASTType::Option(vec![ASTType::TypeRef(
-                                        NmHlp::to_upper_camel_case(n),
-                                    )]),
-                                )
-                                .and_then(|_| {
-                                    self.add_output_type(
-                                        p1.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(
-                                            NmHlp::to_upper_camel_case(n),
-                                        )]),
-                                    )
-                                })
-                                .and_then(|_| self.add_semantic(p0.0, Semantic::OptionalSome))
-                                .and_then(|_| {
-                                    self.add_input_type(
-                                        p0.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(
-                                            NmHlp::to_upper_camel_case(n),
-                                        )]),
-                                    )
-                                })
-                                .and_then(|_| {
-                                    self.add_output_type(
-                                        p0.0,
-                                        ASTType::Option(vec![ASTType::TypeRef(
-                                            NmHlp::to_upper_camel_case(n),
-                                        )]),
-                                    )
-                                })
-                                .and_then(|_| self.add_semantic(p1.0, Semantic::OptionalNone));
-                        }
-                        _ => (),
-                    }
+    fn deduce_action_type_from_production(&self, prod: &Pr) -> Result<ASTType> {
+        match prod.len() {
+            0 => Ok(ASTType::Unit),
+            1 => match &prod.1[..] {
+                [Symbol::Pseudo(SymbolAttribute::OptionalNone(o))] => {
+                    Ok(ASTType::Option(o.to_string()))
                 }
-                acc
-            })?;
-        Ok(())
-    }
-
-    fn add_other_types(&mut self, cfg: &Cfg) -> Result<()> {
-        cfg.get_non_terminal_set()
-            .iter()
-            .map(|nt| cfg.matching_productions(nt))
-            .fold(Ok(()), |mut acc, p| {
-                for (i, pr) in p {
-                    if !self.in_types.contains_key(&i) {
-                        let in_type = self.deduce_in_type_of_production(pr);
-                        acc = acc.and_then(|_| self.add_input_type(i, in_type));
-                    }
-                    if !self.out_types.contains_key(&i) {
-                        let out_type = self.deduce_out_type_of_production(pr);
-                        acc = acc.and_then(|_| self.add_output_type(i, out_type));
-                    }
-                }
-                acc
-            })?;
-        Ok(())
-    }
-
-    fn deduce_semantics(&mut self, cfg: &Cfg) -> Result<()> {
-        cfg.get_non_terminal_set()
-            .iter()
-            .map(|nt| cfg.matching_productions(nt))
-            .fold(Ok(()), |mut acc, p| {
-                for (i, pr) in p {
-                    if !self.semantics.contains_key(&i) {
-                        let sem = self.deduce_semantic_of_production(pr);
-                        acc = acc.and_then(|_| self.add_semantic(i, sem));
-                    }
-                }
-                acc
-            })?;
-        Ok(())
-    }
-
-    fn struct_data_of_production(&self, prod: &Pr) -> ASTType {
-        let mut types =
-            prod.get_r()
-                .iter()
-                .filter(|s| s.is_t() || s.is_n())
-                .fold(Vec::new(), |mut acc, s| {
-                    acc.push(Self::deduce_type_of_symbol(s));
-                    acc
-                });
-        let field_names =
-            NmHlp::generate_member_names(prod.get_r(), &self.terminals, &self.terminal_names)
-                .iter()
-                .zip(types.drain(..))
-                .map(|(n, t)| (n.to_string(), t))
-                .collect::<Vec<(String, ASTType)>>();
-        ASTType::Struct(NmHlp::to_upper_camel_case(prod.get_n_str()), field_names)
-    }
-
-    fn deduce_in_type_of_production(&self, prod: &Pr) -> ASTType {
-        match prod.efficient_len() {
-            0 => ASTType::Unit,
-            1 => Self::deduce_type_of_symbol(&prod.get_r()[0]),
-            _ => self.struct_data_of_production(prod),
+                _ => Ok(self.struct_data_of_production(prod)?),
+            },
+            _ => match prod.1[0].attribute() {
+                SymbolAttribute::OptionalSome => Ok(ASTType::Option(prod.1[0].get_n().unwrap())),
+                SymbolAttribute::Repetition => Ok(ASTType::Repeat(prod.1[0].get_n().unwrap())),
+                _ => Ok(self.struct_data_of_production(prod)?),
+            },
         }
     }
 
-    fn deduce_out_type_of_production(&self, prod: &Pr) -> ASTType {
-        match prod.efficient_len() {
-            0 => ASTType::Unit,
-            1 => {
-                let idx = prod
-                    .get_r()
-                    .iter()
-                    .position(|s| s.is_n() || s.is_t())
-                    .unwrap();
-                ASTType::Struct(
-                    NmHlp::to_upper_camel_case(prod.get_n_str()),
-                    vec![(
-                        NmHlp::generate_member_name(
-                            &prod.get_r()[idx],
-                            0,
-                            &self.terminals,
-                            &self.terminal_names,
-                        ),
-                        Self::deduce_type_of_symbol(&prod.get_r()[0]),
-                    )],
-                )
-            }
-            _ => self.struct_data_of_production(prod),
-        }
-    }
-
-    fn deduce_semantic_of_production(&mut self, prod: &Pr) -> Semantic {
-        let sem = prod.get_r().iter().fold(Vec::new(), |mut acc, s| {
-            if self.is_collection(s) {
-                acc.push(s.to_string());
-            }
-            acc
-        });
-        if sem.is_empty() {
-            Semantic::None
-        } else {
-            Semantic::ReverseCollection(sem)
-        }
-    }
-
-    fn deduce_type_of_symbol(symbol: &Symbol) -> ASTType {
+    fn deduce_type_of_symbol(symbol: &Symbol) -> Result<ASTType> {
         match symbol {
-            Symbol::T(Terminal::Trm(t, _)) => ASTType::Token(NmHlp::to_upper_camel_case(t)),
-            Symbol::N(n) => ASTType::TypeRef(NmHlp::to_upper_camel_case(n)),
+            Symbol::T(Terminal::Trm(t, _)) => Ok(ASTType::Token(t.to_string())),
+            Symbol::N(n, a) => {
+                let inner_type_name = NmHlp::to_upper_camel_case(n);
+                match a {
+                    Some(SymbolAttribute::None) => Ok(ASTType::TypeRef(inner_type_name)),
+                    Some(SymbolAttribute::OptionalSome) => Ok(ASTType::Option(inner_type_name)),
+                    Some(SymbolAttribute::OptionalNone(n)) => Err(miette!(
+                        "OptionalNone attribute on non-terminal {} is not supported!",
+                        n
+                    )),
+                    Some(SymbolAttribute::Repetition) => Ok(ASTType::Repeat(inner_type_name)),
+                    None => Ok(ASTType::TypeRef(inner_type_name)),
+                }
+            }
+            Symbol::Pseudo(a) => match a {
+                SymbolAttribute::OptionalNone(n) => {
+                    Ok(ASTType::Option(NmHlp::to_upper_camel_case(n)))
+                }
+                _ => Err(miette!(
+                    "Attribute {} on pseudo symbol  is not supported!",
+                    a
+                )),
+            },
+            _ => Ok(ASTType::Unit),
+        }
+    }
+
+    fn deduce_type_of_non_terminal(&mut self, actions: Vec<usize>) -> Option<ASTType> {
+        match actions.len() {
+            // Productions can be optimized away, when they have duplicates!
+            0 => None,
+            // Only one production for this non-terminal: we take the out-type of the single action
+            1 => Some(self.actions[actions[0]].out_type.clone()),
             _ => {
-                trace!("Returning Unit for symbol {}", symbol);
-                ASTType::Unit
+                if let Some(option_index) = actions.iter().position(|a| {
+                    let a = &self.actions[*a];
+                    a.args.len() == 1 && matches!(a.args[0].sem, SymbolAttribute::OptionalSome)
+                }) {
+                    // Test for option first:
+                    //      Does there exist an action with one argument that has
+                    //      SymbolAttribute::OptionalSome set?
+                    Some(ASTType::Option(NmHlp::to_upper_camel_case(
+                        &self.actions[actions[option_index]].non_terminal,
+                    )))
+                } else if let Some(vec_index) = actions.iter().position(|a| {
+                    // Test for collection next:
+                    //      Does there exist an action with no arguments and the
+                    //      ProductionAttribute::CollectionStart set?
+                    let a = &self.actions[*a];
+                    a.args.is_empty() && matches!(a.sem, ProductionAttribute::CollectionStart)
+                }) {
+                    Some(ASTType::Repeat(NmHlp::to_upper_camel_case(
+                        &self.actions[actions[vec_index]].non_terminal,
+                    )))
+                } else {
+                    // Otherwise: we generate an enum form the out-types of each action
+                    let nt_ref = &self.actions[actions[0]].non_terminal;
+                    Some(ASTType::Enum(
+                        NmHlp::to_upper_camel_case(nt_ref),
+                        actions
+                            .iter()
+                            .map(|i| self.actions[*i].out_type.clone())
+                            .collect::<Vec<ASTType>>(),
+                    ))
+                }
             }
         }
     }
 
     fn deduce_type_of_non_terminals(&mut self, cfg: &Cfg) -> Result<()> {
-        cfg.get_non_terminal_set()
-            .iter()
-            .map(|nt| (nt, cfg.matching_productions(nt)))
-            .fold(Ok(()), |mut acc, (n, prods)| {
-                if prods.len() == 1 {
-                    acc = acc.and_then(|_| {
-                        self.add_non_terminal_type(
-                            n,
-                            self.deduce_out_type_of_production(prods[0].1),
-                        )
-                    });
-                } else {
-                    let option_type = if prods.len() == 2 {
-                        match (
-                            self.in_types.get(&prods[0].0),
-                            self.in_types.get(&prods[1].0),
-                        ) {
-                            (Some(ASTType::Option(n)), _) => Some(ASTType::Option(n.clone())),
-                            (_, Some(ASTType::Option(n))) => Some(ASTType::Option(n.clone())),
-                            _ => None,
-                        }
-                    } else {
-                        None
-                    };
-
-                    if let Some(option_type) = option_type {
-                        acc = acc.and_then(|_| self.add_non_terminal_type(n, option_type));
-                    } else {
-                        let repetition_type = if prods.len() == 2 {
-                            match (
-                                self.semantics.get(&prods[0].0),
-                                self.semantics.get(&prods[1].0),
-                            ) {
-                                (Some(Semantic::StartCollection), _) => {
-                                    let mut pr = prods[1].1.clone();
-                                    let _ = pr.1.pop();
-                                    Some(ASTType::Repeat(
-                                        pr.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
-                                            Vec::new(),
-                                            |mut acc, s| {
-                                                acc.push(Self::deduce_type_of_symbol(s));
-                                                acc
-                                            },
-                                        ),
-                                    ))
-                                }
-                                (_, Some(Semantic::StartCollection)) => {
-                                    let mut pr = prods[0].1.clone();
-                                    let _ = pr.1.pop();
-                                    Some(ASTType::Repeat(
-                                        pr.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
-                                            Vec::new(),
-                                            |mut acc, s| {
-                                                acc.push(Self::deduce_type_of_symbol(s));
-                                                acc
-                                            },
-                                        ),
-                                    ))
-                                }
-                                _ => None,
-                            }
-                        } else {
-                            None
-                        };
-
-                        if let Some(repetition_type) = repetition_type {
-                            acc = acc.and_then(|_| self.add_non_terminal_type(n, repetition_type));
-                        } else {
-                            acc = acc.and_then(|_| {
-                                self.add_non_terminal_type(
-                                    n,
-                                    ASTType::Enum(
-                                        NmHlp::to_upper_camel_case(n),
-                                        prods
-                                            .iter()
-                                            .map(|pr| {
-                                                ASTType::TypeRef(NmHlp::to_upper_camel_case(
-                                                    &format!(
-                                                        "{}_{}",
-                                                        NmHlp::to_upper_camel_case(
-                                                            pr.1.get_n_str()
-                                                        ),
-                                                        pr.0
-                                                    ),
-                                                ))
-                                            })
-                                            .collect::<Vec<ASTType>>(),
-                                    ),
-                                )
-                            });
-                        }
-                    }
-                }
-                acc
-            })?;
-        Ok(())
-    }
-
-    fn is_collection(&mut self, s: &Symbol) -> bool {
-        match s {
-            Symbol::N(n) => matches!(self.non_terminal_types.get(n), Some(ASTType::Repeat(_))),
-            _ => false,
+        for nt in cfg.get_non_terminal_set() {
+            let actions = self.matching_actions(&nt);
+            if let Some(nt_type) = self.deduce_type_of_non_terminal(actions) {
+                self.add_non_terminal_type(&nt, nt_type)?;
+            }
         }
+        Ok(())
     }
 }
 
 impl Display for GrammarTypeSystem {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
-        let width = (self.in_types.len() as f32).log10() as usize + 1;
-        for (prod_num, in_type) in &self.in_types {
-            let out_type = self.out_types.get(prod_num).unwrap_or(&ASTType::None);
-            let sem = self.semantics.get(prod_num).unwrap_or(&Semantic::None);
-            writeln!(
-                f,
-                "/* {:w$} */ ({} -> {})  {{ {} }}",
-                prod_num,
-                in_type,
-                out_type,
-                sem,
-                w = width
-            )?;
+        for action in &self.actions {
+            writeln!(f, "{}", action)?;
         }
         writeln!(f)?;
         for (non_terminal, ast_type) in &self.non_terminal_types {
@@ -651,22 +492,9 @@ impl Display for GrammarTypeSystem {
 impl TryFrom<&Cfg> for GrammarTypeSystem {
     type Error = miette::Error;
     fn try_from(cfg: &Cfg) -> Result<Self> {
-        let mut me = Self::new();
-        me.terminals = cfg
-            .get_ordered_terminals()
-            .iter()
-            .map(|(t, _)| t.to_string())
-            .collect::<Vec<String>>();
-        me.terminal_names = me.terminals.iter().fold(Vec::new(), |mut acc, e| {
-            let n = generate_terminal_name(e, usize::MAX, cfg);
-            acc.push(n);
-            acc
-        });
-
-        me.add_pairwise_types(cfg)?;
-        me.add_other_types(cfg)?;
+        let mut me = Self::new(cfg);
+        me.deduce_actions(cfg)?;
         me.deduce_type_of_non_terminals(cfg)?;
-        me.deduce_semantics(cfg)?;
         Ok(me)
     }
 }
@@ -674,8 +502,7 @@ impl TryFrom<&Cfg> for GrammarTypeSystem {
 #[cfg(test)]
 mod tests {
     use super::{ASTType, GrammarTypeSystem};
-    use crate::grammar::SemanticInfo;
-    use crate::{Cfg, Pr, Symbol};
+    use crate::{left_factor, obtain_grammar_config_from_string, Cfg};
     use log::trace;
     use proptest::prelude::*;
     use std::convert::TryInto;
@@ -683,43 +510,34 @@ mod tests {
 
     static INIT: Once = Once::new();
 
+    static GRAMMAR1: &str = r#"%start S %% S: "a" {"b-rpt"} "c" {"d-rpt"};"#;
+    static GRAMMAR2: &str = r#"%start S %% S: "a" ["b-opt"] "c" ["d-opt"];"#;
+
     lazy_static! {
         // S: "a" {"b-rpt"} "c" {"d-rpt"};
-
-        // /* 0 */ S: "a" SList "c" SList1;
-        // /* 1 */ SList1: "d-rpt" SList1;
-        // /* 2 */ SList1: /* Vec<SList1>::New */;
-        // /* 3 */ SList: "b-rpt" SList;
-        // /* 4 */ SList: /* Vec<SList>::New */;
-        static ref G1: Cfg = Cfg::with_start_symbol("S")
-            .add_pr(Pr::new("S", vec![t("a"), n("SList"), t("c"), n("SList1")]))
-            .add_pr(Pr::new("SList1", vec![t("d-rpt"), n("SList1")]))
-            .add_pr(Pr::new("SList1", vec![c("SList1")]))
-            .add_pr(Pr::new("SList", vec![t("b-rpt"), n("SList")]))
-            .add_pr(Pr::new("SList", vec![c("SList")]));
+        // =>
+        // /* 0 */ S: "a" Vec<SList> "c" Vec<SList1>;
+        // /* 1 */ SList1: "d-rpt" Vec<SList1>; // Vec<T>::Push
+        // /* 2 */ SList1: ; // Vec<T>::New
+        // /* 3 */ SList: "b-rpt" Vec<SList>; // Vec<T>::Push
+        // /* 4 */ SList: ; // Vec<T>::New
+        static ref G1: Cfg = left_factor(
+            &obtain_grammar_config_from_string(GRAMMAR1, false).unwrap().cfg);
         static ref TYPE_SYSTEM1: GrammarTypeSystem = (&*G1).try_into().unwrap();
 
         // S: "a" ["b-opt"] "c" ["d-opt"];
-
+        // =>
         // /* 0 */ S: "a" SSuffix2;
-        // /* 1 */ SSuffix2: /* Option<SOpt>::None */ "c" SSuffix1;
-        // /* 2 */ SSuffix2: SOpt "c" SSuffix;
-        // /* 3 */ SSuffix1: SOpt1;
-        // /* 4 */ SSuffix1: /* Option<SOpt2>::None */;
-        // /* 5 */ SSuffix: SOpt1;
+        // /* 1 */ SSuffix2: SOpt /* Option::Some */ "c" SSuffix1;
+        // /* 2 */ SSuffix2: /* Option<SOpt>::None */ "c" SSuffix;
+        // /* 3 */ SSuffix1: SOpt1 /* Option::Some */;
+        // /* 4 */ SSuffix1: /* Option<SOpt1>::None */;
+        // /* 5 */ SSuffix: SOpt1 /* Option::Some */;
         // /* 6 */ SSuffix: /* Option<SOpt1>::None */;
         // /* 7 */ SOpt1: "d-opt";
         // /* 8 */ SOpt: "b-opt";
-        static ref G2: Cfg = Cfg::with_start_symbol("S")
-            .add_pr(Pr::new("S", vec![t("a"), n("SSuffix2")]))
-            .add_pr(Pr::new("SSuffix2", vec![o("SOpt"), t("c"), n("SSuffix1")]))
-            .add_pr(Pr::new("SSuffix2", vec![n("SOpt"), t("c"), n("SSuffix")]))
-            .add_pr(Pr::new("SSuffix1", vec![n("SOpt1")]))
-            .add_pr(Pr::new("SSuffix1", vec![o("SOpt2")]))
-            .add_pr(Pr::new("SSuffix", vec![n("SOpt1")]))
-            .add_pr(Pr::new("SSuffix", vec![o("SOpt1")]))
-            .add_pr(Pr::new("SOpt1", vec![t("d-opt")]))
-            .add_pr(Pr::new("SOpt", vec![t("b-opt")]));
+        static ref G2: Cfg = left_factor(
+            &obtain_grammar_config_from_string(GRAMMAR2, false).unwrap().cfg);
         static ref TYPE_SYSTEM2: GrammarTypeSystem = (&*G2).try_into().unwrap();
     }
 
@@ -727,42 +545,16 @@ mod tests {
         INIT.call_once(env_logger::init);
     }
 
-    fn t(t: &str) -> Symbol {
-        Symbol::t(t, vec![0])
-    }
-
-    fn n(n: &str) -> Symbol {
-        Symbol::n(n)
-    }
-
-    fn c(r: &str) -> Symbol {
-        Symbol::Pseudo(SemanticInfo::CollectionStart(r.to_owned()))
-    }
-
-    fn o(r: &str) -> Symbol {
-        Symbol::Pseudo(SemanticInfo::OptionalNone(r.to_owned()))
-    }
-
     proptest! {
         #[test]
-        fn type_creation_repeat_1(prod_num in 0usize..4) {
+        fn type_creation_repeat_props(prod_num in 0usize..4) {
             setup();
 
-            trace!("{}", *TYPE_SYSTEM1);
-
-            assert_eq!(5, TYPE_SYSTEM1.in_types.len());
-            assert_eq!(5, TYPE_SYSTEM1.out_types.len());
+            assert_eq!(5, TYPE_SYSTEM1.actions.len());
             assert_eq!(3, TYPE_SYSTEM1.non_terminal_types.len());
 
             assert!(TYPE_SYSTEM1.non_terminal_types.contains_key(G1.pr[prod_num].get_n_str()));
-            match &TYPE_SYSTEM1.in_types[&prod_num] {
-                ASTType::Enum(n, m) => {
-                    assert_eq!(n, G1.pr[prod_num].get_n_str());
-                    assert_eq!(m.len(), (&G1).matching_productions(G1.pr[prod_num].get_n_str()).len())
-                }
-                _ => ()
-            }
-            match &TYPE_SYSTEM1.out_types[&prod_num] {
+            match &TYPE_SYSTEM1.actions[prod_num].out_type {
                 ASTType::Enum(n, m) => {
                     assert_eq!(n, G1.pr[prod_num].get_n_str());
                     assert_eq!(m.len(), (&G1).matching_productions(G1.pr[prod_num].get_n_str()).len())
@@ -772,26 +564,23 @@ mod tests {
         }
     }
 
+    #[test]
+    fn type_creation_repeat_1() {
+        setup();
+
+        trace!("{}", *TYPE_SYSTEM1);
+
+        assert_eq!(5, TYPE_SYSTEM1.actions.len());
+        assert_eq!(3, TYPE_SYSTEM1.non_terminal_types.len());
+    }
+
     proptest! {
         #[test]
-        fn type_creation_optional_1(prod_num in 0usize..8) {
+        fn type_creation_optional_pros(prod_num in 0usize..8) {
             setup();
 
-            trace!("{}", *TYPE_SYSTEM2);
-
-            assert_eq!(9, TYPE_SYSTEM2.in_types.len());
-            assert_eq!(9, TYPE_SYSTEM2.out_types.len());
-            assert_eq!(6, TYPE_SYSTEM2.non_terminal_types.len());
-
             assert!(TYPE_SYSTEM2.non_terminal_types.contains_key(G2.pr[prod_num].get_n_str()));
-            match &TYPE_SYSTEM2.in_types[&prod_num] {
-                ASTType::Enum(n, m) => {
-                    assert_eq!(n, G2.pr[prod_num].get_n_str());
-                    assert_eq!(m.len(), (&G2).matching_productions(G2.pr[prod_num].get_n_str()).len())
-                }
-                _ => ()
-            }
-            match &TYPE_SYSTEM2.out_types[&prod_num] {
+            match &TYPE_SYSTEM2.actions[prod_num].out_type {
                 ASTType::Enum(n, m) => {
                     assert_eq!(n, G2.pr[prod_num].get_n_str());
                     assert_eq!(m.len(), (&G2).matching_productions(G2.pr[prod_num].get_n_str()).len())
@@ -799,5 +588,31 @@ mod tests {
                 _ => ()
             }
         }
+    }
+
+    #[test]
+    fn type_creation_optional_1() {
+        setup();
+
+        trace!("{}", *TYPE_SYSTEM2);
+
+        assert_eq!(9, TYPE_SYSTEM2.actions.len());
+        assert_eq!(6, TYPE_SYSTEM2.non_terminal_types.len());
+
+        // /* 2 */ SSuffix2: /* Option<SOpt>::None */ "c" SSuffix;
+        assert_eq!(
+            2,
+            TYPE_SYSTEM2.actions[2].args.len(),
+            "Option::None should not appear in action arguments!"
+        );
+        assert!(
+            matches!(TYPE_SYSTEM2.actions[2].args[0].arg_type, ASTType::Token(_)),
+            "Type of argument 0 in action 2 should be Token"
+        );
+        assert!(
+            matches!(&TYPE_SYSTEM2.actions[2].out_type, ASTType::Struct(n, _) if n == "SSuffix2"),
+            "Output type of action 2 should be struct SSuffix2 but was {}",
+            TYPE_SYSTEM2.actions[2].out_type
+        );
     }
 }
