@@ -176,11 +176,6 @@ fn separate_alternatives(opd: TransformationOperand) -> TransformationOperand {
 // -------------------------------------------------------------------------
 // R  -> x { a } y
 // =>
-// Case 1: Iff a is only of size 1
-// R  -> x R' y        (1)
-// R' -> a R'          (2)
-// R' ->               (2a)
-// Case 2: Otherwise (a could be something like x | y)
 // R  -> x R' y        (1)
 // R' -> (a) R'        (2)
 // R' ->               (2a)
@@ -197,33 +192,18 @@ fn eliminate_single_rep(
         .position(|f| matches!(f, Factor::Repeat(_)))
     {
         let r_tick_name = generate_name(exclusions, production_name + "List");
-        if let Factor::Repeat(mut repeat) = production.rhs.0[alt_index].0[rpt_index_in_alt].clone()
-        {
+        if let Factor::Repeat(repeat) = production.rhs.0[alt_index].0[rpt_index_in_alt].clone() {
             let mut production1 = production.clone();
             production1.rhs.0[alt_index].0[rpt_index_in_alt] =
                 Factor::NonTerminal(r_tick_name.clone(), Some(SymbolAttribute::Repetition));
 
-            let production2 = if repeat.0.len() == 1 {
-                // Case 1
-                repeat.0[0].push(Factor::NonTerminal(
-                    r_tick_name.clone(),
-                    Some(SymbolAttribute::Repetition),
-                ));
-                repeat.0[0].1 = Some(ProductionAttribute::AddToCollection);
-                Production {
-                    lhs: r_tick_name.clone(),
-                    rhs: repeat,
-                }
-            } else {
-                // Case 2
-                Production {
-                    lhs: r_tick_name.clone(),
-                    rhs: Alternations(vec![Alternation::new(vec![
-                        Factor::Group(repeat),
-                        Factor::NonTerminal(r_tick_name.clone(), Some(SymbolAttribute::Repetition)),
-                    ])
-                    .with_attribute(ProductionAttribute::AddToCollection)]),
-                }
+            let production2 = Production {
+                lhs: r_tick_name.clone(),
+                rhs: Alternations(vec![Alternation::new(vec![
+                    Factor::Group(repeat),
+                    Factor::NonTerminal(r_tick_name.clone(), Some(SymbolAttribute::Repetition)),
+                ])
+                .with_attribute(ProductionAttribute::AddToCollection)]),
             };
 
             let production2a = Production {
@@ -559,73 +539,13 @@ mod test {
     };
     use crate::grammar::{ProductionAttribute, SymbolAttribute};
 
-    // R  -> x { r1 r2 } y
-    // =>
-    // R  -> x R' y        (1)
-    // R' -> r1 r2 R'      (2)
-    // R' ->               (2a)
-
-    #[test]
-    fn eliminate_single_rep_case_1() {
-        // Start: x { r1 r2 } y;
-        let production = Production {
-            lhs: "Start".to_string(),
-            rhs: Alternations(vec![Alternation::new(vec![
-                Factor::Terminal("x".to_string(), vec![0]),
-                Factor::Repeat(Alternations(vec![Alternation::new(vec![
-                    Factor::Terminal("r1".to_string(), vec![0]),
-                    Factor::Terminal("r2".to_string(), vec![0]),
-                ])])),
-                Factor::Terminal("y".to_string(), vec![0]),
-            ])]),
-        };
-
-        let productions = eliminate_single_rep(&[production.lhs.clone()], 0, production);
-        assert_eq!(3, productions.len());
-        // Start: x StartList y;
-        assert_eq!(
-            Production {
-                lhs: "Start".to_string(),
-                rhs: Alternations(vec![Alternation::new(vec![
-                    Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::NonTerminal("StartList".to_string(), Some(SymbolAttribute::Repetition)),
-                    Factor::Terminal("y".to_string(), vec![0]),
-                ])])
-            },
-            productions[0]
-        );
-        // StartList: r1 r2 StartList;
-        assert_eq!(
-            Production {
-                lhs: "StartList".to_string(),
-                rhs: Alternations(vec![Alternation::new(vec![
-                    Factor::Terminal("r1".to_string(), vec![0]),
-                    Factor::Terminal("r2".to_string(), vec![0]),
-                    Factor::NonTerminal("StartList".to_string(), Some(SymbolAttribute::Repetition)),
-                ])
-                .with_attribute(ProductionAttribute::AddToCollection)])
-            },
-            productions[1]
-        );
-        // StartList: ;
-        assert_eq!(
-            Production {
-                lhs: "StartList".to_string(),
-                rhs: Alternations(vec![
-                    Alternation::default().with_attribute(ProductionAttribute::CollectionStart)
-                ])
-            },
-            productions[2]
-        );
-    }
-
     // R  -> x { r1 | r2 } y
     // =>
     // R  -> x R' y        (1)
     // R' -> ( r1 | r2 ) R'        (2)
     // R' ->               (2a)
     #[test]
-    fn eliminate_single_rep_case_2() {
+    fn eliminate_single_rep_test() {
         // Start: x { r1 | r2 } y;
         let production = Production {
             lhs: "Start".to_string(),

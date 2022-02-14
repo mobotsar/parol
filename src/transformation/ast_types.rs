@@ -573,7 +573,7 @@ mod tests {
     fn type_creation_repeat_1() {
         setup();
 
-        trace!("{}", *TYPE_SYSTEM1);
+        trace!("Type system 1:\n{}", *TYPE_SYSTEM1);
 
         assert_eq!(5, TYPE_SYSTEM1.actions.len());
         assert_eq!(3, TYPE_SYSTEM1.non_terminal_types.len());
@@ -599,7 +599,7 @@ mod tests {
     fn type_creation_optional_1() {
         setup();
 
-        trace!("{}", *TYPE_SYSTEM2);
+        trace!("Type system 2:\n{}", *TYPE_SYSTEM2);
 
         assert_eq!(9, TYPE_SYSTEM2.actions.len());
         assert_eq!(6, TYPE_SYSTEM2.non_terminal_types.len());

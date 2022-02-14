@@ -69,6 +69,8 @@ pub enum SymbolAttribute {
 
     /// The symbol is actually a collection, i.e. a vector
     /// Is attached to a non-terminal symbol which shall be typed as collection type.
+    /// If an argument with this attribute appears in the argument list of a semantic action
+    /// this collection should be reversed.
     Repetition,
 }
 

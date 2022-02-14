@@ -129,10 +129,6 @@ impl Alternation {
         self.0.insert(0, fac)
     }
 
-    pub(crate) fn push(&mut self, fac: Factor) {
-        self.0.push(fac)
-    }
-
     /// Generate parol's syntax
     pub fn to_par(&self) -> String {
         self.0
