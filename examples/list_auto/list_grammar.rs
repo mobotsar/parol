@@ -1,4 +1,4 @@
-use crate::list_grammar_trait::{List, ListGrammarTrait, ListList};
+use crate::list_grammar_trait::{List, ListGrammarTrait, ListOptList};
 use miette::Result;
 use std::fmt::{Debug, Display, Error, Formatter};
 
@@ -22,8 +22,9 @@ impl Display for List<'_> {
             List::List0(l) => write!(
                 f,
                 "[{}{}]",
-                l.num.num.symbol,
-                l.list_list
+                l.list_opt.num.num.symbol,
+                l.list_opt
+                    .list_opt_list
                     .iter()
                     .map(|e| format!("{}", e))
                     .collect::<Vec<std::string::String>>()
@@ -34,9 +35,9 @@ impl Display for List<'_> {
     }
 }
 
-impl Display for ListList<'_> {
+impl Display for ListOptList<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
-        write!(f, "{} {}", self.comma.symbol, self.num.num.symbol)
+        write!(f, "{} {}", self.trailing_comma_opt.symbol, self.num.num.symbol)
     }
 }
 
