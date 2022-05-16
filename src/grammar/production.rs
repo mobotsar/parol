@@ -117,7 +117,7 @@ impl Pr {
     }
 
     fn is_allowed_symbol(s: &Symbol) -> bool {
-        !(matches!(s, Symbol::T(Terminal::Eps)))
+        !(matches!(s, Symbol::T(Terminal::Eps, _)))
     }
 
     /// Returns the length of [Rhs] while counting only parser relevant symbols

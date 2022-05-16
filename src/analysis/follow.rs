@@ -162,14 +162,14 @@ fn update_production_equations<'a, 'c: 'a>(
                 // For each non-terminal create a separate SymbolString
                 Symbol::N(_, _) => acc.push((i + 1, SymbolString(vec![s.clone()]))),
                 // Stack terminals as long as possible
-                Symbol::T(_) => {
+                Symbol::T(_, _) => {
                     if acc.is_empty() {
                         acc.push((i + 1, SymbolString(vec![s.clone()])));
                     } else {
                         let last = acc.len() - 1;
                         let last_len = acc[last].1.len();
                         let last_terminal = &acc[last].1 .0[last_len - 1];
-                        if matches!(last_terminal, Symbol::T(_)) {
+                        if matches!(last_terminal, Symbol::T(_, _)) {
                             // Only add to terminals
                             acc[last].1 .0.push(s.clone());
                         } else {
@@ -178,6 +178,7 @@ fn update_production_equations<'a, 'c: 'a>(
                         }
                     }
                 }
+                Symbol::P(_) => (),
                 Symbol::S(_) => (),
                 Symbol::Push(_) => (),
                 Symbol::Pop => (),
@@ -205,7 +206,7 @@ fn update_production_equations<'a, 'c: 'a>(
             for (_, symbol_string) in parts.iter().skip(part_index + 1) {
                 let symbol_string_clone = symbol_string.clone();
                 match &symbol_string_clone.0[0] {
-                    Symbol::T(_) => {
+                    Symbol::T(_, _) => {
                         // trace!("  concat terminals: {}", symbol_string_clone);
                         result_function =
                             Box::new(move |result_map: &ResultMap, non_terminal_results| {
@@ -229,6 +230,7 @@ fn update_production_equations<'a, 'c: 'a>(
                                     .k_concat(first_of_nt, k)
                             });
                     }
+                    Symbol::P(_) => (),
                     Symbol::S(_) => (),
                     Symbol::Push(_) => (),
                     Symbol::Pop => (),

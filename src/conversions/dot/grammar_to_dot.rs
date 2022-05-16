@@ -90,7 +90,7 @@ pub fn render_nt_dot_string(grammar_config: &GrammarConfig) -> String {
                 instances_to_types_edges.push(format!("\"{}\"->\"{}\";", to_node, n));
                 from_node = to_node;
             }
-            Symbol::T(Terminal::Trm(_, _)) | Symbol::T(Terminal::End) => {
+            Symbol::T(Terminal::Trm(_, _), _) | Symbol::T(Terminal::End, _) => {
                 let to_node = format!("t{}_{}", pi, si + 1);
                 inside_production_edges.push(format!("\"{}\"->\"{}\";", from_node, to_node));
                 from_node = to_node;

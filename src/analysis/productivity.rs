@@ -114,7 +114,7 @@ fn combine_production_equation<'a, 'c>(
         Box::new(|_| false)
     } else if matching_productions
         .iter()
-        .any(|(_, p)| p.get_r().iter().all(|s| matches!(s, Symbol::T(_))))
+        .any(|(_, p)| p.get_r().iter().all(|s| matches!(s, Symbol::T(_, _))))
     {
         Box::new(|_| true)
     } else {

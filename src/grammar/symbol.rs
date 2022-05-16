@@ -57,8 +57,8 @@ impl Terminal {
     /// Creates a terminal from a [Symbol]
     pub fn create(s: &Symbol) -> Self {
         match s {
-            Symbol::T(Terminal::Trm(t, s)) => Terminal::Trm(t.to_string(), s.to_vec()),
-            Symbol::T(Terminal::End) => Terminal::End,
+            Symbol::T(Terminal::Trm(t, s), _) => Terminal::Trm(t.to_string(), s.to_vec()),
+            Symbol::T(Terminal::End, _) => Terminal::End,
             _ => panic!("Unexpected symbol type: {:?}", s),
         }
     }
@@ -143,12 +143,17 @@ pub enum Symbol {
     ///
     /// Terminal symbol of the grammar.
     ///
-    T(Terminal),
+    T(Terminal, SymbolAttribute),
 
     ///
     /// Instruction to switch scanner state
     ///
     S(ScannerIndex),
+
+    ///
+    /// Pseudo symbol to convey transformation information
+    ///
+    P(SymbolAttribute),
 
     ///
     /// Instruction to push the index of the current scanner and switch to a scanner configuration
@@ -166,7 +171,7 @@ pub enum Symbol {
 impl Symbol {
     /// Creates a terminal symbol
     pub fn t(t: &str, s: Vec<usize>) -> Self {
-        Self::T(Terminal::Trm(t.to_owned(), s))
+        Self::T(Terminal::Trm(t.to_owned(), s), SymbolAttribute::default())
     }
     /// Creates a non-terminal symbol
     pub fn n(n: &str) -> Self {
@@ -174,7 +179,7 @@ impl Symbol {
     }
     /// Creates a end-of-input terminal symbol
     pub fn e() -> Self {
-        Self::T(Terminal::End)
+        Self::T(Terminal::End, SymbolAttribute::default())
     }
     /// Creates a scanner index
     pub fn s(s: usize) -> Self {
@@ -182,7 +187,7 @@ impl Symbol {
     }
     /// Checks if self is a terminal
     pub fn is_t(&self) -> bool {
-        matches!(self, Self::T(_))
+        matches!(self, Self::T(_, _))
     }
     /// Checks if self is a non-terminal
     pub fn is_n(&self) -> bool {
@@ -190,7 +195,7 @@ impl Symbol {
     }
     /// Checks if self is a end-of-input terminal
     pub fn is_end(&self) -> bool {
-        matches!(self, Self::T(Terminal::End))
+        matches!(self, Self::T(Terminal::End, _))
     }
     /// Checks if self is a scanner switch instruction
     pub fn is_switch(&self) -> bool {
@@ -198,7 +203,7 @@ impl Symbol {
     }
     /// Returns a terminal if available
     pub fn get_t(&self) -> Option<Terminal> {
-        if let Self::T(t) = &self {
+        if let Self::T(t, _) = &self {
             Some(t.clone())
         } else {
             None
@@ -206,7 +211,7 @@ impl Symbol {
     }
     /// Returns a terminal reference if available
     pub fn get_t_ref(&self) -> Option<&Terminal> {
-        if let Self::T(t) = &self {
+        if let Self::T(t, _) = &self {
             Some(t)
         } else {
             None
@@ -232,7 +237,7 @@ impl Symbol {
     /// Get the symbol attribute or a default value
     pub fn attribute(&self) -> SymbolAttribute {
         match self {
-            Symbol::N(_, a) => a.clone(),
+            Symbol::N(_, a) | Symbol::T(_, a) | Symbol::P(a) => a.clone(),
             _ => SymbolAttribute::None,
         }
     }
@@ -248,7 +253,12 @@ impl Symbol {
                 a.decorate(&mut s, n).into_diagnostic()?;
                 Ok(s)
             }
-            Self::T(t) => t.format(scanner_state_resolver),
+            Self::T(t, a) => {
+                let mut s = String::new();
+                let t = t.format(scanner_state_resolver)?;
+                a.decorate(&mut s, &t).into_diagnostic()?;
+                Ok(s)
+            }
             Self::S(s) => {
                 if *s == 0 {
                     Ok("%sc()".to_string())
@@ -256,6 +266,7 @@ impl Symbol {
                     Ok(format!("%sc({})", scanner_state_resolver(&[*s])))
                 }
             }
+            Self::P(a) => Ok(format!("{}", a)),
             Self::Push(s) => Ok(format!("%push({})", scanner_state_resolver(&[*s]))),
             Self::Pop => Ok("%pop()".to_string()),
         }
@@ -270,7 +281,12 @@ impl Display for Symbol {
                 a.decorate(&mut s, n)?;
                 write!(f, "{}", s)
             }
-            Self::T(t) => write!(f, "{}", t),
+            Self::T(t, a) => {
+                let mut s = String::new();
+                a.decorate(&mut s, t)?;
+                write!(f, "{}", s)
+            }
+            Self::P(a) => write!(f, "{}", a),
             Self::S(s) => write!(f, "S({})", s),
             Self::Push(s) => write!(f, "Push({})", s),
             Self::Pop => write!(f, "Pop"),

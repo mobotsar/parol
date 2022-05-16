@@ -86,8 +86,8 @@ impl Display for SymbolAttribute {
         match self {
             Self::None => Ok(()),
             Self::RepetitionAnchor => write!(f, "Vec<T>"),
-            Self::OptionalSome(id) => write!(f, "Opt({})", id.0),
-            Self::OptionalNone(id) => write!(f, "Opt({})", id.0),
+            Self::OptionalSome(id) => write!(f, "Some({})", id.0),
+            Self::OptionalNone(id) => write!(f, "None({})", id.0),
         }
     }
 }
@@ -107,8 +107,12 @@ where
         match self {
             Self::None => out.write_fmt(format_args!("{}", decoratee)),
             Self::RepetitionAnchor => out.write_fmt(format_args!("{} /* Vec */", decoratee)),
-            Self::OptionalSome(_) => todo!(),
-            Self::OptionalNone(_) => todo!(),
+            Self::OptionalSome(id) => {
+                out.write_fmt(format_args!("{} /* Some({}) */", decoratee, id.0))
+            }
+            Self::OptionalNone(id) => {
+                out.write_fmt(format_args!("{} /* None({}) */", decoratee, id.0))
+            }
         }
     }
 }

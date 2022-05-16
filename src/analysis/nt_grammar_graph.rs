@@ -114,10 +114,10 @@ impl From<&Cfg> for NtGrammarGraph {
         let te_positions = g.get_terminal_positions();
         let te_positions = te_positions.iter().fold(HashMap::new(), |mut acc, (p, t)| {
             let node_index = match t {
-                Symbol::T(trm) if matches!(trm, Terminal::Trm(_, _)) => {
+                Symbol::T(trm, _) if matches!(trm, Terminal::Trm(_, _)) => {
                     gg.0.add_node(NtNodeType::T(trm.clone(), p.pr_index(), p.sy_index()))
                 }
-                Symbol::T(Terminal::End) => {
+                Symbol::T(Terminal::End, _) => {
                     gg.0.add_node(NtNodeType::E(p.pr_index(), p.sy_index()))
                 }
                 _ => panic!("Invalid symbol type on RHS of production"),
@@ -149,7 +149,7 @@ impl From<&Cfg> for NtGrammarGraph {
                             gg.0.add_edge(*from_index, *nt_type_index, NtEdgeType::NtTypeInstance);
                             from_index
                         }
-                        Symbol::T(Terminal::Trm(_, _)) | Symbol::T(Terminal::End) => {
+                        Symbol::T(Terminal::Trm(_, _), _) | Symbol::T(Terminal::End, _) => {
                             te_positions.get(&(pi, si + 1)).unwrap()
                         }
                         _ => panic!(
