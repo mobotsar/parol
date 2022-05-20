@@ -37,7 +37,11 @@ impl Display for List<'_> {
 
 impl Display for ListOptList<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
-        write!(f, "{} {}", self.trailing_comma_opt.symbol, self.num.num.symbol)
+        write!(
+            f,
+            "{} {}",
+            self.trailing_comma_opt.symbol, self.num.num.symbol
+        )
     }
 }
 
