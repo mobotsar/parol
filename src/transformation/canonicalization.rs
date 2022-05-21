@@ -1,6 +1,6 @@
 use crate::analysis::lookahead_dfa::ProductionIndex;
 use crate::generate_name;
-use crate::grammar::attributes::OptionalId;
+use crate::grammar::attributes::{OptionalId, OPTIONAL_ID_INIT};
 use crate::grammar::{ProductionAttribute, SymbolAttribute};
 use crate::parser::{Alternation, Alternations, Factor, ParolGrammarItem, Production};
 use crate::utils::combine;
@@ -542,7 +542,7 @@ fn transform(productions: Vec<Production>) -> Result<Vec<Pr>> {
     let mut state = TransformationState {
         modified: true,
         productions,
-        next_optional: OptionalId(0),
+        next_optional: OPTIONAL_ID_INIT,
     };
     let trans_fn = combine(
         combine(
@@ -572,7 +572,7 @@ mod test {
         eliminate_single_grp, eliminate_single_opt, eliminate_single_rep, Alternation,
         Alternations, Factor, Production,
     };
-    use crate::grammar::{attributes::OptionalId, ProductionAttribute, SymbolAttribute};
+    use crate::grammar::{attributes::OPTIONAL_ID_INIT, ProductionAttribute, SymbolAttribute};
 
     // R  -> x { r1 r2 } y
     // =>
@@ -724,7 +724,7 @@ mod test {
         };
 
         let productions =
-            eliminate_single_opt(&[production.lhs.clone()], 0, production, OptionalId(0));
+            eliminate_single_opt(&[production.lhs.clone()], 0, production, OPTIONAL_ID_INIT);
         assert_eq!(3, productions.len());
         // Start: x StartOpt y;
         assert_eq!(
@@ -734,7 +734,7 @@ mod test {
                     Factor::Terminal("x".to_string(), vec![0]),
                     Factor::NonTerminal(
                         "StartOpt".to_string(),
-                        SymbolAttribute::OptionalSome(OptionalId(0))
+                        SymbolAttribute::OptionalSome(OPTIONAL_ID_INIT)
                     ),
                     Factor::Terminal("y".to_string(), vec![0]),
                 ])])
@@ -749,7 +749,7 @@ mod test {
                     Factor::Terminal("x".to_string(), vec![0]),
                     Factor::Pseudo(
                         "StartOpt".to_string(),
-                        SymbolAttribute::OptionalNone(OptionalId(0))
+                        SymbolAttribute::OptionalNone(OPTIONAL_ID_INIT)
                     ),
                     Factor::Terminal("y".to_string(), vec![0])
                 ]),])

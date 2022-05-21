@@ -2,7 +2,7 @@ use super::{Decorate, SymbolAttribute};
 use crate::analysis::k_tuple::TerminalMappings;
 use crate::parser::parol_grammar::Factor;
 use crate::parser::to_grammar_config::try_from_factor;
-use miette::{IntoDiagnostic, Result, bail};
+use miette::{bail, IntoDiagnostic, Result};
 use parol_runtime::parser::ScannerIndex;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Error, Formatter};
@@ -270,14 +270,11 @@ impl Symbol {
                     Ok(format!("%sc({})", scanner_state_resolver(&[*s])))
                 }
             }
-            Self::P(n, a) => {
-                match a {
-                    SymbolAttribute::OptionalSome(_) => Ok(format!("{}: {}", n, a)),
-                    SymbolAttribute::OptionalNone(_) => Ok(format!("/* {}: {} */", n, a)),
-                    _ => bail!("Unexpected symbol attribute in pseudo symbol"),
-                }
-                
-            }
+            Self::P(n, a) => match a {
+                SymbolAttribute::OptionalSome(_) => Ok(format!("{}: {}", n, a)),
+                SymbolAttribute::OptionalNone(_) => Ok(format!("/* {}: {} */", n, a)),
+                _ => bail!("Unexpected symbol attribute in pseudo symbol"),
+            },
             Self::Push(s) => Ok(format!("%push({})", scanner_state_resolver(&[*s]))),
             Self::Pop => Ok("%pop()".to_string()),
         }

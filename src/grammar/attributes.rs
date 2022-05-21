@@ -5,7 +5,10 @@ use std::fmt::{Debug, Display, Error, Formatter, Write};
 
 /// Id type for tracking of optionals during grammar transformation
 #[derive(Debug, Clone, Copy, Hash, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OptionalId(pub(crate) usize);
+pub struct OptionalId(pub usize);
+
+/// First Id value when initializing a sequence of OptionalIds
+pub const OPTIONAL_ID_INIT: OptionalId = OptionalId(0);
 
 impl OptionalId {
     /// Increments mutable self
@@ -13,9 +16,9 @@ impl OptionalId {
     /// # Examples
     ///
     /// ```
-    /// use parol::grammar::attributes::OptionalId;
+    /// use parol::grammar::attributes::{OptionalId, OPTIONAL_ID_INIT};
     ///
-    /// let mut optional_id = OptionalId(0);
+    /// let mut optional_id = OPTIONAL_ID_INIT;
     /// optional_id.incr();
     /// assert_eq!(optional_id, OptionalId(1));
     /// ```
@@ -28,9 +31,9 @@ impl OptionalId {
     /// # Examples
     ///
     /// ```
-    /// use parol::grammar::attributes::OptionalId;
+    /// use parol::grammar::attributes::{OptionalId, OPTIONAL_ID_INIT};
     ///
-    /// let optional_id = OptionalId(0);
+    /// let optional_id = OPTIONAL_ID_INIT;
     /// assert_eq!(optional_id.next(), OptionalId(1));
     /// ```
     pub fn next(&self) -> Self {
