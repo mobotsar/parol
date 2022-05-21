@@ -1,5 +1,6 @@
 use miette::{miette, Result};
 use parol::generators::grammar_type_generator::GrammarTypeInfo;
+use parol::generators::NamingHelper as NmHlp;
 use parol::{left_factor, obtain_grammar_config, obtain_grammar_config_from_string};
 use std::path::PathBuf;
 
@@ -27,11 +28,11 @@ pub fn main(args: &Args) -> Result<()> {
         return Err(miette!("Please provide a valid grammar input!"));
     };
 
-    let grammar_name = if let Some(file_name) = &args.grammar_file {
+    let grammar_name =  NmHlp::purge_name(if let Some(file_name) = &args.grammar_file {
         file_name.file_stem().unwrap().to_str().unwrap_or("TestGrammar")
     } else {
         "TestGrammar"
-    }.replace("-exp", "").replace('.', "_").replace('-', "_");
+    });
 
     let cfg = left_factor(&grammar_config.cfg);
     // Exchange original grammar with transformed one
