@@ -20,7 +20,7 @@ impl SymbolString {
                 .iter()
                 .fold(Vec::with_capacity(pr.len()), |mut acc, e| {
                     // Don't include scanner state switches into symbol string
-                    if !e.is_switch() {
+                    if !e.is_switch() && !e.is_pseudo() {
                         acc.push(e.clone())
                     }
                     acc

@@ -198,7 +198,7 @@ fn combine_production_equation<'a, 'c: 'a>(
                         }
                     }
                 }
-                Symbol::P(_) => (),
+                Symbol::P(_, _) => (),
                 Symbol::S(_) => (),
                 Symbol::Push(_) => (),
                 Symbol::Pop => (),
@@ -239,7 +239,7 @@ fn combine_production_equation<'a, 'c: 'a>(
                     result_function(result_vector).k_concat(&f(result_vector), k)
                 });
             }
-            Symbol::P(_) => (),
+            Symbol::P(_, _) => (),
             Symbol::S(_) => (),
             Symbol::Push(_) => (),
             Symbol::Pop => (),

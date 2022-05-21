@@ -36,6 +36,8 @@ pub enum Factor {
     Terminal(String, Vec<usize>),
     /// A non-terminal
     NonTerminal(String, SymbolAttribute),
+    /// A pseudo symbol with non-terminal name and symbol attribute
+    Pseudo(String, SymbolAttribute),
     /// An identifier, scanner state name
     Identifier(String),
     /// A scanner switch instruction
@@ -72,6 +74,11 @@ impl Display for Factor {
                 a.decorate(&mut s, &format!("N({})", n))?;
                 write!(f, "{}", s)
             }
+            Self::Pseudo(n, a) => {
+                let mut s = String::new();
+                a.decorate(&mut s, &format!("/* {} */", n))?;
+                write!(f, "{}", s)
+            }
             Self::Identifier(n) => write!(f, "Id({})", n),
             Self::ScannerSwitch(n) => write!(f, "S({})", n),
             Self::ScannerSwitchPush(n) => write!(f, "Push({})", n),
@@ -96,6 +103,12 @@ impl Factor {
                 t
             ),
             Self::NonTerminal(n, a) => {
+                let mut buf = String::new();
+                a.decorate(&mut buf, n)
+                    .expect("Failed to decorate non-terminal!");
+                buf
+            }
+            Self::Pseudo(n, a) => {
                 let mut buf = String::new();
                 a.decorate(&mut buf, n)
                     .expect("Failed to decorate non-terminal!");

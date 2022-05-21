@@ -487,8 +487,24 @@ impl GrammarTypeInfo {
                 match a {
                     SymbolAttribute::None => Ok(TypeEntrails::Box(*inner_type)),
                     SymbolAttribute::RepetitionAnchor => Ok(TypeEntrails::Vec(*inner_type)),
-                    SymbolAttribute::OptionalSome(_) => todo!(),
-                    SymbolAttribute::OptionalNone(_) => todo!(),
+                    SymbolAttribute::OptionalSome(id) => {
+                        Ok(TypeEntrails::OptSome(*inner_type, *id))
+                    }
+                    SymbolAttribute::OptionalNone(id) => {
+                        Ok(TypeEntrails::OptNone(*inner_type, *id))
+                    }
+                }
+            }
+            Symbol::P(n, a) => {
+                let inner_type = self.non_terminal_types.get(n).unwrap();
+                match a {
+                    SymbolAttribute::OptionalSome(id) => {
+                        Ok(TypeEntrails::OptSome(*inner_type, *id))
+                    }
+                    SymbolAttribute::OptionalNone(id) => {
+                        Ok(TypeEntrails::OptNone(*inner_type, *id))
+                    }
+                    _ => bail!("Unexpected attribute type at pseudo symbol!"),
                 }
             }
             _ => Err(miette!("Unexpected symbol kind: {}", symbol)),

@@ -5,7 +5,38 @@ use std::fmt::{Debug, Display, Error, Formatter, Write};
 
 /// Id type for tracking of optionals during grammar transformation
 #[derive(Debug, Clone, Copy, Hash, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OptionalId(usize);
+pub struct OptionalId(pub(crate) usize);
+
+impl OptionalId {
+    /// Increments mutable self
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use parol::grammar::attributes::OptionalId;
+    ///
+    /// let mut optional_id = OptionalId(0);
+    /// optional_id.incr();
+    /// assert_eq!(optional_id, OptionalId(1));
+    /// ```
+    pub fn incr(&mut self) {
+        self.0 += 1;
+    }
+
+    /// Generates a new next value without changing self
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use parol::grammar::attributes::OptionalId;
+    ///
+    /// let optional_id = OptionalId(0);
+    /// assert_eq!(optional_id.next(), OptionalId(1));
+    /// ```
+    pub fn next(&self) -> Self {
+        Self(self.0 + 1)
+    }
+}
 
 /// Used to decorate an object's printed format
 pub trait Decorate<T, W>

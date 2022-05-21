@@ -2,7 +2,7 @@ use super::{Decorate, SymbolAttribute};
 use crate::analysis::k_tuple::TerminalMappings;
 use crate::parser::parol_grammar::Factor;
 use crate::parser::to_grammar_config::try_from_factor;
-use miette::{IntoDiagnostic, Result};
+use miette::{IntoDiagnostic, Result, bail};
 use parol_runtime::parser::ScannerIndex;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display, Error, Formatter};
@@ -153,7 +153,7 @@ pub enum Symbol {
     ///
     /// Pseudo symbol to convey transformation information
     ///
-    P(SymbolAttribute),
+    P(String, SymbolAttribute),
 
     ///
     /// Instruction to push the index of the current scanner and switch to a scanner configuration
@@ -201,6 +201,10 @@ impl Symbol {
     pub fn is_switch(&self) -> bool {
         matches!(self, Self::S(_)) || matches!(self, Self::Push(_)) || matches!(self, Self::Pop)
     }
+    /// Checks if self is a scanner switch instruction
+    pub fn is_pseudo(&self) -> bool {
+        matches!(self, Self::P(..))
+    }
     /// Returns a terminal if available
     pub fn get_t(&self) -> Option<Terminal> {
         if let Self::T(t, _) = &self {
@@ -237,7 +241,7 @@ impl Symbol {
     /// Get the symbol attribute or a default value
     pub fn attribute(&self) -> SymbolAttribute {
         match self {
-            Symbol::N(_, a) | Symbol::T(_, a) | Symbol::P(a) => a.clone(),
+            Symbol::N(_, a) | Symbol::T(_, a) | Symbol::P(_, a) => a.clone(),
             _ => SymbolAttribute::None,
         }
     }
@@ -266,7 +270,14 @@ impl Symbol {
                     Ok(format!("%sc({})", scanner_state_resolver(&[*s])))
                 }
             }
-            Self::P(a) => Ok(format!("{}", a)),
+            Self::P(n, a) => {
+                match a {
+                    SymbolAttribute::OptionalSome(_) => Ok(format!("{}: {}", n, a)),
+                    SymbolAttribute::OptionalNone(_) => Ok(format!("/* {}: {} */", n, a)),
+                    _ => bail!("Unexpected symbol attribute in pseudo symbol"),
+                }
+                
+            }
             Self::Push(s) => Ok(format!("%push({})", scanner_state_resolver(&[*s]))),
             Self::Pop => Ok("%pop()".to_string()),
         }
@@ -286,7 +297,7 @@ impl Display for Symbol {
                 a.decorate(&mut s, t)?;
                 write!(f, "{}", s)
             }
-            Self::P(a) => write!(f, "{}", a),
+            Self::P(n, a) => write!(f, "{}: {}", n, a),
             Self::S(s) => write!(f, "S({})", s),
             Self::Push(s) => write!(f, "Push({})", s),
             Self::Pop => write!(f, "Pop"),

@@ -1,5 +1,6 @@
 use crate::analysis::lookahead_dfa::ProductionIndex;
 use crate::generate_name;
+use crate::grammar::attributes::OptionalId;
 use crate::grammar::{ProductionAttribute, SymbolAttribute};
 use crate::parser::{Alternation, Alternations, Factor, ParolGrammarItem, Production};
 use crate::utils::combine;
@@ -28,9 +29,10 @@ pub(crate) fn transform_productions(item_stack: Vec<ParolGrammarItem>) -> Result
     transform(productions)
 }
 
-struct TransformationOperand {
+struct TransformationState {
     modified: bool,
     productions: Vec<Production>,
+    next_optional: OptionalId,
 }
 
 fn finalize(productions: Vec<Production>) -> Result<Vec<Pr>> {
@@ -123,7 +125,7 @@ fn find_production_with_factor(
 }
 
 // Transform productions with multiple alternatives
-fn separate_alternatives(opd: TransformationOperand) -> TransformationOperand {
+fn separate_alternatives(state: TransformationState) -> TransformationState {
     fn production_has_multiple_alts(r: &Production) -> bool {
         let Alternations(e) = &r.rhs;
         e.len() > 1
@@ -158,16 +160,17 @@ fn separate_alternatives(opd: TransformationOperand) -> TransformationOperand {
         }
     }
 
-    let mut modified = opd.modified;
-    let mut productions = opd.productions;
+    let mut modified = state.modified;
+    let mut productions = state.productions;
 
     while separate_single_production(&mut productions) {
         modified |= true;
     }
 
-    TransformationOperand {
+    TransformationState {
         modified,
         productions,
+        next_optional: state.next_optional,
     }
 }
 
@@ -248,7 +251,7 @@ fn eliminate_single_rep(
 }
 
 // Eliminate repetitions
-fn eliminate_repetitions(opd: TransformationOperand) -> TransformationOperand {
+fn eliminate_repetitions(state: TransformationState) -> TransformationState {
     fn find_production_with_repetition(
         productions: &[Production],
     ) -> Option<(ProductionIndex, usize)> {
@@ -267,15 +270,16 @@ fn eliminate_repetitions(opd: TransformationOperand) -> TransformationOperand {
         }
     }
 
-    let mut modified = opd.modified;
-    let mut productions = opd.productions;
+    let mut modified = state.modified;
+    let mut productions = state.productions;
 
     while eliminate_repetition(&mut productions) {
         modified |= true;
     }
-    TransformationOperand {
+    TransformationState {
         modified,
         productions,
+        next_optional: state.next_optional,
     }
 }
 
@@ -291,6 +295,7 @@ fn eliminate_single_opt(
     exclusions: &[String],
     alt_index: usize,
     production: Production,
+    next_optional: OptionalId,
 ) -> Vec<Production> {
     let production_name = production.lhs.clone();
     if let Some(opt_index_in_alt) = production.rhs.0[alt_index]
@@ -302,11 +307,16 @@ fn eliminate_single_opt(
         {
             let r_tick_name = generate_name(exclusions, production_name + "Opt");
             let mut production1 = production.clone();
-            production1.rhs.0[alt_index].0[opt_index_in_alt] =
-                Factor::default_non_terminal(r_tick_name.clone());
+            production1.rhs.0[alt_index].0[opt_index_in_alt] = Factor::NonTerminal(
+                r_tick_name.clone(),
+                SymbolAttribute::OptionalSome(next_optional),
+            );
 
             let mut production1a = production1.clone();
-            production1a.rhs.0[0].0.remove(opt_index_in_alt);
+            production1a.rhs.0[0].0[opt_index_in_alt] = Factor::Pseudo(
+                r_tick_name.clone(),
+                SymbolAttribute::OptionalNone(next_optional),
+            );
 
             let production2 = Production {
                 lhs: r_tick_name,
@@ -318,7 +328,6 @@ fn eliminate_single_opt(
                     optional
                 },
             };
-
             vec![production1, production1a, production2]
         } else {
             panic!("Expected Factor::Optional!");
@@ -328,17 +337,17 @@ fn eliminate_single_opt(
     }
 }
 
-fn eliminate_options(opd: TransformationOperand) -> TransformationOperand {
+fn eliminate_options(state: TransformationState) -> TransformationState {
     fn find_production_with_optional(
         productions: &[Production],
     ) -> Option<(ProductionIndex, usize)> {
         find_production_with_factor(productions, |f| matches!(f, Factor::Optional(_)))
     }
-    fn eliminate_option(productions: &mut Vec<Production>) -> bool {
+    fn eliminate_option(productions: &mut Vec<Production>, next_optional: OptionalId) -> bool {
         if let Some((production_index, alt_index)) = find_production_with_optional(productions) {
             let exclusions = variable_names(productions);
             apply_production_transformation(productions, production_index, |r| {
-                eliminate_single_opt(&exclusions, alt_index, r)
+                eliminate_single_opt(&exclusions, alt_index, r, next_optional)
             });
             true
         } else {
@@ -346,15 +355,18 @@ fn eliminate_options(opd: TransformationOperand) -> TransformationOperand {
         }
     }
 
-    let mut modified = opd.modified;
-    let mut productions = opd.productions;
+    let mut modified = state.modified;
+    let mut productions = state.productions;
+    let mut next_optional = state.next_optional;
 
-    while eliminate_option(&mut productions) {
+    while eliminate_option(&mut productions, next_optional) {
         modified |= true;
+        next_optional.incr();
     }
-    TransformationOperand {
+    TransformationState {
         modified,
         productions,
+        next_optional,
     }
 }
 
@@ -417,7 +429,7 @@ fn eliminate_single_grp(
     }
 }
 
-fn eliminate_groups(opd: TransformationOperand) -> TransformationOperand {
+fn eliminate_groups(state: TransformationState) -> TransformationState {
     fn find_production_with_group(productions: &[Production]) -> Option<(ProductionIndex, usize)> {
         find_production_with_factor(productions, |f| matches!(f, Factor::Group(_)))
     }
@@ -433,19 +445,20 @@ fn eliminate_groups(opd: TransformationOperand) -> TransformationOperand {
         }
     }
 
-    let mut modified = opd.modified;
-    let mut productions = opd.productions;
+    let mut modified = state.modified;
+    let mut productions = state.productions;
 
     while eliminate_group(&mut productions) {
         modified |= true;
     }
-    TransformationOperand {
+    TransformationState {
         modified,
         productions,
+        next_optional: state.next_optional,
     }
 }
 
-fn eliminate_duplicates(opd: TransformationOperand) -> TransformationOperand {
+fn eliminate_duplicates(state: TransformationState) -> TransformationState {
     fn find_productions_with_same_rhs(
         productions: &[Production],
     ) -> Option<(ProductionIndex, ProductionIndex)> {
@@ -506,15 +519,16 @@ fn eliminate_duplicates(opd: TransformationOperand) -> TransformationOperand {
         }
     }
 
-    let mut modified = opd.modified;
-    let mut productions = opd.productions;
+    let mut modified = state.modified;
+    let mut productions = state.productions;
 
     while eliminate_duplicate(&mut productions) {
         modified |= true;
     }
-    TransformationOperand {
+    TransformationState {
         modified,
         productions,
+        next_optional: state.next_optional,
     }
 }
 
@@ -525,9 +539,10 @@ fn eliminate_duplicates(opd: TransformationOperand) -> TransformationOperand {
 // The input order should be preserved as much as possible.
 // -------------------------------------------------------------------------
 fn transform(productions: Vec<Production>) -> Result<Vec<Pr>> {
-    let mut operand = TransformationOperand {
+    let mut state = TransformationState {
         modified: true,
         productions,
+        next_optional: OptionalId(0),
     };
     let trans_fn = combine(
         combine(
@@ -537,18 +552,18 @@ fn transform(productions: Vec<Production>) -> Result<Vec<Pr>> {
         eliminate_groups,
     );
 
-    while operand.modified {
-        operand.modified = false;
-        operand = trans_fn(operand);
+    while state.modified {
+        state.modified = false;
+        state = trans_fn(state);
     }
 
-    operand.modified = true;
-    while operand.modified {
-        operand.modified = false;
-        operand = eliminate_duplicates(operand);
+    state.modified = true;
+    while state.modified {
+        state.modified = false;
+        state = eliminate_duplicates(state);
     }
 
-    finalize(operand.productions)
+    finalize(state.productions)
 }
 
 #[cfg(test)]
@@ -557,7 +572,7 @@ mod test {
         eliminate_single_grp, eliminate_single_opt, eliminate_single_rep, Alternation,
         Alternations, Factor, Production,
     };
-    use crate::grammar::{ProductionAttribute, SymbolAttribute};
+    use crate::grammar::{attributes::OptionalId, ProductionAttribute, SymbolAttribute};
 
     // R  -> x { r1 r2 } y
     // =>
@@ -686,60 +701,13 @@ mod test {
         );
     }
 
-    // R  -> x [ o1 o2 ] y.
-    // =>
-    // R  -> x o1 o2 y     (1)
-    // R  -> x y           (1a)
-    #[test]
-    fn eliminate_single_opt_case_1() {
-        // Start: x [ o1 o2 ] y;
-        let production = Production {
-            lhs: "Start".to_string(),
-            rhs: Alternations(vec![Alternation::new().with_factors(vec![
-                Factor::Terminal("x".to_string(), vec![0]),
-                Factor::Optional(Alternations(vec![Alternation::new().with_factors(vec![
-                    Factor::Terminal("o1".to_string(), vec![0]),
-                    Factor::Terminal("o2".to_string(), vec![0]),
-                ])])),
-                Factor::Terminal("y".to_string(), vec![0]),
-            ])]),
-        };
-
-        let productions = eliminate_single_opt(&[production.lhs.clone()], 0, production);
-        assert_eq!(2, productions.len());
-        // Start: x o1 o2 y;
-        assert_eq!(
-            Production {
-                lhs: "Start".to_string(),
-                rhs: Alternations(vec![Alternation::new().with_factors(vec![
-                    Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::Terminal("o1".to_string(), vec![0]),
-                    Factor::Terminal("o2".to_string(), vec![0]),
-                    Factor::Terminal("y".to_string(), vec![0]),
-                ])])
-            },
-            productions[0]
-        );
-        // Start: x y;
-        assert_eq!(
-            Production {
-                lhs: "Start".to_string(),
-                rhs: Alternations(vec![Alternation::new().with_factors(vec![
-                    Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::Terminal("y".to_string(), vec![0]),
-                ])])
-            },
-            productions[1]
-        );
-    }
-
     // R  -> x [ o1 | o2 ] y.
     // =>
     // R  -> x R' y.       (1)
     // R  -> x y.          (1a)
     // R' -> o1 | o2.      (2)
     #[test]
-    fn eliminate_single_opt_case_2() {
+    fn eliminate_single_opt_test() {
         // Start: x [ o1 | o2 ] y;
         let production = Production {
             lhs: "Start".to_string(),
@@ -755,7 +723,8 @@ mod test {
             ])]),
         };
 
-        let productions = eliminate_single_opt(&[production.lhs.clone()], 0, production);
+        let productions =
+            eliminate_single_opt(&[production.lhs.clone()], 0, production, OptionalId(0));
         assert_eq!(3, productions.len());
         // Start: x StartOpt y;
         assert_eq!(
@@ -763,7 +732,10 @@ mod test {
                 lhs: "Start".to_string(),
                 rhs: Alternations(vec![Alternation::new().with_factors(vec![
                     Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::default_non_terminal("StartOpt".to_string()),
+                    Factor::NonTerminal(
+                        "StartOpt".to_string(),
+                        SymbolAttribute::OptionalSome(OptionalId(0))
+                    ),
                     Factor::Terminal("y".to_string(), vec![0]),
                 ])])
             },
@@ -775,6 +747,10 @@ mod test {
                 lhs: "Start".to_string(),
                 rhs: Alternations(vec![Alternation::new().with_factors(vec![
                     Factor::Terminal("x".to_string(), vec![0]),
+                    Factor::Pseudo(
+                        "StartOpt".to_string(),
+                        SymbolAttribute::OptionalNone(OptionalId(0))
+                    ),
                     Factor::Terminal("y".to_string(), vec![0])
                 ]),])
             },

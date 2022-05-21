@@ -350,7 +350,7 @@ impl<'a> UserTraitGenerator<'a> {
         let mut arguments = pr
             .get_r()
             .iter()
-            .filter(|s| !s.is_switch())
+            .filter(|s| !s.is_switch() && !s.is_pseudo())
             .enumerate()
             .map(|(i, _)| format!("&children[{}]", i))
             .collect::<Vec<String>>();

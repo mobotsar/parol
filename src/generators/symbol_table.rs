@@ -1,6 +1,7 @@
 //! The module symbol_table provides means to mimic the uniqueness of names per scope.
 //! For auto-generation of symbols we need to adhere these rules of uniqueness.
 use crate::analysis::lookahead_dfa::ProductionIndex;
+use crate::grammar::attributes::OptionalId;
 use crate::grammar::{ProductionAttribute, SymbolAttribute};
 use crate::{generators::NamingHelper as NmHlp, utils::generate_name};
 use miette::{bail, miette, Result};
@@ -96,6 +97,10 @@ pub(crate) enum TypeEntrails {
     Trait,
     /// A trait function
     Function(Function),
+    /// Some part of an Option
+    OptSome(SymbolId, OptionalId),
+    /// None part of an Option
+    OptNone(SymbolId, OptionalId),
 }
 
 impl TypeEntrails {
@@ -137,6 +142,18 @@ impl TypeEntrails {
             ),
             TypeEntrails::Trait => format!("trait {}{}", my_type_name, lifetime),
             TypeEntrails::Function(f) => f.format(my_type_name),
+            TypeEntrails::OptSome(t, id) => format!(
+                "{}{} /* Some {} */",
+                symbol_table.symbol(*t).name(symbol_table),
+                symbol_table.lifetime(*t),
+                id.0
+            ),
+            TypeEntrails::OptNone(t, id) => format!(
+                "{}{} /* None {} */",
+                symbol_table.symbol(*t).name(symbol_table),
+                symbol_table.lifetime(*t),
+                id.0
+            ),
         }
     }
 
@@ -144,6 +161,16 @@ impl TypeEntrails {
         match self {
             TypeEntrails::Box(t) | TypeEntrails::Vec(t) => {
                 Ok(symbol_table.symbol(*t).name(symbol_table))
+            }
+            TypeEntrails::OptSome(t, id) => {
+                let inner_name = symbol_table.symbol(*t).name(symbol_table);
+                // let inner_lifetime = symbol_table.lifetime(*t);
+                Ok(format!("{} /* Some {} */", inner_name, id.0))
+            }
+            TypeEntrails::OptNone(t, id) => {
+                let inner_name = symbol_table.symbol(*t).name(symbol_table);
+                // let inner_lifetime = symbol_table.lifetime(*t);
+                Ok(format!("{} /* None {} */", inner_name, id.0))
             }
             _ => bail!("No inner name available!"),
         }
@@ -313,9 +340,11 @@ impl Symbol {
                     .symbols
                     .iter()
                     .any(|e| symbol_table.has_lifetime(*e)),
-                TypeEntrails::Vec(t) | TypeEntrails::EnumVariant(t) | TypeEntrails::Box(t) => {
-                    symbol_table.has_lifetime(t)
-                }
+                TypeEntrails::Vec(t)
+                | TypeEntrails::EnumVariant(t)
+                | TypeEntrails::Box(t)
+                | TypeEntrails::OptSome(t, _)
+                | TypeEntrails::OptNone(t, _) => symbol_table.has_lifetime(t),
             },
             Self::Instance(i) => symbol_table.has_lifetime(i.type_id),
         }
