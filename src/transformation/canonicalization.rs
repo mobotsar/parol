@@ -18,13 +18,20 @@ pub(crate) fn transform_productions(item_stack: Vec<ParolGrammarItem>) -> Result
         bail!("Expecting only productions on user stack");
     }
 
-    let productions = item_stack
-        .into_iter()
-        .map(|i| match i {
-            ParolGrammarItem::Prod(p) => p,
-            _ => panic!("Can't happen"),
-        })
-        .collect::<Vec<Production>>();
+    let productions = item_stack.into_iter().fold(
+        Ok(Vec::<Production>::new()),
+        |res: Result<Vec<Production>>, i| {
+            if let Ok(mut pr) = res {
+                match i {
+                    ParolGrammarItem::Prod(p) => pr.push(p),
+                    _ => bail!("Can't happen"),
+                }
+                Ok(pr)
+            } else {
+                res
+            }
+        },
+    )?;
 
     transform(productions)
 }
