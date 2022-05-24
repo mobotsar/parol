@@ -79,13 +79,16 @@ pub(crate) struct Function {
 impl Function {
     pub(crate) fn format(&self, fn_name: String) -> String {
         format!(
-            "fn {} /* NT: {}{} */",
+            "fn {} /* NT: {}{} Prod: {}, Rel: {}, Alts: {} */",
             fn_name,
             self.non_terminal,
             match self.sem {
                 ProductionAttribute::None => "".to_string(),
                 _ => format!(", {}", self.sem),
-            }
+            },
+            self.prod_num,
+            self.rel_idx,
+            self.alts,
         )
     }
 }
