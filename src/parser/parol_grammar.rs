@@ -119,7 +119,7 @@ impl Factor {
 /// An Alternation is a sequence of factors.
 /// Valid operation on Alternation is "|".
 ///
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq)]
 pub struct Alternation(pub Vec<Factor>, pub ProductionAttribute);
 
 impl Display for Alternation {
@@ -138,6 +138,17 @@ impl Display for Alternation {
         } else {
             write!(f, ")")
         }
+    }
+}
+
+// We need this implementation to support parol::transformation::eliminate_duplicates.
+// The optional id itself must be ignored because they can be exchanged.
+impl PartialEq for Alternation {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+            && (self.1 == other.1
+                || matches!(self.1, ProductionAttribute::OptionalSome(_))
+                    && matches!(other.1, ProductionAttribute::OptionalSome(_)))
     }
 }
 

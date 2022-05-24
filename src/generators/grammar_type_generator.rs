@@ -294,9 +294,9 @@ impl GrammarTypeInfo {
         Ok(self.symbol_table.scope(action_scope).symbols.clone())
     }
 
-    fn find_opt_non(&self, arguments: &[SymbolId]) -> Option<OptionalId> {
+    fn find_opt_non(&self, arguments: &[Symbol]) -> Option<OptionalId> {
         arguments.iter().find_map(|s| {
-            let sem = self.symbol_table.symbol(*s).sem(&self.symbol_table);
+            let sem = s.attribute();
             if let SymbolAttribute::OptionalNone(opt_id) = sem {
                 Some(opt_id)
             } else {
@@ -376,10 +376,8 @@ impl GrammarTypeInfo {
             } else {
                 bail!("Production type not found");
             };
-            let arguments = self.arguments(primary_action)?;
-            debug_assert!(self.find_opt_non(&arguments).is_none());
             // Copy the arguments as struct members
-            self.arguments_to_struct_members(&arguments, non_terminal_type)?;
+            self.arguments_to_struct_members(&self.arguments(primary_action)?, non_terminal_type)?;
         } else {
             // This is the "enum case". We generate an enum variant for each production with a name
             // built from the nt name plus the relative number and the variant's content is the
@@ -443,7 +441,7 @@ impl GrammarTypeInfo {
 
             self.adapter_actions.insert(i, function_id);
 
-            self.build_production_type(function_id, i)?;
+            self.build_production_type(&grammar_config.cfg, function_id, i)?;
         }
 
         // Correct production types for
@@ -479,18 +477,17 @@ impl GrammarTypeInfo {
         if let Ok(function) = self.symbol_table.symbol_as_type(function_id) {
             if let TypeEntrails::Function(function_entrails) = &function.entrails {
                 let prod = &grammar_config.cfg[function_entrails.prod_num];
-                let mut types = prod
-                    .get_r()
-                    .iter()
-                    .filter(|s| s.is_t() || s.is_n())
-                    .fold(Ok(Vec::new()), |acc, s| {
+                let mut types = prod.get_r().iter().filter(|s| s.is_t() || s.is_n()).fold(
+                    Ok(Vec::new()),
+                    |acc, s| {
                         acc.and_then(|mut acc| {
                             self.deduce_type_of_symbol(s).map(|t| {
                                 acc.push((t, s.attribute()));
                                 acc
                             })
                         })
-                    })?;
+                    },
+                )?;
 
                 if function_entrails.sem == ProductionAttribute::AddToCollection {
                     let ref_mut_last_type = &mut types.last_mut().unwrap().0;
@@ -552,12 +549,15 @@ impl GrammarTypeInfo {
 
     fn build_production_type(
         &mut self,
+        cfg: &Cfg,
         function_id: SymbolId,
         prod_num: ProductionIndex,
     ) -> Result<()> {
-        let fn_symbol = self.symbol_table.symbol_as_function(function_id)?;
-        let non_terminal = fn_symbol.non_terminal.clone();
-        let production_type = if let ProductionAttribute::OptionalSome(opt_id) = fn_symbol.sem {
+        let (non_terminal, sem) = {
+            let fn_symbol = self.symbol_table.symbol_as_function(function_id)?;
+            (fn_symbol.non_terminal.clone(), fn_symbol.sem)
+        };
+        let production_type = if let ProductionAttribute::OptionalSome(opt_id) = sem {
             let inner_type = self.non_terminal_optional_types.get(&opt_id).unwrap();
             self.symbol_table
                 .insert_global_type(&non_terminal, TypeEntrails::OptSome(*inner_type, opt_id))?
@@ -568,22 +568,17 @@ impl GrammarTypeInfo {
 
         let arguments = self.arguments(function_id)?;
 
-        if let Some(opt_id_non) = self.find_opt_non(&arguments) {
+        if let Some(opt_id_non) = self.find_opt_non(cfg.pr[prod_num].get_r()) {
             // If we find a OptNone symbol in the members we should use the same type as the
             // production that contains the OptSome
             // Search in all productions with production number < prod_num because due to grammar
             // transformation the production in case should already have been processed!
+            let lhs = cfg.pr[prod_num].get_n();
             let mut found_prod = None;
             for i in 0..prod_num {
                 let action_id = self.adapter_actions.get(&i).unwrap();
-                if self.has_opt_some(*action_id, opt_id_non) {
+                if cfg.pr[i].get_n() == lhs && self.has_opt_some(*action_id, opt_id_non) {
                     debug_assert!(found_prod.is_none());
-                    debug_assert_eq!(
-                        self.symbol_table
-                            .symbol_as_function(*action_id)?
-                            .non_terminal,
-                        non_terminal
-                    );
                     found_prod = Some(i);
                 }
             }

@@ -28,7 +28,6 @@ impl Display for ScopedNameId {
     }
 }
 
-
 /// Index type for SymbolNames
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub(crate) struct ScopeId(usize);
@@ -38,7 +37,6 @@ impl Display for ScopeId {
         write!(f, "Sco({})", self.0)
     }
 }
-
 
 fn build_indent(amount: usize) -> String {
     const SPACES_PER_TAB: usize = 4;

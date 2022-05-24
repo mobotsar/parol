@@ -184,7 +184,7 @@ impl<'a> UserTraitGenerator<'a> {
             code.push(format!(
                 "let {}_built = {}Builder::default()",
                 fn_name,
-                nt_type.name(symbol_table)
+                fn_out_type.name(symbol_table)
             ));
             for member_id in symbol_table.members(action_id)?.iter().rev().skip(1) {
                 let arg_inst = symbol_table.symbol_as_instance(*member_id)?;
@@ -604,7 +604,7 @@ impl<'a> UserTraitGenerator<'a> {
         // $env:RUST_LOG="parol::generators::user_trait_generator=trace
         trace!("// Type information:");
         trace!("{}", type_info);
-    
+
         let user_trait_data = UserTraitDataBuilder::default()
             .user_type_name(&self.user_type_name)
             .auto_generate(self.auto_generate)

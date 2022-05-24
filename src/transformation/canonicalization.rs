@@ -475,10 +475,24 @@ fn eliminate_duplicates(state: TransformationState) -> TransformationState {
                 if i != j && productions[i].rhs == productions[j].rhs {
                     let (i, j) = if i < j { (i, j) } else { (j, i) };
                     let first = &productions[i].lhs;
-                    let duplicate = &productions[j].lhs;
-                    if productions.iter().filter(|pr| &pr.lhs == first).count() == 1
-                        && productions.iter().filter(|pr| &pr.lhs == duplicate).count() == 1
-                    {
+                    let dup = &productions[j].lhs;
+                    let first_prod_set = productions
+                        .iter()
+                        .filter_map(|pr| {
+                            if &pr.lhs == first {
+                                Some(&pr.rhs)
+                            } else {
+                                None
+                            }
+                        })
+                        .cloned()
+                        .collect::<Vec<Alternations>>();
+                    let second_prod_set = productions
+                        .iter()
+                        .filter_map(|pr| if &pr.lhs == dup { Some(&pr.rhs) } else { None })
+                        .cloned()
+                        .collect::<Vec<Alternations>>();
+                    if first_prod_set == second_prod_set {
                         return Some((i, j));
                     }
                 }
@@ -490,14 +504,36 @@ fn eliminate_duplicates(state: TransformationState) -> TransformationState {
     // Replace the all occurrences of the LHS of the second production within
     // all productions RHS.
     // Then Remove the second production.
+    // Update the optional id if necessary
     // -------------------------------------------------------------------------
     fn eliminate_single_duplicate(
         productions: &mut Vec<Production>,
         production_index_1: ProductionIndex,
         production_index_2: ProductionIndex,
     ) {
-        let to_find = productions[production_index_2].lhs.clone();
-        let replace_with = productions[production_index_1].lhs.clone();
+        let old_prod = &productions[production_index_2];
+        let new_prod = &productions[production_index_1];
+
+        let to_find = old_prod.lhs.clone();
+        let replace_with = new_prod.lhs.clone();
+        let old_optional_id = if old_prod.rhs.0.len() == 1 {
+            if let ProductionAttribute::OptionalSome(opt_id) = old_prod.rhs.0[0].1 {
+                Some(opt_id)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let new_optional_id = if new_prod.rhs.0.len() == 1 {
+            if let ProductionAttribute::OptionalSome(opt_id) = new_prod.rhs.0[0].1 {
+                Some(opt_id)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         #[allow(clippy::needless_range_loop)]
         for pi in 0..productions.len() {
@@ -505,10 +541,41 @@ fn eliminate_duplicates(state: TransformationState) -> TransformationState {
                 let pr = &mut productions[pi];
                 debug_assert!(pr.rhs.0.len() == 1, "Only one single Alternation expected!");
                 for s in &mut pr.rhs.0[0].0 {
-                    if let Factor::NonTerminal(n, a) = s {
-                        if n == &to_find {
-                            *s = Factor::NonTerminal(replace_with.clone(), *a);
+                    // Update the optional id too!
+                    let a = match s {
+                        Factor::NonTerminal(_, a) => *a,
+                        Factor::Pseudo(a) => *a,
+                        _ => SymbolAttribute::None,
+                    };
+                    let a = match a {
+                        SymbolAttribute::OptionalSome(old) | SymbolAttribute::OptionalNone(old) => {
+                            if let Some(old_id) = old_optional_id {
+                                if let Some(new_id) = new_optional_id {
+                                    if old == old_id {
+                                        if matches!(a, SymbolAttribute::OptionalSome(_)) {
+                                            SymbolAttribute::OptionalSome(new_id)
+                                        } else {
+                                            SymbolAttribute::OptionalNone(new_id)
+                                        }
+                                    } else {
+                                        a
+                                    }
+                                } else {
+                                    a
+                                }
+                            } else {
+                                a
+                            }
                         }
+                        _ => a,
+                    };
+                    // The optional id need to be updated in Factor::NonTerminal and Factor::Pseudo
+                    if let Factor::NonTerminal(n, _) = s {
+                        if n == &to_find {
+                            *s = Factor::NonTerminal(replace_with.clone(), a);
+                        }
+                    } else if let Factor::Pseudo(_) = s {
+                        *s = Factor::Pseudo(a);
                     }
                 }
             }
