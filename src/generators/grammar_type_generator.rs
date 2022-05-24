@@ -482,7 +482,7 @@ impl GrammarTypeInfo {
                 let mut types = prod
                     .get_r()
                     .iter()
-                    .filter(|s| s.is_t() || s.is_n() || s.is_pseudo())
+                    .filter(|s| s.is_t() || s.is_n())
                     .fold(Ok(Vec::new()), |acc, s| {
                         acc.and_then(|mut acc| {
                             self.deduce_type_of_symbol(s).map(|t| {
