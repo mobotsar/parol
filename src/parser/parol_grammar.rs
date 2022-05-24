@@ -37,7 +37,7 @@ pub enum Factor {
     /// A non-terminal
     NonTerminal(String, SymbolAttribute),
     /// A pseudo symbol with non-terminal name and symbol attribute
-    Pseudo(String, SymbolAttribute),
+    Pseudo(SymbolAttribute),
     /// An identifier, scanner state name
     Identifier(String),
     /// A scanner switch instruction
@@ -74,10 +74,8 @@ impl Display for Factor {
                 a.decorate(&mut s, &format!("N({})", n))?;
                 write!(f, "{}", s)
             }
-            Self::Pseudo(n, a) => {
-                let mut s = String::new();
-                a.decorate(&mut s, &format!("/* {} */", n))?;
-                write!(f, "{}", s)
+            Self::Pseudo(a) => {
+                write!(f, "/* {} */", a)
             }
             Self::Identifier(n) => write!(f, "Id({})", n),
             Self::ScannerSwitch(n) => write!(f, "S({})", n),
@@ -108,12 +106,7 @@ impl Factor {
                     .expect("Failed to decorate non-terminal!");
                 buf
             }
-            Self::Pseudo(n, a) => {
-                let mut buf = String::new();
-                a.decorate(&mut buf, n)
-                    .expect("Failed to decorate non-terminal!");
-                buf
-            }
+            Self::Pseudo(a) => format!("{}", a),
             Factor::Identifier(i) => format!("\"{}\"", i),
             Self::ScannerSwitch(n) => format!("%sc({})", n),
             Self::ScannerSwitchPush(n) => format!("%push({})", n),
@@ -232,7 +225,7 @@ pub struct Production {
 }
 
 impl Production {
-    fn new(lhs: String, rhs: Alternations) -> Self {
+    pub(crate) fn new(lhs: String, rhs: Alternations) -> Self {
         Self { lhs, rhs }
     }
 }

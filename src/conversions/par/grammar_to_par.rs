@@ -7,7 +7,7 @@ use std::fmt::Debug;
 
 #[derive(BartDisplay, Debug, Default)]
 #[template = "templates/par_template.par"]
-struct YaccElements {
+struct ProductionData {
     start_symbol: String,
     title: String,
     comment: String,
@@ -120,7 +120,7 @@ pub fn render_par_string(
         acc
     });
 
-    let elements = YaccElements {
+    let elements = ProductionData {
         start_symbol: grammar_config.cfg.st.clone(),
         title,
         comment,

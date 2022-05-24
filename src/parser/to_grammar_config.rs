@@ -56,7 +56,7 @@ pub(crate) fn try_from_factor(factor: Factor) -> Result<Symbol> {
     match factor {
         Factor::NonTerminal(n, a) => Ok(Symbol::N(n, a)),
         Factor::Terminal(t, s) => Ok(Symbol::t(&t, s)),
-        Factor::Pseudo(t, s) => Ok(Symbol::P(t.to_string(), s)),
+        Factor::Pseudo(a) => Ok(Symbol::P(a)),
         Factor::ScannerSwitch(s) => Ok(Symbol::s(s)),
         Factor::ScannerSwitchPush(s) => Ok(Symbol::Push(s)),
         Factor::ScannerSwitchPop => Ok(Symbol::Pop),

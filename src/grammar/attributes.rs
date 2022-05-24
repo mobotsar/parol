@@ -41,6 +41,11 @@ impl OptionalId {
     }
 }
 
+impl Display for OptionalId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        write!(f, "Opt({})", self.0)
+    }
+}
 /// Used to decorate an object's printed format
 pub trait Decorate<T, W>
 where
@@ -54,7 +59,7 @@ where
 ///
 /// Attributes applicable to a production or an alternation
 ///
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ProductionAttribute {
     /// No valid attribute, default value
     None,
@@ -62,6 +67,8 @@ pub enum ProductionAttribute {
     CollectionStart,
     /// Add to a collection
     AddToCollection,
+    /// A production that is created by extracting an optional
+    OptionalSome(OptionalId),
 }
 
 impl Display for ProductionAttribute {
@@ -70,6 +77,7 @@ impl Display for ProductionAttribute {
             Self::None => write!(f, "-"),
             Self::CollectionStart => write!(f, "Vec<T>::New"),
             Self::AddToCollection => write!(f, "Vec<T>::Push"),
+            Self::OptionalSome(id) => write!(f, "{}", id),
         }
     }
 }
@@ -90,6 +98,7 @@ where
             Self::None => out.write_fmt(format_args!("{}", decoratee)),
             Self::CollectionStart => out.write_fmt(format_args!("{} // Vec<T>::New", decoratee)),
             Self::AddToCollection => out.write_fmt(format_args!("{} // Vec<T>::Push", decoratee)),
+            Self::OptionalSome(id) => out.write_fmt(format_args!("{} /* {} */", decoratee, id)),
         }
     }
 }
@@ -97,7 +106,7 @@ where
 ///
 /// Attributes applicable to a grammar symbol
 ///
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SymbolAttribute {
     /// No valid attribute, default value
     None,
@@ -120,8 +129,8 @@ impl Display for SymbolAttribute {
         match self {
             Self::None => Ok(()),
             Self::RepetitionAnchor => write!(f, "Vec<T>"),
-            Self::OptionalSome(id) => write!(f, "Some({})", id.0),
-            Self::OptionalNone(id) => write!(f, "None({})", id.0),
+            Self::OptionalSome(id) => write!(f, "Some({})", id),
+            Self::OptionalNone(id) => write!(f, "None({})", id),
         }
     }
 }
@@ -142,10 +151,10 @@ where
             Self::None => out.write_fmt(format_args!("{}", decoratee)),
             Self::RepetitionAnchor => out.write_fmt(format_args!("{} /* Vec */", decoratee)),
             Self::OptionalSome(id) => {
-                out.write_fmt(format_args!("{} /* Some({}) */", decoratee, id.0))
+                out.write_fmt(format_args!("{} /* Some({}) */", decoratee, id))
             }
             Self::OptionalNone(id) => {
-                out.write_fmt(format_args!("{} /* None({}) */", decoratee, id.0))
+                out.write_fmt(format_args!("{} /* None({}) */", decoratee, id))
             }
         }
     }

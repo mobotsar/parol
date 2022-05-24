@@ -153,7 +153,7 @@ pub enum Symbol {
     ///
     /// Pseudo symbol to convey transformation information
     ///
-    P(String, SymbolAttribute),
+    P(SymbolAttribute),
 
     ///
     /// Instruction to push the index of the current scanner and switch to a scanner configuration
@@ -241,7 +241,7 @@ impl Symbol {
     /// Get the symbol attribute or a default value
     pub fn attribute(&self) -> SymbolAttribute {
         match self {
-            Symbol::N(_, a) | Symbol::T(_, a) | Symbol::P(_, a) => a.clone(),
+            Symbol::N(_, a) | Symbol::T(_, a) | Symbol::P(a) => *a,
             _ => SymbolAttribute::None,
         }
     }
@@ -270,9 +270,8 @@ impl Symbol {
                     Ok(format!("%sc({})", scanner_state_resolver(&[*s])))
                 }
             }
-            Self::P(n, a) => match a {
-                SymbolAttribute::OptionalSome(_) => Ok(format!("{}: {}", n, a)),
-                SymbolAttribute::OptionalNone(_) => Ok(format!("/* {}: {} */", n, a)),
+            Self::P(a) => match a {
+                SymbolAttribute::OptionalNone(_) => Ok(format!("/* {} */", a)),
                 _ => bail!("Unexpected symbol attribute in pseudo symbol"),
             },
             Self::Push(s) => Ok(format!("%push({})", scanner_state_resolver(&[*s]))),
@@ -294,7 +293,7 @@ impl Display for Symbol {
                 a.decorate(&mut s, t)?;
                 write!(f, "{}", s)
             }
-            Self::P(n, a) => write!(f, "{}: {}", n, a),
+            Self::P(a) => write!(f, "{}", a),
             Self::S(s) => write!(f, "S({})", s),
             Self::Push(s) => write!(f, "Push({})", s),
             Self::Pop => write!(f, "Pop"),

@@ -9,16 +9,36 @@ use miette::{bail, miette, Result};
 use std::fmt::{Debug, Display, Error, Formatter};
 
 /// Index type for Symbols
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub(crate) struct SymbolId(usize);
+
+impl Display for SymbolId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        write!(f, "Sym({})", self.0)
+    }
+}
 
 /// Scope local index type for SymbolNames
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub(crate) struct ScopedNameId(ScopeId, usize);
 
+impl Display for ScopedNameId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        write!(f, "Nam({}, {})", self.0, self.1)
+    }
+}
+
+
 /// Index type for SymbolNames
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub(crate) struct ScopeId(usize);
+
+impl Display for ScopeId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), Error> {
+        write!(f, "Sco({})", self.0)
+    }
+}
+
 
 fn build_indent(amount: usize) -> String {
     const SPACES_PER_TAB: usize = 4;
@@ -143,16 +163,16 @@ impl TypeEntrails {
             TypeEntrails::Trait => format!("trait {}{}", my_type_name, lifetime),
             TypeEntrails::Function(f) => f.format(my_type_name),
             TypeEntrails::OptSome(t, id) => format!(
-                "{}{} /* Some {} */",
+                "Option<{}{}> /* Some {} */",
                 symbol_table.symbol(*t).name(symbol_table),
                 symbol_table.lifetime(*t),
-                id.0
+                id
             ),
             TypeEntrails::OptNone(t, id) => format!(
                 "{}{} /* None {} */",
                 symbol_table.symbol(*t).name(symbol_table),
                 symbol_table.lifetime(*t),
-                id.0
+                id
             ),
         }
     }
@@ -165,12 +185,12 @@ impl TypeEntrails {
             TypeEntrails::OptSome(t, id) => {
                 let inner_name = symbol_table.symbol(*t).name(symbol_table);
                 // let inner_lifetime = symbol_table.lifetime(*t);
-                Ok(format!("{} /* Some {} */", inner_name, id.0))
+                Ok(format!("{} /* Some {} */", inner_name, id))
             }
             TypeEntrails::OptNone(t, id) => {
                 let inner_name = symbol_table.symbol(*t).name(symbol_table);
                 // let inner_lifetime = symbol_table.lifetime(*t);
-                Ok(format!("{} /* None {} */", inner_name, id.0))
+                Ok(format!("{} /* None {} */", inner_name, id))
             }
             _ => bail!("No inner name available!"),
         }
@@ -178,6 +198,14 @@ impl TypeEntrails {
 
     fn to_rust(&self, type_id: SymbolId, symbol_table: &SymbolTable) -> String {
         self.format(type_id, symbol_table)
+    }
+
+    pub(crate) fn sem(&self) -> SymbolAttribute {
+        match self {
+            TypeEntrails::OptSome(_, id) => SymbolAttribute::OptionalSome(*id),
+            TypeEntrails::OptNone(_, id) => SymbolAttribute::OptionalNone(*id),
+            _ => SymbolAttribute::None,
+        }
     }
 }
 
@@ -209,8 +237,7 @@ impl Type {
     fn format(&self, symbol_table: &SymbolTable, scope_depth: usize) -> String {
         let scope = if !matches!(self.entrails, TypeEntrails::EnumVariant(_)) {
             format!(
-                " {{\n{}{}\n{}}}",
-                build_indent(scope_depth),
+                " {{\n{}\n{}}}",
                 symbol_table
                     .scope(self.member_scope)
                     .format(symbol_table, scope_depth + 1),
@@ -223,8 +250,8 @@ impl Type {
             "{}{} /* Type: my_id {}, name_id: {} */ {}",
             build_indent(scope_depth),
             self.entrails.format(self.my_id, symbol_table),
-            self.my_id.0,
-            self.name_id.1,
+            self.my_id,
+            self.name_id,
             scope,
         )
     }
@@ -250,7 +277,17 @@ impl Type {
     }
 
     pub(crate) fn is_container(&self) -> bool {
-        matches!(self.entrails, TypeEntrails::Box(_) | TypeEntrails::Vec(_))
+        matches!(
+            self.entrails,
+            TypeEntrails::Box(_)
+                | TypeEntrails::Vec(_)
+                | TypeEntrails::OptNone(..)
+                | TypeEntrails::OptSome(..)
+        )
+    }
+
+    pub(crate) fn sem(&self) -> SymbolAttribute {
+        self.entrails.sem()
     }
 }
 
@@ -286,13 +323,14 @@ impl Instance {
         let desc = if self.description.is_empty() {
             String::default()
         } else {
-            format!("/* {} */", self.description)
+            format!(" /* {} */", self.description)
         };
         format!(
-            "{}{}: {}{}{}",
+            "{}{}: {}{}{}{}",
             build_indent(scope_depth),
             self.name(symbol_table),
             symbol_table.symbol(self.type_id).name(symbol_table),
+            symbol_table.lifetime(self.type_id),
             desc,
             match self.sem {
                 SymbolAttribute::None => "".to_string(),
@@ -317,6 +355,18 @@ impl Instance {
 
     pub(crate) fn name(&self, symbol_table: &SymbolTable) -> String {
         symbol_table.name(self.name_id).to_string()
+    }
+
+    pub(crate) fn sem(&self, symbol_table: &SymbolTable) -> SymbolAttribute {
+        if self.sem != SymbolAttribute::None {
+            self.sem
+        } else {
+            if let Ok(type_symbol) = symbol_table.symbol_as_type(self.type_id) {
+                type_symbol.sem()
+            } else {
+                SymbolAttribute::None
+            }
+        }
     }
 }
 
@@ -397,6 +447,13 @@ impl Symbol {
             Symbol::Instance(i) => i.name(symbol_table),
         }
     }
+
+    pub(crate) fn sem(&self, symbol_table: &SymbolTable) -> SymbolAttribute {
+        match self {
+            Symbol::Type(t) => t.sem(),
+            Symbol::Instance(i) => i.sem(symbol_table),
+        }
+    }
 }
 ///
 /// Scope with symbols inside
@@ -410,6 +467,8 @@ pub(crate) struct Scope {
 }
 
 impl Scope {
+    /// The unnamed type name is always inserted into the `names` vector at construction time and
+    /// thus has index 0.
     pub(crate) const UNNAMED_TYPE_NAME_ID: usize = 0;
 
     pub(crate) fn new(parent: Option<ScopeId>, my_id: ScopeId) -> Self {
@@ -487,9 +546,9 @@ impl Scope {
         format!(
             "{}// Scope: my_id: {}, parent: {},\n{}",
             build_indent(scope_depth),
-            self.my_id.0,
+            self.my_id,
             self.parent
-                .map_or("No parent".to_string(), |i| format!("{}", i.0)),
+                .map_or("No parent".to_string(), |i| format!("{}", i)),
             self.symbols
                 .iter()
                 .map(|s| symbol_table.symbol(*s).format(symbol_table, scope_depth))
@@ -519,7 +578,10 @@ pub(crate) struct SymbolTable {
 }
 
 impl SymbolTable {
+    /// The one and only global scope has always ScopeId 0
     pub(crate) const GLOBAL_SCOPE: ScopeId = ScopeId(0);
+
+    /// This is a dummy name for types like Vec<T> or Option<T>
     pub(crate) const UNNAMED_TYPE: &'static str = "$$";
 
     pub(crate) fn new() -> Self {
@@ -611,7 +673,7 @@ impl SymbolTable {
     ) -> Result<ProductionAttribute> {
         let function_type = self.symbol_as_type(symbol_id)?;
         match &function_type.entrails {
-            TypeEntrails::Function(f) => Ok(f.sem.clone()),
+            TypeEntrails::Function(f) => Ok(f.sem),
             _ => bail!("Expecting a function here"),
         }
     }
@@ -644,20 +706,26 @@ impl SymbolTable {
         Ok(self.insert_symbol(symbol))
     }
 
+    pub(crate) fn insert_type_in_scope(
+        &mut self,
+        target_scope: ScopeId,
+        type_name: &str,
+        entrails: TypeEntrails,
+    ) -> Result<SymbolId> {
+        let symbol_id = self.next_symbol_id();
+        let member_scope = self.insert_scope(Some(target_scope));
+        let symbol =
+            self.scope_mut(target_scope)
+                .insert_type(type_name, symbol_id, member_scope, entrails);
+        Ok(self.insert_symbol(symbol))
+    }
+
     pub(crate) fn insert_global_type(
         &mut self,
         type_name: &str,
         entrails: TypeEntrails,
     ) -> Result<SymbolId> {
-        let symbol_id = self.next_symbol_id();
-        let member_scope = self.insert_scope(Some(SymbolTable::GLOBAL_SCOPE));
-        let symbol = self.scope_mut(Self::GLOBAL_SCOPE).insert_type(
-            type_name,
-            symbol_id,
-            member_scope,
-            entrails,
-        );
-        Ok(self.insert_symbol(symbol))
+        self.insert_type_in_scope(Self::GLOBAL_SCOPE, type_name, entrails)
     }
 
     pub(crate) fn insert_instance(
@@ -686,8 +754,6 @@ impl SymbolTable {
         if let Some(symbol_id) = self.scope(scope).symbols.iter().find(|symbol_id| {
             if let Ok(type_symbol) = self.symbol_as_type(**symbol_id) {
                 type_symbol.entrails == entrails
-                    || matches!(type_symbol.entrails, TypeEntrails::Token)
-                        && matches!(entrails, TypeEntrails::Token)
             } else {
                 false
             }
@@ -695,7 +761,7 @@ impl SymbolTable {
             return Ok(*symbol_id);
         }
 
-        self.insert_global_type(type_name, entrails)
+        self.insert_type_in_scope(scope, type_name, entrails)
     }
 }
 

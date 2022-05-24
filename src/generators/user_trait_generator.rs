@@ -106,8 +106,11 @@ impl<'a> UserTraitGenerator<'a> {
 
         for (i, member_id) in symbol_table.members(action_id)?.iter().rev().enumerate() {
             let arg_inst = symbol_table.symbol_as_instance(*member_id)?;
+            let sem = arg_inst.sem(symbol_table);
             let arg_type = symbol_table.symbol_as_type(arg_inst.type_id)?;
-            if !matches!(arg_type.entrails, TypeEntrails::Token) {
+            if !matches!(arg_type.entrails, TypeEntrails::Token)
+                && !matches!(sem, SymbolAttribute::OptionalNone(_))
+            {
                 let arg_name = symbol_table.name(arg_inst.name_id);
                 let stack_pop_data = UserTraitFunctionStackPopDataBuilder::default()
                     .arg_name(arg_name.to_string())
@@ -192,6 +195,8 @@ impl<'a> UserTraitGenerator<'a> {
                     && arg_inst.sem == SymbolAttribute::None
                 {
                     format!("Box::new({})", &arg_name)
+                } else if matches!(arg_type.entrails, TypeEntrails::OptSome(..)) {
+                    format!("Some({})", &arg_name)
                 } else {
                     arg_name.to_string()
                 };
@@ -216,6 +221,10 @@ impl<'a> UserTraitGenerator<'a> {
                 let setter_name = &arg_name;
                 let arg_name = if matches!(arg_type.entrails, TypeEntrails::Box(_)) {
                     format!("Box::new({})", arg_name)
+                } else if matches!(arg_type.entrails, TypeEntrails::OptSome(..))
+                    && matches!(arg_inst.sem(symbol_table), SymbolAttribute::OptionalSome(_))
+                {
+                    format!("Some({})", &arg_name)
                 } else {
                     arg_name.to_string()
                 };
@@ -414,6 +423,7 @@ impl<'a> UserTraitGenerator<'a> {
 
         self.add_user_actions(&mut type_info)?;
 
+        let mut generated_production_types = HashSet::new();
         let production_output_types = if self.auto_generate {
             type_info
                 .production_types
@@ -439,15 +449,27 @@ impl<'a> UserTraitGenerator<'a> {
                 })
                 .fold(Ok(StrVec::new(0)), |acc: Result<StrVec>, (t, f)| {
                     if let Ok(mut acc) = acc {
-                        let mut comment = StrVec::new(0);
-                        comment.push(String::default());
-                        comment.push(format!("Type derived for production {}", f.prod_num));
-                        comment.push(String::default());
-                        comment.push(f.prod_string.clone());
-                        comment.push(String::default());
-                        Self::format_type(*t, &type_info.symbol_table, comment)?
-                            .into_iter()
-                            .for_each(|s| acc.push(s));
+                        if !generated_production_types.contains(t) {
+                            let mut comment = StrVec::new(0);
+                            comment.push(String::default());
+                            comment.push(format!("Type derived for production {}", f.prod_num));
+                            comment.push(String::default());
+                            comment.push(f.prod_string.clone());
+                            comment.push(String::default());
+                            Self::format_type(*t, &type_info.symbol_table, comment)?
+                                .into_iter()
+                                .for_each(|s| acc.push(s));
+                            generated_production_types.insert(*t);
+                        } else {
+                            acc.push(format!("//"));
+                            acc.push(format!(
+                                "// Type derived for production {} is '{}{}'",
+                                f.prod_num,
+                                type_info.symbol_table.type_name(*t)?,
+                                type_info.symbol_table.lifetime(*t),
+                            ));
+                            acc.push(format!("//"));
+                        }
                         Ok(acc)
                     } else {
                         acc
@@ -579,7 +601,10 @@ impl<'a> UserTraitGenerator<'a> {
                 }
             },
         )?;
-
+        // $env:RUST_LOG="parol::generators::user_trait_generator=trace
+        trace!("// Type information:");
+        trace!("{}", type_info);
+    
         let user_trait_data = UserTraitDataBuilder::default()
             .user_type_name(&self.user_type_name)
             .auto_generate(self.auto_generate)

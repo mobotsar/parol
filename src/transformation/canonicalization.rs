@@ -102,13 +102,10 @@ fn variable_names(productions: &[Production]) -> Vec<String> {
 fn apply_production_transformation(
     productions: &mut Vec<Production>,
     index: usize,
-    trans: impl Fn(Production) -> Vec<Production>,
+    trans: impl Fn(&Production) -> Option<Vec<Production>>,
 ) {
-    let production_to_substitute = productions.remove(index);
-    let mut substitutes = trans(production_to_substitute);
-    productions.reserve(substitutes.len());
-    for i in index..(index + substitutes.len()) {
-        productions.insert(i, substitutes.remove(0));
+    if let Some(substitutes) = trans(&productions[index]) {
+        productions.splice(index..index + 1, substitutes);
     }
 }
 
@@ -141,16 +138,18 @@ fn separate_alternatives(state: TransformationState) -> TransformationState {
     // -------------------------------------------------------------------------
     // Replace the given production with multiple alternatives by a list of new productions.
     // -------------------------------------------------------------------------
-    fn separate_production_with_multiple_alts(r: Production) -> Vec<Production> {
-        let Production { lhs, rhs } = r;
+    fn separate_production_with_multiple_alts(r: &Production) -> Option<Vec<Production>> {
+        let Production { ref lhs, ref rhs } = r;
         let Alternations(e) = rhs;
 
-        e.into_iter()
-            .map(|a| Production {
-                lhs: lhs.clone(),
-                rhs: Alternations(vec![a]),
-            })
-            .collect::<Vec<Production>>()
+        Some(
+            e.into_iter()
+                .map(|a| Production {
+                    lhs: lhs.clone(),
+                    rhs: Alternations(vec![a.clone()]),
+                })
+                .collect::<Vec<Production>>(),
+        )
     }
 
     fn separate_single_production(productions: &mut Vec<Production>) -> bool {
@@ -198,8 +197,8 @@ fn separate_alternatives(state: TransformationState) -> TransformationState {
 fn eliminate_single_rep(
     exclusions: &[String],
     alt_index: usize,
-    production: Production,
-) -> Vec<Production> {
+    production: &Production,
+) -> Option<Vec<Production>> {
     let production_name = production.lhs.clone();
     if let Some(rpt_index_in_alt) = production.rhs.0[alt_index]
         .0
@@ -248,12 +247,12 @@ fn eliminate_single_rep(
                 ]),
             };
 
-            vec![production1, production2, production2a]
+            Some(vec![production1, production2, production2a])
         } else {
             panic!("Expected Factor::Repeat!");
         }
     } else {
-        vec![production]
+        None
     }
 }
 
@@ -295,15 +294,19 @@ fn eliminate_repetitions(state: TransformationState) -> TransformationState {
 // -------------------------------------------------------------------------
 // R  -> x [ a ] y.
 // =>
-// R  -> x R' y.       (1)
-// R  -> x y.          (1a)
-// R' -> a.            (2)
+// R  -> x R' y.       (1) - Non-terminal R' receives SymbolAttribute::OptionalSome
+// R' -> a.            (2) - Production R' receives ProductionAttribute::OptionalSome
+// R  -> x P y.        (1a) - Between x and y a pseudo symbol with SymbolAttribute::OptionalNone is inserted
+//
+// Finally (1) and (1a) should have the same structure where R' and P are later substituted by
+// an Option type. R' is the Some case, P is the None case for [ a ].
+//
 fn eliminate_single_opt(
     exclusions: &[String],
     alt_index: usize,
-    production: Production,
+    production: &Production,
     next_optional: OptionalId,
-) -> Vec<Production> {
+) -> Option<Vec<Production>> {
     let production_name = production.lhs.clone();
     if let Some(opt_index_in_alt) = production.rhs.0[alt_index]
         .0
@@ -320,27 +323,25 @@ fn eliminate_single_opt(
             );
 
             let mut production1a = production1.clone();
-            production1a.rhs.0[0].0[opt_index_in_alt] = Factor::Pseudo(
-                r_tick_name.clone(),
-                SymbolAttribute::OptionalNone(next_optional),
-            );
+            production1a.rhs.0[0].0[opt_index_in_alt] =
+                Factor::Pseudo(SymbolAttribute::OptionalNone(next_optional));
 
             let production2 = Production {
                 lhs: r_tick_name,
                 rhs: if optional.0.len() == 1 {
-                    Alternations(vec![
-                        Alternation::new().with_factors(optional.0[0].0.clone())
-                    ])
+                    Alternations(vec![Alternation::new()
+                        .with_factors(optional.0[0].0.clone())
+                        .with_attribute(ProductionAttribute::OptionalSome(next_optional))])
                 } else {
                     optional
                 },
             };
-            vec![production1, production1a, production2]
+            Some(vec![production1, production2, production1a])
         } else {
             panic!("Expected Factor::Optional!");
         }
     } else {
-        vec![production]
+        None
     }
 }
 
@@ -390,8 +391,8 @@ fn eliminate_options(state: TransformationState) -> TransformationState {
 fn eliminate_single_grp(
     exclusions: &[String],
     alt_index: usize,
-    production: Production,
-) -> Vec<Production> {
+    production: &Production,
+) -> Option<Vec<Production>> {
     let production_name = production.lhs.clone();
     if let Some(grp_index_in_alt) = production.rhs.0[alt_index]
         .0
@@ -408,7 +409,7 @@ fn eliminate_single_grp(
                         .0
                         .insert(grp_index_in_alt, fac.clone())
                 });
-                vec![production1]
+                Some(vec![production1])
             } else {
                 // Case 2
                 let g_name = generate_name(exclusions, production_name + "Group");
@@ -423,7 +424,7 @@ fn eliminate_single_grp(
                         rhs: group,
                     };
 
-                    vec![production1, production2]
+                    Some(vec![production1, production2])
                 } else {
                     panic!("Expected Factor::Group!");
                 }
@@ -432,7 +433,7 @@ fn eliminate_single_grp(
             panic!("Expected Group here");
         }
     } else {
-        vec![production]
+        None
     }
 }
 
@@ -504,9 +505,9 @@ fn eliminate_duplicates(state: TransformationState) -> TransformationState {
                 let pr = &mut productions[pi];
                 debug_assert!(pr.rhs.0.len() == 1, "Only one single Alternation expected!");
                 for s in &mut pr.rhs.0[0].0 {
-                    if let Factor::NonTerminal(n, _) = s {
+                    if let Factor::NonTerminal(n, a) = s {
                         if n == &to_find {
-                            *s = Factor::default_non_terminal(replace_with.clone());
+                            *s = Factor::NonTerminal(replace_with.clone(), *a);
                         }
                     }
                 }
@@ -573,11 +574,23 @@ fn transform(productions: Vec<Production>) -> Result<Vec<Pr>> {
     finalize(state.productions)
 }
 
+fn trace_item_stack(item_stack: &[ParolGrammarItem]) {
+    trace!(
+        "Item stack:\n{}",
+        item_stack
+            .iter()
+            .rev()
+            .map(|s| format!("  {}", s))
+            .collect::<Vec<String>>()
+            .join("\n")
+    );
+}
+
 #[cfg(test)]
 mod test {
     use super::{
-        eliminate_single_grp, eliminate_single_opt, eliminate_single_rep, Alternation,
-        Alternations, Factor, Production,
+        apply_production_transformation, eliminate_single_grp, eliminate_single_opt,
+        eliminate_single_rep, Alternation, Alternations, Factor, Production,
     };
     use crate::grammar::{attributes::OPTIONAL_ID_INIT, ProductionAttribute, SymbolAttribute};
 
@@ -602,7 +615,7 @@ mod test {
             ])]),
         };
 
-        let productions = eliminate_single_rep(&[production.lhs.clone()], 0, production);
+        let productions = eliminate_single_rep(&[production.lhs.clone()], 0, &production).unwrap();
         assert_eq!(3, productions.len());
         // Start: x StartList y;
         assert_eq!(
@@ -664,7 +677,7 @@ mod test {
             ])]),
         };
 
-        let productions = eliminate_single_rep(&[production.lhs.clone()], 0, production);
+        let productions = eliminate_single_rep(&[production.lhs.clone()], 0, &production).unwrap();
         assert_eq!(3, productions.len());
         // Start: x StartList y;
         assert_eq!(
@@ -708,11 +721,11 @@ mod test {
         );
     }
 
-    // R  -> x [ o1 | o2 ] y.
+    // R  -> x [ a ] y.
     // =>
-    // R  -> x R' y.       (1)
-    // R  -> x y.          (1a)
-    // R' -> o1 | o2.      (2)
+    // R  -> x R' y.       (1) - Non-terminal R' receives SymbolAttribute::OptionalSome
+    // R' -> a.            (2) - Production R' receives ProductionAttribute::OptionalSome
+    // R  -> x P y.        (1a) - Between x and y a pseudo symbol with SymbolAttribute::OptionalNone is inserted
     #[test]
     fn eliminate_single_opt_test() {
         // Start: x [ o1 | o2 ] y;
@@ -731,7 +744,8 @@ mod test {
         };
 
         let productions =
-            eliminate_single_opt(&[production.lhs.clone()], 0, production, OPTIONAL_ID_INIT);
+            eliminate_single_opt(&[production.lhs.clone()], 0, &production, OPTIONAL_ID_INIT)
+                .unwrap();
         assert_eq!(3, productions.len());
         // Start: x StartOpt y;
         assert_eq!(
@@ -748,21 +762,6 @@ mod test {
             },
             productions[0]
         );
-        // Start: x y;
-        assert_eq!(
-            Production {
-                lhs: "Start".to_string(),
-                rhs: Alternations(vec![Alternation::new().with_factors(vec![
-                    Factor::Terminal("x".to_string(), vec![0]),
-                    Factor::Pseudo(
-                        "StartOpt".to_string(),
-                        SymbolAttribute::OptionalNone(OPTIONAL_ID_INIT)
-                    ),
-                    Factor::Terminal("y".to_string(), vec![0])
-                ]),])
-            },
-            productions[1]
-        );
         // StartOpt: o1 | o2;
         assert_eq!(
             Production {
@@ -773,6 +772,18 @@ mod test {
                     Alternation::new()
                         .with_factors(vec![Factor::Terminal("o2".to_string(), vec![0])]),
                 ])
+            },
+            productions[1]
+        );
+        // Start: x y;
+        assert_eq!(
+            Production {
+                lhs: "Start".to_string(),
+                rhs: Alternations(vec![Alternation::new().with_factors(vec![
+                    Factor::Terminal("x".to_string(), vec![0]),
+                    Factor::Pseudo(SymbolAttribute::OptionalNone(OPTIONAL_ID_INIT)),
+                    Factor::Terminal("y".to_string(), vec![0])
+                ]),])
             },
             productions[2]
         );
@@ -796,7 +807,7 @@ mod test {
             ])]),
         };
 
-        let productions = eliminate_single_grp(&[production.lhs.clone()], 0, production);
+        let productions = eliminate_single_grp(&[production.lhs.clone()], 0, &production).unwrap();
         assert_eq!(1, productions.len());
         // Start: x g1 g2 y;
         assert_eq!(
@@ -834,7 +845,7 @@ mod test {
             ])]),
         };
 
-        let productions = eliminate_single_grp(&[production.lhs.clone()], 0, production);
+        let productions = eliminate_single_grp(&[production.lhs.clone()], 0, &production).unwrap();
         assert_eq!(2, productions.len());
         // Start: x StartGroup y;
         assert_eq!(
@@ -862,16 +873,105 @@ mod test {
             productions[1]
         );
     }
-}
 
-fn trace_item_stack(item_stack: &[ParolGrammarItem]) {
-    trace!(
-        "Item stack:\n{}",
-        item_stack
-            .iter()
-            .rev()
-            .map(|s| format!("  {}", s))
-            .collect::<Vec<String>>()
-            .join("\n")
-    );
+    #[test]
+    fn test_apply_production_transformation1() {
+        let mut productions = vec![
+            Production::new("A".to_string(), Alternations::new()),
+            Production::new("B".to_string(), Alternations::new()),
+        ];
+
+        apply_production_transformation(&mut productions, 1, |_| {
+            Some(vec![
+                Production::new("C".to_string(), Alternations::new()),
+                Production::new("D".to_string(), Alternations::new()),
+            ])
+        });
+
+        assert_eq!(
+            vec![
+                Production::new("A".to_string(), Alternations::new()),
+                Production::new("C".to_string(), Alternations::new()),
+                Production::new("D".to_string(), Alternations::new()),
+            ],
+            productions
+        );
+    }
+
+    #[test]
+    fn test_apply_production_transformation2() {
+        let mut productions = vec![
+            Production::new("A".to_string(), Alternations::new()),
+            Production::new("B".to_string(), Alternations::new()),
+        ];
+
+        apply_production_transformation(&mut productions, 0, |_| {
+            Some(vec![
+                Production::new("C".to_string(), Alternations::new()),
+                Production::new("D".to_string(), Alternations::new()),
+            ])
+        });
+
+        assert_eq!(
+            vec![
+                Production::new("C".to_string(), Alternations::new()),
+                Production::new("D".to_string(), Alternations::new()),
+                Production::new("B".to_string(), Alternations::new()),
+            ],
+            productions
+        );
+    }
+
+    #[test]
+    fn test_apply_production_transformation_no_change() {
+        let mut productions = vec![
+            Production::new("A".to_string(), Alternations::new()),
+            Production::new("B".to_string(), Alternations::new()),
+        ];
+
+        apply_production_transformation(&mut productions, 0, |_| {
+            Some(vec![Production::new("A".to_string(), Alternations::new())])
+        });
+
+        assert_eq!(
+            vec![
+                Production::new("A".to_string(), Alternations::new()),
+                Production::new("B".to_string(), Alternations::new()),
+            ],
+            productions
+        );
+    }
+
+    #[test]
+    fn test_apply_production_transformation_no_change_2() {
+        let mut productions = vec![
+            Production::new("A".to_string(), Alternations::new()),
+            Production::new("B".to_string(), Alternations::new()),
+        ];
+
+        apply_production_transformation(&mut productions, 0, |_| None);
+
+        assert_eq!(
+            vec![
+                Production::new("A".to_string(), Alternations::new()),
+                Production::new("B".to_string(), Alternations::new()),
+            ],
+            productions
+        );
+    }
+
+    #[test]
+    fn test_apply_production_transformation_empty_substitute() {
+        let mut productions = vec![
+            Production::new("A".to_string(), Alternations::new()),
+            Production::new("B".to_string(), Alternations::new()),
+        ];
+
+        apply_production_transformation(&mut productions, 0, |_| Some(vec![]));
+
+        assert_eq!(
+            vec![Production::new("B".to_string(), Alternations::new()),],
+            productions
+        );
+    }
 }

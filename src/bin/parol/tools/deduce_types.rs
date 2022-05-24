@@ -14,6 +14,9 @@ pub struct Args {
     /// Grammar input as text
     #[clap(short = 's', long = "grammar-text")]
     grammar: Option<String>,
+    /// The name of the grammar type. Defaults to the grammar file name.
+    #[clap(short = 'n', long)]
+    grammar_name: Option<String>,
     /// Increase verbosity
     #[clap(short = 'v', long = "verbose")]
     verbose: bool,
@@ -28,10 +31,18 @@ pub fn main(args: &Args) -> Result<()> {
         return Err(miette!("Please provide a valid grammar input!"));
     };
 
-    let grammar_name =  NmHlp::purge_name(if let Some(file_name) = &args.grammar_file {
-        file_name.file_stem().unwrap().to_str().unwrap_or("TestGrammar")
+    let grammar_name = NmHlp::purge_name(if let Some(grammar_name) = &args.grammar_name {
+        grammar_name
     } else {
-        "TestGrammar"
+        if let Some(file_name) = &args.grammar_file {
+            file_name
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap_or("TestGrammar")
+        } else {
+            "TestGrammar"
+        }
     });
 
     let cfg = left_factor(&grammar_config.cfg);
@@ -44,14 +55,14 @@ pub fn main(args: &Args) -> Result<()> {
     let scanner_state_resolver = grammar_config.get_scanner_state_resolver();
     for (i, pr) in grammar_config.cfg.pr.iter().enumerate() {
         println!(
-            "/* {:w$} */ {}",
+            "// {:w$}: {}",
             i,
             pr.format(&scanner_state_resolver)?,
             w = width
         );
     }
     println!();
-    println!("Type information:");
+    println!("// Type information:");
     println!("{}", type_info);
     Ok(())
 }

@@ -178,10 +178,7 @@ fn update_production_equations<'a, 'c: 'a>(
                         }
                     }
                 }
-                Symbol::P(_, _) => (),
-                Symbol::S(_) => (),
-                Symbol::Push(_) => (),
-                Symbol::Pop => (),
+                Symbol::P(_) | Symbol::S(_) | Symbol::Push(_) | Symbol::Pop => (),
             }
             acc
         },
@@ -230,10 +227,7 @@ fn update_production_equations<'a, 'c: 'a>(
                                     .k_concat(first_of_nt, k)
                             });
                     }
-                    Symbol::P(_, _) => (),
-                    Symbol::S(_) => (),
-                    Symbol::Push(_) => (),
-                    Symbol::Pop => (),
+                    Symbol::P(_) | Symbol::S(_) | Symbol::Push(_) | Symbol::Pop => (),
                 }
             }
             // trace!("  concat Follow({}, {})", pr.get_n_str(), k);
